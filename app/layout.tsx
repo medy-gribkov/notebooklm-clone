@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NotebookLM Clone",
-  description: "Upload PDFs and chat with your documents using AI",
+  title: "DocChat — Chat with your PDFs",
+  description:
+    "Upload a PDF and ask questions in plain English. DocChat answers from your document using AI — with cited sources.",
 };
 
 export default function RootLayout({

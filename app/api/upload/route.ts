@@ -88,10 +88,13 @@ export async function POST(request: Request) {
 
   if (dbError || !notebook) {
     console.error("[upload] Failed to create notebook:", dbError);
-    return NextResponse.json(
-      { error: "Failed to create notebook" },
-      { status: 500 }
-    );
+    // Clean up the uploaded file since we couldn't create the notebook row
+    await serviceClient.storage.from("pdf-uploads").remove([storagePath]);
+    const msg =
+      dbError?.message?.includes("relation") || dbError?.message?.includes("does not exist")
+        ? "Database not set up. Please apply the migration in Supabase SQL Editor."
+        : "Failed to create notebook. Please try again.";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 
   // Process synchronously (embed + store chunks) within 60s timeout
@@ -99,10 +102,14 @@ export async function POST(request: Request) {
     await processNotebook(notebook.id, user.id, buffer);
   } catch (error) {
     console.error("[upload] Processing failed:", error);
-    return NextResponse.json(
-      { error: "Processing failed", notebookId: notebook.id },
-      { status: 500 }
-    );
+    const msg =
+      error instanceof Error && error.message.includes("No text layer")
+        ? "This PDF has no selectable text (scanned image). Please upload a text-based PDF."
+        : error instanceof Error && error.message.includes("quota")
+        ? "AI quota exceeded. Please try again in a minute."
+        : "Processing failed. The document was saved — please try re-uploading.";
+    // Notebook row already set to "error" status by processNotebook
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 
   // Return the updated notebook

@@ -11,15 +11,24 @@ interface NotebookCardProps {
   onDelete: (id: string) => void;
 }
 
-const statusColors: Record<Notebook["status"], string> = {
-  processing:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-  ready: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-  error: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+const statusConfig: Record<Notebook["status"], { label: string; className: string }> = {
+  processing: {
+    label: "Processing...",
+    className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+  },
+  ready: {
+    label: "Ready",
+    className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  },
+  error: {
+    label: "Failed",
+    className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+  },
 };
 
 export function NotebookCard({ notebook, onDelete }: NotebookCardProps) {
   const [deleting, setDeleting] = useState(false);
+  const status = statusConfig[notebook.status];
 
   async function handleDelete(e: React.MouseEvent) {
     e.preventDefault();
@@ -43,7 +52,7 @@ export function NotebookCard({ notebook, onDelete }: NotebookCardProps) {
       const { url } = await res.json();
       window.open(url, "_blank", "noopener,noreferrer");
     } catch {
-      // silently fail — PDF is supplementary
+      // silently fail — PDF viewing is supplementary
     }
   }
 
@@ -53,44 +62,54 @@ export function NotebookCard({ notebook, onDelete }: NotebookCardProps) {
     year: "numeric",
   });
 
+  const isClickable = notebook.status === "ready";
+
   return (
     <Card className="group relative transition-shadow hover:shadow-md">
       <Link
-        href={notebook.status === "ready" ? `/notebook/${notebook.id}` : "#"}
-        className={notebook.status !== "ready" ? "pointer-events-none" : ""}
+        href={isClickable ? `/notebook/${notebook.id}` : "#"}
+        className={!isClickable ? "pointer-events-none" : ""}
+        aria-disabled={!isClickable}
       >
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 pr-10">
           <CardTitle className="line-clamp-2 text-base font-semibold leading-snug">
             {notebook.title}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span
-              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[notebook.status]}`}
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}
             >
-              {notebook.status}
+              {notebook.status === "processing" && (
+                <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+              )}
+              {status.label}
             </span>
             <span className="text-xs text-muted-foreground">{date}</span>
           </div>
           {notebook.status === "ready" && (
             <button
               onClick={handleViewPdf}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="View PDF"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              aria-label="View source PDF"
             >
-              PDF
+              View PDF
             </button>
+          )}
+          {notebook.status === "error" && (
+            <span className="text-xs text-muted-foreground">Upload failed</span>
           )}
         </CardContent>
       </Link>
+
       <Button
         variant="ghost"
         size="sm"
         onClick={handleDelete}
         disabled={deleting}
-        className="absolute right-2 top-2 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-600"
-        aria-label="Delete notebook"
+        className="absolute right-2 top-2 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-600 transition-opacity"
+        aria-label={`Delete ${notebook.title}`}
       >
         <svg
           className="h-4 w-4"

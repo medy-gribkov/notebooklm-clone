@@ -14,6 +14,13 @@ interface ChatInterfaceProps {
   initialMessages: Message[];
 }
 
+const STARTER_PROMPTS = [
+  "Summarize the key points of this document",
+  "What are the main conclusions or findings?",
+  "What topics does this document cover?",
+  "What questions does this document answer?",
+];
+
 export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [streamingSources, setStreamingSources] = useState<Source[]>([]);
@@ -24,7 +31,7 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
     content: m.content,
   }));
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, data } =
+  const { messages, input, handleInputChange, handleSubmit, isLoading, data, setInput } =
     useChat({
       api: "/api/chat",
       body: { notebookId },
@@ -56,6 +63,10 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
     }
   }
 
+  function handleStarterPrompt(prompt: string) {
+    setInput(prompt);
+  }
+
   // Map db message id to stored sources
   const sourcesById = Object.fromEntries(
     initialMessages
@@ -68,9 +79,9 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
       <ScrollArea className="flex-1 px-4 py-4">
         <div className="space-y-4 max-w-2xl mx-auto">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+            <div className="flex flex-col items-center py-12 text-center">
               <svg
-                className="mb-4 h-12 w-12 opacity-30"
+                className="mb-4 h-12 w-12 text-muted-foreground/30"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -82,8 +93,23 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                 />
               </svg>
-              <p className="text-sm font-medium">Ask anything about your document</p>
-              <p className="text-xs mt-1">Answers are grounded in your PDF only</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                Ask anything about your document
+              </p>
+              <p className="text-xs mt-1 text-muted-foreground/70 mb-6">
+                All answers come directly from the uploaded PDF.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md">
+                {STARTER_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => handleStarterPrompt(prompt)}
+                    className="rounded-lg border px-3 py-2 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -92,7 +118,7 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
             const isLastAssistant =
               !isUser && message.id === messages[messages.length - 1]?.id;
 
-            // Use streaming sources for the last assistant message while loading
+            // Use streaming sources for the last assistant message while loading,
             // fall back to persisted sources from DB
             const sources: Source[] | undefined =
               isLastAssistant && isLoading
@@ -128,7 +154,7 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
           {isLoading && messages[messages.length - 1]?.role === "user" && (
             <div className="flex justify-start">
               <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-2.5">
-                <span className="flex gap-1">
+                <span className="flex gap-1" aria-label="Thinking...">
                   <span className="animate-bounce h-1.5 w-1.5 rounded-full bg-muted-foreground [animation-delay:0ms]" />
                   <span className="animate-bounce h-1.5 w-1.5 rounded-full bg-muted-foreground [animation-delay:150ms]" />
                   <span className="animate-bounce h-1.5 w-1.5 rounded-full bg-muted-foreground [animation-delay:300ms]" />
@@ -160,6 +186,7 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
             size="sm"
             disabled={isLoading || !input.trim()}
             className="h-11 px-4 shrink-0"
+            aria-label="Send message"
           >
             <svg
               className="h-4 w-4"
@@ -176,6 +203,9 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
             </svg>
           </Button>
         </form>
+        <p className="mt-1.5 text-center text-xs text-muted-foreground/50 max-w-2xl mx-auto">
+          Answers are grounded in your document only. Sources shown below each reply.
+        </p>
       </div>
     </div>
   );
