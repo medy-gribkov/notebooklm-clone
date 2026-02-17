@@ -101,12 +101,15 @@ export async function POST(request: Request) {
   try {
     await processNotebook(notebook.id, user.id, buffer);
   } catch (error) {
-    console.error("[upload] Processing failed:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("[upload] Processing failed:", errorMsg, error);
     const msg =
       error instanceof Error && error.message.includes("No text layer")
         ? "This PDF has no selectable text (scanned image). Please upload a text-based PDF."
         : error instanceof Error && error.message.includes("quota")
         ? "AI quota exceeded. Please try again in a minute."
+        : error instanceof Error && error.message.includes("No content could be extracted")
+        ? "No text content found in this PDF."
         : "Processing failed. The document was saved — please try re-uploading.";
     // Notebook row already set to "error" status by processNotebook
     return NextResponse.json({ error: msg }, { status: 500 });
