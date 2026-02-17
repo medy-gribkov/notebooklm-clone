@@ -4,7 +4,7 @@ import { retrieveChunks } from "@/lib/rag";
 import { getLLM } from "@/lib/gemini";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isValidUUID, validateUserMessage } from "@/lib/validate";
-import { streamText, StreamData } from "ai";
+import { streamText } from "ai";
 import { NextResponse } from "next/server";
 import type { Source } from "@/types";
 
@@ -102,11 +102,6 @@ export async function POST(request: Request) {
     content: userMessage,
   });
 
-  const data = new StreamData();
-  // StreamData.append requires JSONValue; Source[] is JSON-serializable at runtime
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data.append({ sources } as any);
-
   const result = streamText({
     model: getLLM(),
     system: systemWithContext,
@@ -122,9 +117,8 @@ export async function POST(request: Request) {
         content: text,
         sources: sources.length > 0 ? sources : null,
       });
-      data.close();
     },
   });
 
-  return result.toDataStreamResponse({ data });
+  return result.toDataStreamResponse();
 }
