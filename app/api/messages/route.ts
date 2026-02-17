@@ -23,7 +23,8 @@ export async function GET(request: Request) {
     .select("*")
     .eq("notebook_id", notebookId)
     .eq("user_id", user.id)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .limit(100);
 
   if (error) {
     console.error("[messages] Failed to fetch messages:", error);

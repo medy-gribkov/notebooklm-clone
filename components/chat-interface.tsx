@@ -23,7 +23,7 @@ const STARTER_PROMPTS = [
 
 export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [streamingSources, setStreamingSources] = useState<Source[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const priorMessages: AIMessage[] = initialMessages.map((m) => ({
     id: m.id,
@@ -36,17 +36,27 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
       api: "/api/chat",
       body: { notebookId },
       initialMessages: priorMessages,
+      onError: (error) => {
+        const msg = error.message ?? "";
+        if (msg.includes("429") || msg.toLowerCase().includes("too many")) {
+          setErrorMessage(
+            "Rate limit reached. You can send up to 10 messages per minute."
+          );
+        } else {
+          setErrorMessage("Something went wrong. Please try again.");
+        }
+        // Input is preserved automatically by useChat on error
+      },
     });
 
-  // Extract sources from stream data
-  useEffect(() => {
+  // Derive streaming sources from latest stream data during render (no state needed)
+  const streamingSources: Source[] = (() => {
     if (data && data.length > 0) {
       const last = data[data.length - 1] as { sources?: Source[] };
-      if (last?.sources) {
-        setStreamingSources(last.sources);
-      }
+      return last?.sources ?? [];
     }
-  }, [data]);
+    return [];
+  })();
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -57,10 +67,15 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (!isLoading && input.trim()) {
+        setErrorMessage(null);
         handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
-        setStreamingSources([]);
       }
     }
+  }
+
+  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+    setErrorMessage(null);
+    handleSubmit(e);
   }
 
   function handleStarterPrompt(prompt: string) {
@@ -168,8 +183,13 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
       </ScrollArea>
 
       <div className="border-t p-4">
+        {errorMessage && (
+          <p className="mb-2 text-center text-xs text-red-600 dark:text-red-400 max-w-2xl mx-auto">
+            {errorMessage}
+          </p>
+        )}
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handleFormSubmit}
           className="max-w-2xl mx-auto flex gap-2 items-end"
         >
           <Textarea

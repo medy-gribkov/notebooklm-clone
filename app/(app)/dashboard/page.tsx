@@ -2,34 +2,42 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { UploadZone } from "@/components/upload-zone";
 import { NotebookCard } from "@/components/notebook-card";
 import { Button } from "@/components/ui/button";
 import type { Notebook } from "@/types";
 
+const PROCESSING_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const POLL_DELAYS = [5000, 10000, 20000, 30000];
+
+function isTimedOut(notebook: Notebook): boolean {
+  return (
+    notebook.status === "processing" &&
+    Date.now() - new Date(notebook.created_at).getTime() > PROCESSING_TIMEOUT_MS
+  );
+}
+
 export default function DashboardPage() {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const pollAttemptRef = useRef(0);
 
   useEffect(() => {
-    fetchNotebooks();
+    fetch("/api/notebooks")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setNotebooks(data);
+        setLoading(false);
+      });
+
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       setUserEmail(data.user?.email ?? null);
     });
   }, []);
-
-  async function fetchNotebooks() {
-    const res = await fetch("/api/notebooks");
-    if (res.ok) {
-      const data = await res.json();
-      setNotebooks(data);
-    }
-    setLoading(false);
-  }
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -45,26 +53,36 @@ export default function DashboardPage() {
     setNotebooks((prev) => prev.filter((n) => n.id !== id));
   }
 
-  // Poll processing notebooks every 5s
+  // Poll processing notebooks with exponential backoff: 5s → 10s → 20s → 30s cap
   useEffect(() => {
-    const processing = notebooks.filter((n) => n.status === "processing");
-    if (processing.length === 0) return;
+    const processing = notebooks.filter(
+      (n) => n.status === "processing" && !isTimedOut(n)
+    );
 
-    const interval = setInterval(async () => {
-      const updates = await Promise.all(
+    if (processing.length === 0) {
+      pollAttemptRef.current = 0;
+      return;
+    }
+
+    const delay = POLL_DELAYS[Math.min(pollAttemptRef.current, POLL_DELAYS.length - 1)];
+
+    const timeout = setTimeout(() => {
+      pollAttemptRef.current++;
+      Promise.all(
         processing.map((n) =>
           fetch(`/api/notebooks/${n.id}`).then((r) => r.json())
         )
-      );
-      setNotebooks((prev) =>
-        prev.map((n) => {
-          const updated = updates.find((u) => u.id === n.id);
-          return updated ?? n;
-        })
-      );
-    }, 5000);
+      ).then((updates) => {
+        setNotebooks((prev) =>
+          prev.map((n) => {
+            const updated = updates.find((u) => u.id === n.id);
+            return updated ?? n;
+          })
+        );
+      });
+    }, delay);
 
-    return () => clearInterval(interval);
+    return () => clearTimeout(timeout);
   }, [notebooks]);
 
   const readyCount = notebooks.filter((n) => n.status === "ready").length;
@@ -142,6 +160,7 @@ export default function DashboardPage() {
                 <NotebookCard
                   key={notebook.id}
                   notebook={notebook}
+                  timedOut={isTimedOut(notebook)}
                   onDelete={handleNotebookDeleted}
                 />
               ))}

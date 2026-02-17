@@ -1,17 +1,16 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 
-if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is required");
+export function getLLM() {
+  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is required");
+  const google = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
+  return google("gemini-2.5-flash-latest");
+}
 
-const apiKey = process.env.GEMINI_API_KEY;
-
-const genAI = new GoogleGenerativeAI(apiKey);
-
-// For Vercel AI SDK streaming
-export const google = createGoogleGenerativeAI({ apiKey });
-export const llm = google("gemini-2.5-flash-latest");
-
-// For embeddings (direct SDK)
-export const embeddingModel = genAI.getGenerativeModel({
-  model: "text-embedding-004",
-});
+export function getEmbeddings() {
+  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is required");
+  return new GoogleGenerativeAIEmbeddings({
+    model: "text-embedding-004",
+    apiKey: process.env.GEMINI_API_KEY,
+  });
+}

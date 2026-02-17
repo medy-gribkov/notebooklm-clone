@@ -8,6 +8,7 @@ import type { Notebook } from "@/types";
 
 interface NotebookCardProps {
   notebook: Notebook;
+  timedOut?: boolean;
   onDelete: (id: string) => void;
 }
 
@@ -26,9 +27,14 @@ const statusConfig: Record<Notebook["status"], { label: string; className: strin
   },
 };
 
-export function NotebookCard({ notebook, onDelete }: NotebookCardProps) {
+const timedOutConfig = {
+  label: "Timed out",
+  className: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+};
+
+export function NotebookCard({ notebook, timedOut = false, onDelete }: NotebookCardProps) {
   const [deleting, setDeleting] = useState(false);
-  const status = statusConfig[notebook.status];
+  const status = timedOut ? timedOutConfig : statusConfig[notebook.status];
 
   async function handleDelete(e: React.MouseEvent) {
     e.preventDefault();
@@ -62,7 +68,7 @@ export function NotebookCard({ notebook, onDelete }: NotebookCardProps) {
     year: "numeric",
   });
 
-  const isClickable = notebook.status === "ready";
+  const isClickable = notebook.status === "ready" && !timedOut;
 
   return (
     <Card className="group relative transition-shadow hover:shadow-md">
@@ -81,14 +87,14 @@ export function NotebookCard({ notebook, onDelete }: NotebookCardProps) {
             <span
               className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}
             >
-              {notebook.status === "processing" && (
+              {notebook.status === "processing" && !timedOut && (
                 <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
               )}
               {status.label}
             </span>
             <span className="text-xs text-muted-foreground">{date}</span>
           </div>
-          {notebook.status === "ready" && (
+          {notebook.status === "ready" && !timedOut && (
             <button
               onClick={handleViewPdf}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
@@ -97,8 +103,10 @@ export function NotebookCard({ notebook, onDelete }: NotebookCardProps) {
               View PDF
             </button>
           )}
-          {notebook.status === "error" && (
-            <span className="text-xs text-muted-foreground">Upload failed</span>
+          {(notebook.status === "error" || timedOut) && (
+            <span className="text-xs text-muted-foreground">
+              {timedOut ? "Try re-uploading" : "Upload failed"}
+            </span>
           )}
         </CardContent>
       </Link>
