@@ -124,7 +124,6 @@ export async function retrieveChunks(
     match_notebook_id: notebookId,
     match_user_id: userId,
     match_count: 5,
-    match_threshold: 0.5,
   });
 
   if (error) {
