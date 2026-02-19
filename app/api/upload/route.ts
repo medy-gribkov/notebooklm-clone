@@ -139,7 +139,7 @@ export async function POST(request: Request) {
         ? "Database connection error. Please try again."
         : error instanceof Error && error.message.includes("embedding shape")
         ? "AI API error: Invalid response format."
-        : "Processing failed. The document was saved — please try re-uploading.";
+        : `Processing failed: ${errorMsg}`;
     // Notebook row already set to "error" status by processNotebook
     return NextResponse.json({ error: msg }, { status: 500 });
   }

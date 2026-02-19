@@ -10,7 +10,7 @@ export function getLLM() {
 export function getEmbeddings() {
   if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is required");
   return new GoogleGenerativeAIEmbeddings({
-    model: "embedding-001",
+    model: "text-embedding-004",
     apiKey: process.env.GEMINI_API_KEY,
   });
 }
