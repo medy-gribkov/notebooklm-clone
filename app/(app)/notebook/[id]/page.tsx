@@ -1,10 +1,6 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { NotebookTabs } from "@/components/notebook-tabs";
-import { ViewPdfButton } from "@/components/view-pdf-button";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
+import { NotebookLayout } from "@/components/notebook-layout";
 import type { Notebook, Message } from "@/types";
 
 interface PageProps {
@@ -42,30 +38,10 @@ export default async function NotebookPage({ params }: PageProps) {
     .order("created_at", { ascending: true });
 
   return (
-    <div className="flex h-screen flex-col bg-background">
-      <header className="border-b bg-background/80 backdrop-blur-md shrink-0">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 sm:px-6 py-3">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="hidden sm:inline">Dashboard</span>
-            </Button>
-          </Link>
-          <div className="h-4 w-px bg-border" />
-          <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold truncate">{notebook.title}</h1>
-          </div>
-          <ThemeToggle />
-          <ViewPdfButton notebookId={id} />
-        </div>
-      </header>
-
-      <NotebookTabs
-        notebookId={id}
-        initialMessages={(messages ?? []) as Message[]}
-      />
-    </div>
+    <NotebookLayout
+      notebookId={id}
+      notebookTitle={notebook.title}
+      initialMessages={(messages ?? []) as Message[]}
+    />
   );
 }

@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { FlashcardsView } from "@/components/studio/flashcards";
 import { QuizView } from "@/components/studio/quiz";
 import { ReportView } from "@/components/studio/report";
@@ -53,9 +52,16 @@ const FEATURES: {
   },
 ];
 
+const ACTION_LABELS: Record<StudioAction, string> = {
+  flashcards: "Flashcards",
+  quiz: "Quiz",
+  report: "Report",
+  mindmap: "Mind Map",
+  datatable: "Data Table",
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseStudioResult(action: StudioAction, text: string): any {
-  // Strip markdown code fences if present
   let cleaned = text.trim();
   if (cleaned.startsWith("```")) {
     cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
@@ -69,6 +75,7 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generated, setGenerated] = useState<Set<StudioAction>>(new Set());
 
   const generate = useCallback(
     async (action: StudioAction) => {
@@ -89,7 +96,6 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
           throw new Error(body.error ?? `Request failed (${res.status})`);
         }
 
-        // Read the streamed response as text
         const reader = res.body?.getReader();
         if (!reader) throw new Error("No response body");
 
@@ -102,8 +108,6 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
           fullText += decoder.decode(value, { stream: true });
         }
 
-        // Extract text content from the data stream format
-        // The AI SDK data stream sends lines like: 0:"text content"\n
         const textParts: string[] = [];
         for (const line of fullText.split("\n")) {
           if (line.startsWith("0:")) {
@@ -122,6 +126,7 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
 
         const parsed = parseStudioResult(action, combinedText);
         setResult(parsed);
+        setGenerated((prev) => new Set(prev).add(action));
       } catch (e) {
         setError(e instanceof Error ? e.message : "Generation failed");
       } finally {
@@ -137,8 +142,10 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
     setError(null);
   }
 
-  // Show result view
+  // Result view
   if (selectedAction && (result || loading || error)) {
+    const label = ACTION_LABELS[selectedAction];
+
     return (
       <div className="flex h-full flex-col">
         <div className="border-b px-4 py-3 flex items-center gap-3 shrink-0">
@@ -150,15 +157,28 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <span className="text-sm font-semibold capitalize">{selectedAction.replace("datatable", "Data Table").replace("mindmap", "Mind Map")}</span>
+          <span className="text-sm font-semibold flex-1">{label}</span>
+          {(result || error) && !loading && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => generate(selectedAction)}
+              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Regenerate
+            </Button>
+          )}
         </div>
 
-        <ScrollArea className="flex-1 px-4 py-6">
+        <div className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin">
           <div className="max-w-2xl mx-auto">
             {loading && (
               <div className="flex flex-col items-center py-16 text-center animate-fade-in">
                 <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin mb-4" />
-                <p className="text-sm font-medium">Generating {selectedAction}...</p>
+                <p className="text-sm font-medium">Generating {label.toLowerCase()}...</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   This may take 10-30 seconds for large documents.
                 </p>
@@ -174,30 +194,20 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
               </div>
             )}
 
-            {result && selectedAction === "flashcards" && (
-              <FlashcardsView data={result} />
-            )}
-            {result && selectedAction === "quiz" && (
-              <QuizView data={result} />
-            )}
-            {result && selectedAction === "report" && (
-              <ReportView data={result} />
-            )}
-            {result && selectedAction === "mindmap" && (
-              <MindMapView data={result} />
-            )}
-            {result && selectedAction === "datatable" && (
-              <DataTableView data={result} />
-            )}
+            {result && selectedAction === "flashcards" && <FlashcardsView data={result} />}
+            {result && selectedAction === "quiz" && <QuizView data={result} />}
+            {result && selectedAction === "report" && <ReportView data={result} />}
+            {result && selectedAction === "mindmap" && <MindMapView data={result} />}
+            {result && selectedAction === "datatable" && <DataTableView data={result} />}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     );
   }
 
   // Feature grid
   return (
-    <ScrollArea className="h-full">
+    <div className="h-full overflow-y-auto scrollbar-thin">
       <div className="px-4 py-8 max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="text-lg font-semibold tracking-tight mb-1">Studio</h2>
@@ -206,31 +216,44 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {FEATURES.map((feature) => (
-            <button
-              key={feature.action}
-              onClick={() => generate(feature.action)}
-              className="group flex items-start gap-3 rounded-xl border bg-card p-4 text-left transition-all hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary/15 transition-colors">
-                <FeatureIcon type={feature.icon} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold mb-0.5">{feature.label}</p>
-                <p className="text-xs text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
-            </button>
-          ))}
+        <div className="grid grid-cols-1 gap-3">
+          {FEATURES.map((feature) => {
+            const hasResult = generated.has(feature.action);
+            return (
+              <button
+                key={feature.action}
+                onClick={() => generate(feature.action)}
+                className="group flex items-start gap-3 rounded-xl border bg-card p-4 text-left transition-all hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary/15 transition-colors">
+                  <FeatureIcon type={feature.icon} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold mb-0.5 flex items-center gap-2">
+                    {feature.label}
+                    {hasResult && (
+                      <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                        Generated
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {feature.description}
+                  </p>
+                </div>
+                <svg className="h-4 w-4 shrink-0 text-muted-foreground/30 group-hover:text-muted-foreground mt-1 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            );
+          })}
         </div>
 
         <p className="text-center text-[11px] text-muted-foreground/50 mt-8">
           Generated content is AI-produced and may not be perfectly accurate. Always verify against the source document.
         </p>
       </div>
-    </ScrollArea>
+    </div>
   );
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Source } from "@/types";
 
 interface SourcePanelProps {
@@ -26,7 +25,7 @@ export function SourcePanel({ sources }: SourcePanelProps) {
   if (sources.length === 0) return null;
 
   return (
-    <div className="rounded-xl border bg-card/50 p-3 animate-fade-in">
+    <div className="rounded-xl border bg-card/50 p-3 overflow-hidden animate-fade-in">
       <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -41,7 +40,17 @@ export function SourcePanel({ sources }: SourcePanelProps) {
             onClick={() => setExpanded(expanded === i ? null : i)}
           >
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <span className="text-xs font-medium">
+              <span className="text-xs font-medium flex items-center gap-1.5">
+                <svg
+                  className={`h-3 w-3 shrink-0 text-muted-foreground transition-transform ${
+                    expanded === i ? "rotate-90" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
                 Source {i + 1}
               </span>
               <span className="text-[10px] text-muted-foreground">
@@ -58,11 +67,11 @@ export function SourcePanel({ sources }: SourcePanelProps) {
             </div>
 
             {expanded === i ? (
-              <ScrollArea className="max-h-40">
-                <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+              <div className="overflow-y-auto max-h-40 scrollbar-thin">
+                <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
                   {source.content}
                 </p>
-              </ScrollArea>
+              </div>
             ) : (
               <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                 {source.content}
