@@ -75,7 +75,7 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete 
   const isError = notebook.status === "error" || timedOut;
 
   return (
-    <div className="group relative rounded-xl border bg-card overflow-hidden transition-all duration-200 hover:shadow-md hover:shadow-black/5 dark:hover:shadow-black/20 hover:-translate-y-0.5">
+    <div className="group relative rounded-xl border bg-card overflow-hidden transition-all duration-200 shadow-sm shadow-black/[0.03] dark:shadow-none hover:shadow-md hover:shadow-black/5 dark:hover:shadow-black/20 hover:-translate-y-0.5">
       <Link
         href={isClickable ? `/notebook/${notebook.id}` : "#"}
         className={`block p-4 ${!isClickable ? "pointer-events-none" : ""}`}
@@ -89,13 +89,13 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete 
 
           <div className="flex-1 min-w-0">
             {/* Title */}
-            <h3 className="text-sm font-semibold leading-snug line-clamp-1 pr-6">
+            <h3 className="text-heading leading-snug line-clamp-1 pr-6">
               {notebook.title}
             </h3>
 
             {/* Meta row: date + sources */}
             <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs text-muted-foreground">
+              <span className="text-caption">
                 {relativeTime(notebook.created_at)}
               </span>
               {files.length > 0 && (

@@ -144,7 +144,7 @@ export default function SettingsPage() {
       <main className="mx-auto max-w-2xl px-4 sm:px-6 py-8 space-y-8">
         {/* Profile */}
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-caption uppercase tracking-wider font-semibold">
             {t("profile")}
           </h2>
           <div className="rounded-xl border bg-card p-4 space-y-3">
@@ -157,7 +157,7 @@ export default function SettingsPage() {
 
         {/* Appearance */}
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-caption uppercase tracking-wider font-semibold">
             {t("appearance")}
           </h2>
           <div className="rounded-xl border bg-card p-4 space-y-4">
@@ -208,7 +208,7 @@ export default function SettingsPage() {
 
         {/* AI Preferences */}
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-caption uppercase tracking-wider font-semibold">
             {t("aiPreferences")}
           </h2>
           <div className="rounded-xl border bg-card p-4 space-y-3">
@@ -242,7 +242,7 @@ export default function SettingsPage() {
 
         {/* Privacy & Data */}
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-caption uppercase tracking-wider font-semibold">
             {t("privacyData")}
           </h2>
           <div className="rounded-xl border bg-card p-4 space-y-4">
@@ -301,7 +301,7 @@ export default function SettingsPage() {
 
         {/* Account */}
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-caption uppercase tracking-wider font-semibold">
             {t("account")}
           </h2>
           <div className="rounded-xl border bg-card p-4 space-y-4">

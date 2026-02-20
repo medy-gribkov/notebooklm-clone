@@ -86,21 +86,21 @@
 .dark {
   --background: oklch(0.18 0.005 250);
   --foreground: oklch(0.93 0.005 250);
-  --card: oklch(0.21 0.006 250);
+  --card: oklch(0.22 0.008 260);
   --card-foreground: oklch(0.93 0.005 250);
-  --popover: oklch(0.21 0.006 250);
+  --popover: oklch(0.22 0.008 260);
   --popover-foreground: oklch(0.93 0.005 250);
   --primary: oklch(0.72 0.16 250);
   --primary-foreground: oklch(0.15 0.005 250);
   --secondary: oklch(0.24 0.008 250);
   --secondary-foreground: oklch(0.88 0.005 250);
   --muted: oklch(0.23 0.006 250);
-  --muted-foreground: oklch(0.60 0.015 250);
+  --muted-foreground: oklch(0.64 0.015 250);
   --accent: oklch(0.25 0.01 250);
   --accent-foreground: oklch(0.88 0.005 250);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(0.28 0.008 250);
-  --input: oklch(0.28 0.008 250);
+  --border: oklch(0.30 0.008 250);
+  --input: oklch(0.30 0.008 250);
   --ring: oklch(0.72 0.16 250);
   --chart-1: oklch(0.72 0.16 250);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -253,4 +253,36 @@
 .dark {
   --shadow-card: none;
   --shadow-header: none;
+}
+
+/* Typography scale */
+.text-display {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.text-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.3;
+}
+
+.text-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.text-body {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.text-caption {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  line-height: 1.5;
 }
