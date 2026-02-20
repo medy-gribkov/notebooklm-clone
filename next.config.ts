@@ -17,6 +17,8 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
+      // unsafe-inline required by Next.js for inline scripts/styles in production.
+      // Removing requires a custom server with nonce-based CSP.
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",

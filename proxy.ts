@@ -31,14 +31,19 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Derive origin from host header (request.url uses 0.0.0.0 inside Docker)
+  const host = request.headers.get("host") ?? "localhost:3000";
+  const proto = request.headers.get("x-forwarded-proto") ?? "http";
+  const origin = `${proto}://${host}`;
+
   // Redirect unauthenticated users away from protected routes
   if (!user && pathname.startsWith("/notebook")) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL(`${origin}/login`));
   }
 
   // Redirect authenticated users away from auth pages
   if (user && (pathname === "/login" || pathname === "/")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL(`${origin}/dashboard`));
   }
 
   return supabaseResponse;

@@ -3,21 +3,7 @@ import { extractText } from "@/lib/pdf";
 import { isValidUUID, sanitizeText } from "@/lib/validate";
 import type { Source } from "@/types";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
-import { createClient } from "@supabase/supabase-js";
-
-// Service-role client for server-only operations (no cookie context)
-function getServiceClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    throw new Error("Environment variable NEXT_PUBLIC_SUPABASE_URL is required");
-  }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("Environment variable SUPABASE_SERVICE_ROLE_KEY is required");
-  }
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-}
+import { getServiceClient } from "@/lib/supabase/service";
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -161,6 +147,7 @@ export async function retrieveChunks(
     match_notebook_id: notebookId,
     match_user_id: userId,
     match_count: 5,
+    match_threshold: 0.3,
   });
 
   if (error) {

@@ -1,8 +1,7 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { UploadZone } from "@/components/upload-zone";
 import { NotebookCard } from "@/components/notebook-card";
@@ -20,6 +19,7 @@ function isTimedOut(notebook: Notebook): boolean {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -151,7 +151,7 @@ export default function DashboardPage() {
               Text-based PDFs only. Up to 5 MB. Processing takes 15-60 seconds.
             </p>
           </div>
-          <UploadZone onNotebookCreated={handleNotebookCreated} />
+          <UploadZone onNotebookCreated={handleNotebookCreated} onNavigate={(path) => router.push(path)} />
         </section>
 
         {/* Notebooks section */}

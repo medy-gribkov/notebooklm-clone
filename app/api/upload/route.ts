@@ -1,31 +1,13 @@
 import { authenticateRequest } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { processNotebook } from "@/lib/rag";
+import { getServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
 export const maxDuration = 60;
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
-
-function validateEnvironment() {
-  const missing = [];
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push("NEXT_PUBLIC_SUPABASE_URL");
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push("SUPABASE_SERVICE_ROLE_KEY");
-  if (!process.env.GEMINI_API_KEY) missing.push("GEMINI_API_KEY");
-  if (missing.length > 0) {
-    throw new Error(`Missing environment variables: ${missing.join(", ")}`);
-  }
-}
-
-function getServiceClient() {
-  validateEnvironment();
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 export async function POST(request: Request) {
   const auth = await authenticateRequest(request);
@@ -43,7 +25,10 @@ export async function POST(request: Request) {
   }
 
   if (!checkRateLimit(user.id + ":upload", 3, 3_600_000)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": "60" } }
+    );
   }
 
   const formData = await request.formData();

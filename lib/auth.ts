@@ -27,10 +27,16 @@ export async function authenticateRequest(
   }
 
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const { payload } = await jwtVerify(
       token,
       new TextEncoder().encode(secret),
-      { algorithms: ["HS256"] }
+      {
+        algorithms: ["HS256"],
+        ...(supabaseUrl && {
+          issuer: `${supabaseUrl}/auth/v1`,
+        }),
+      }
     );
 
     const userId = payload.sub;

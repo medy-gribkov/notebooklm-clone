@@ -1,14 +1,7 @@
 import { authenticateRequest } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { getServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
-
-function getServiceClient() {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 export async function GET(
   _request: Request,

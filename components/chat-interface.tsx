@@ -37,6 +37,7 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
       body: { notebookId },
       initialMessages: priorMessages,
       onError: (error) => {
+        console.error("[chat] useChat error:", error);
         const msg = error.message ?? "";
         if (msg.includes("429") || msg.toLowerCase().includes("too many")) {
           setErrorMessage(
