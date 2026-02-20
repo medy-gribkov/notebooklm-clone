@@ -7,6 +7,7 @@ import { UploadZone } from "@/components/upload-zone";
 import { NotebookCard } from "@/components/notebook-card";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserDropdown } from "@/components/user-dropdown";
 import type { Notebook, NotebookFile } from "@/types";
 import { useTranslations } from "next-intl";
 
@@ -35,7 +36,6 @@ export default function DashboardPage() {
   const [creatingNotebook, setCreatingNotebook] = useState(false);
   const pollAttemptRef = useRef(0);
   const t = useTranslations("dashboard");
-  const tc = useTranslations("common");
 
   useEffect(() => {
     fetch("/api/notebooks?include=files")
@@ -60,12 +60,6 @@ export default function DashboardPage() {
       setUserEmail(data.user?.email ?? null);
     });
   }, []);
-
-  async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = "/login";
-  }
 
   async function handleCreateNotebook() {
     setCreatingNotebook(true);
@@ -144,20 +138,8 @@ export default function DashboardPage() {
             <span className="text-base font-semibold tracking-tight">DocChat</span>
           </div>
           <div className="flex items-center gap-2">
-            {userEmail && (
-              <div className="hidden sm:flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                  {userEmail[0].toUpperCase()}
-                </div>
-                <span className="text-xs text-muted-foreground max-w-[160px] truncate">
-                  {userEmail}
-                </span>
-              </div>
-            )}
             <ThemeToggle />
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
-              {tc("signOut")}
-            </Button>
+            {userEmail && <UserDropdown email={userEmail} />}
           </div>
         </div>
       </header>

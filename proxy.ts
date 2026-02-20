@@ -37,7 +37,7 @@ export async function proxy(request: NextRequest) {
   const origin = `${proto}://${host}`;
 
   // Redirect unauthenticated users away from protected routes
-  if (!user && pathname.startsWith("/notebook")) {
+  if (!user && (pathname.startsWith("/notebook") || pathname.startsWith("/settings"))) {
     return NextResponse.redirect(new URL(`${origin}/login`));
   }
 
