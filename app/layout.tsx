@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description:
     "Upload a PDF and ask questions in plain English. DocChat answers from your document using AI with cited sources.",
   keywords: ["PDF", "chat", "AI", "RAG", "document", "research"],
-  authors: [{ name: "DocChat" }],
+  authors: [{ name: "Medy Gribkov", url: "https://medygribkov.vercel.app" }],
   openGraph: {
     title: "DocChat - Chat with your PDFs",
     description: "Upload a PDF and ask questions. Get AI-powered answers with cited sources.",

@@ -13,10 +13,10 @@ const POLL_INTERVAL = 3000;
 const POLL_TIMEOUT = 90000;
 
 const STAGES = [
-  { label: "Uploading file...", pct: 20 },
-  { label: "Extracting text...", pct: 40 },
-  { label: "Building knowledge base...", pct: 70 },
-  { label: "Almost ready...", pct: 90 },
+  { label: "Uploading file...", pct: 15 },
+  { label: "Extracting text...", pct: 35 },
+  { label: "Building knowledge base...", pct: 60 },
+  { label: "Almost ready...", pct: 85 },
 ];
 
 function formatFileSize(bytes: number): string {
@@ -48,7 +48,7 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
     setStageIndex(0);
     stageTimerRef.current = setInterval(() => {
       setStageIndex((prev) => Math.min(prev + 1, STAGES.length - 1));
-    }, 8000);
+    }, 4000);
   }
 
   function stopStageTimer() {

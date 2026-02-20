@@ -78,13 +78,10 @@ export async function POST(request: Request) {
     );
   }
 
-  console.log(`[chat] User ${user.id} | notebook ${notebookId} | msg: "${userMessage.slice(0, 80)}"`);
-
   // Retrieve relevant chunks
   let sources: Source[] = [];
   try {
     sources = await retrieveChunks(userMessage, notebookId, user.id);
-    console.log(`[chat] Retrieved ${sources.length} sources`);
   } catch (e) {
     console.error("[chat] RAG retrieval failed:", e);
   }
@@ -105,7 +102,6 @@ export async function POST(request: Request) {
   });
 
   try {
-    console.log("[chat] Starting streamText");
     const result = streamText({
       model: getLLM(),
       system: systemWithContext,
@@ -117,7 +113,6 @@ export async function POST(request: Request) {
         console.error("[chat] Stream error from LLM:", error);
       },
       onFinish: async ({ text }) => {
-        console.log(`[chat] Stream finished, text length: ${text.length}`);
         await serviceClient.from("messages").insert({
           notebook_id: notebookId,
           user_id: user.id,

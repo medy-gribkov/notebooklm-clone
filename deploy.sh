@@ -42,7 +42,7 @@ if [ -d "$APP_DIR" ]; then
     git pull origin master
 else
     echo "Cloning repository..."
-    git clone https://github.com/Mahdy-gribkov/notebooklm-clone.git "$APP_DIR"
+    git clone https://github.com/medy-gribkov/notebooklm-clone.git "$APP_DIR"
     cd "$APP_DIR"
 fi
 

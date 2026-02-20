@@ -7,10 +7,10 @@
 | Layer | Technology |
 |-------|-----------|
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
-| AI/LLM | Gemini 2.5 Flash (via Vercel AI SDK), LangChain |
-| Embeddings | Google text-embedding-004 (768-dim), pgvector |
+| AI/LLM | Groq (Llama 3.3 70B) with Gemini fallback, via Vercel AI SDK |
+| Embeddings | Gemini embedding-001 (768-dim), pgvector |
 | Database | Supabase (PostgreSQL + Auth + Storage) |
-| Auth | Supabase Auth (GitHub OAuth + Magic Link) + JWT validation (jose) |
+| Auth | Supabase Auth (Google OAuth + GitHub OAuth + Magic Link) + JWT validation (jose) |
 | Infrastructure | Docker, nginx (reverse proxy + SSL), Let's Encrypt |
 | CI/CD | GitHub Actions (typecheck, lint, build, Docker) |
 
@@ -26,14 +26,14 @@ Next.js App (standalone, port 3000)
   +-- API Routes (/api/chat, /api/upload, /api/notebooks, /api/messages)
   |     |
   |     +-- JWT Auth (jose) + Supabase RLS
-  |     +-- Gemini LLM (streaming via AI SDK)
-  |     +-- RAG Pipeline (LangChain splitter + embeddings + pgvector)
+  |     +-- Groq LLM (streaming via AI SDK)
+  |     +-- RAG Pipeline (LangChain splitter + Gemini embeddings + pgvector)
   |
   +-- Supabase
         +-- PostgreSQL (notebooks, chunks, messages)
         +-- pgvector (cosine similarity search)
         +-- Storage (private PDF bucket)
-        +-- Auth (GitHub OAuth, Magic Link)
+        +-- Auth (Google OAuth, GitHub OAuth, Magic Link)
 ```
 
 ## Features
@@ -42,8 +42,8 @@ Next.js App (standalone, port 3000)
 - **RAG Chat**: Questions answered from your document only, with source citations.
 - **Source Panel**: See which document sections each answer came from, with relevance scores.
 - **Streaming Responses**: Real-time token streaming via Vercel AI SDK.
-- **Auth**: GitHub OAuth or passwordless Magic Link sign-in.
-- **Security**: JWT validation, rate limiting (10 msg/min chat, 3/hr upload), PDF magic bytes check, prompt injection defense, CSP headers.
+- **Auth**: Google OAuth, GitHub OAuth, or passwordless Magic Link sign-in.
+- **Security**: JWT validation with issuer claims, rate limiting (10 msg/min chat, 3/hr upload), PDF magic bytes check, prompt injection defense, CSP headers.
 - **Dark Mode**: Dark-first design with violet accent palette.
 
 ## Local Development
@@ -54,7 +54,7 @@ npm install
 
 # Copy environment variables
 cp .env.local.example .env.local
-# Fill in your Supabase and Gemini API keys
+# Fill in your Supabase, Groq, and Gemini API keys
 
 # Run dev server
 npm run dev
@@ -70,7 +70,8 @@ Open http://localhost:3000.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only) |
 | `SUPABASE_JWT_SECRET` | JWT secret from Supabase Dashboard > Settings > API |
-| `GEMINI_API_KEY` | Google AI (Gemini) API key |
+| `GROQ_API_KEY` | Groq API key (primary LLM) |
+| `GEMINI_API_KEY` | Google AI (Gemini) API key (embeddings + LLM fallback) |
 
 ## Database Setup
 
@@ -87,7 +88,7 @@ Create a private storage bucket named `pdf-uploads` (5 MB limit, application/pdf
 ### Development (no SSL)
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build
+docker compose --env-file .env.local -f docker-compose.dev.yml up --build
 ```
 
 ### Production (with nginx + SSL)
@@ -109,7 +110,7 @@ See `deploy.sh` for a complete VPS setup script.
 
 ```
 app/
-  (auth)/login/       Login page (GitHub OAuth + Magic Link)
+  (auth)/login/       Login page (Google + GitHub OAuth + Magic Link)
   (app)/dashboard/    Dashboard with notebook grid
   (app)/notebook/[id] Chat interface per notebook
   api/                API routes (chat, upload, notebooks, messages)
@@ -126,3 +127,7 @@ GitHub Actions runs on every push/PR to master:
 2. Lint (`eslint`)
 3. Build (`next build`)
 4. Docker build validation
+
+## Author
+
+Built by [Medy Gribkov](https://medygribkov.vercel.app) | [GitHub](https://github.com/medy-gribkov)

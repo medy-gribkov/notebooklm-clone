@@ -85,10 +85,9 @@ export default function DashboardPage() {
   }, [notebooks]);
 
   const readyCount = notebooks.filter((n) => n.status === "ready").length;
-  const processingCount = notebooks.filter((n) => n.status === "processing" && !isTimedOut(n)).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-10">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 sm:px-6 py-3">
@@ -118,29 +117,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-8 space-y-8">
-        {/* Stats row */}
-        {!loading && notebooks.length > 0 && (
-          <div className="grid grid-cols-3 gap-3 animate-fade-in">
-            <StatCard
-              label="Total"
-              value={notebooks.length}
-              icon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>}
-            />
-            <StatCard
-              label="Ready"
-              value={readyCount}
-              icon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-              accent
-            />
-            <StatCard
-              label="Processing"
-              value={processingCount}
-              icon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
-            />
-          </div>
-        )}
-
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-8 space-y-8 flex-1">
         {/* Upload section */}
         <section className="animate-slide-up [animation-delay:100ms]">
           <div className="mb-3">
@@ -148,7 +125,7 @@ export default function DashboardPage() {
               Upload a PDF
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Text-based PDFs only. Up to 5 MB. Processing takes 15-60 seconds.
+              Text-based PDFs only. Up to 5 MB.
             </p>
           </div>
           <UploadZone onNotebookCreated={handleNotebookCreated} onNavigate={(path) => router.push(path)} />
@@ -206,28 +183,30 @@ export default function DashboardPage() {
             </div>
           )}
         </section>
-
-        <footer className="border-t pt-6 pb-4">
-          <p className="text-xs text-muted-foreground/60 text-center">
-            Processing large PDFs may take up to 60 seconds due to rate limits.
-            Scanned PDFs without a text layer are not supported.
-          </p>
-        </footer>
       </main>
-    </div>
-  );
-}
 
-function StatCard({ label, value, icon, accent }: { label: string; value: number; icon: React.ReactNode; accent?: boolean }) {
-  return (
-    <div className="rounded-xl border bg-card p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className={`${accent ? "text-primary" : "text-muted-foreground"}`}>
-          {icon}
-        </span>
-      </div>
-      <p className="text-2xl font-bold tracking-tight">{value}</p>
-      <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+      <footer className="border-t py-6">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 flex flex-col items-center gap-2">
+          <div className="flex items-center gap-3">
+            <a href="https://github.com/medy-gribkov" target="_blank" rel="noopener noreferrer" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors" aria-label="GitHub">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+              </svg>
+            </a>
+            <a href="https://medygribkov.vercel.app" target="_blank" rel="noopener noreferrer" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors" aria-label="Portfolio">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" />
+              </svg>
+            </a>
+          </div>
+          <p className="text-xs text-muted-foreground/40">
+            Built by{" "}
+            <a href="https://medygribkov.vercel.app" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-muted-foreground transition-colors">
+              Medy Gribkov
+            </a>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
