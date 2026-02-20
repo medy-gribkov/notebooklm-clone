@@ -1,7 +1,7 @@
 import { authenticateRequest } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getAllChunks } from "@/lib/rag";
-import { getLLM } from "@/lib/gemini";
+import { getLLM } from "@/lib/llm";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isValidUUID } from "@/lib/validate";
 import { streamText } from "ai";
@@ -118,6 +118,6 @@ export async function POST(request: Request) {
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("[studio] Generation failed:", msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: "Generation failed. Please try again." }, { status: 500 });
   }
 }

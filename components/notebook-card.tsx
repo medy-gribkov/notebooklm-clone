@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { PdfViewerModal } from "@/components/pdf-viewer-modal";
 import type { Notebook } from "@/types";
 
 interface NotebookCardProps {
@@ -83,19 +84,6 @@ export function NotebookCard({ notebook, timedOut = false, onDelete }: NotebookC
     setConfirmDelete(false);
   }
 
-  async function handleViewPdf(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      const res = await fetch(`/api/notebooks/${notebook.id}/pdf`);
-      if (!res.ok) return;
-      const { url } = await res.json();
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      // PDF viewing is supplementary
-    }
-  }
-
   return (
     <div className="group relative rounded-xl border bg-card overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5">
       {/* Top accent line */}
@@ -115,6 +103,13 @@ export function NotebookCard({ notebook, timedOut = false, onDelete }: NotebookC
             {notebook.title}
           </h3>
         </div>
+
+        {/* Description */}
+        {notebook.description && (
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-3 px-0.5">
+            {notebook.description}
+          </p>
+        )}
 
         {/* Bottom row */}
         <div className="flex items-center justify-between gap-2">
@@ -157,13 +152,19 @@ export function NotebookCard({ notebook, timedOut = false, onDelete }: NotebookC
 
           {/* View PDF link */}
           {notebook.status === "ready" && !timedOut && (
-            <button
-              onClick={handleViewPdf}
-              className="text-[11px] text-muted-foreground hover:text-primary transition-colors shrink-0"
-              aria-label="View source PDF"
-            >
-              View PDF
-            </button>
+            <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+              <PdfViewerModal
+                notebookId={notebook.id}
+                trigger={
+                  <button
+                    className="text-[11px] text-muted-foreground hover:text-primary transition-colors shrink-0"
+                    aria-label="View source PDF"
+                  >
+                    View PDF
+                  </button>
+                }
+              />
+            </span>
           )}
           {(notebook.status === "error" || timedOut) && (
             <span className="text-[11px] text-muted-foreground">

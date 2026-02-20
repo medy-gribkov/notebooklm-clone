@@ -1,8 +1,9 @@
-import { embedQuery } from "@/lib/gemini";
+import { embedQuery, getLLM } from "@/lib/llm";
 import { extractText, type PdfResult } from "@/lib/pdf";
 import { isValidUUID, sanitizeText } from "@/lib/validate";
 import type { Source } from "@/types";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { generateText } from "ai";
 import { getServiceClient } from "@/lib/supabase/service";
 
 async function sleep(ms: number) {
@@ -93,7 +94,7 @@ export async function processNotebook(
           errorMessage: error.message,
           errorDetails: error,
         });
-        throw new Error(`Failed to store document chunks: ${error.message}`);
+        throw new Error("Failed to store document chunks");
       }
 
       if (i + BATCH_SIZE < chunks.length) {
@@ -105,6 +106,11 @@ export async function processNotebook(
       .from("notebooks")
       .update({ status: "ready", page_count: pdfResult.pageCount })
       .eq("id", notebookId);
+
+    // Generate title and description (fire-and-forget)
+    generateNotebookMeta(notebookId, chunks.slice(0, 3).join("\n\n")).catch((e) =>
+      console.error("[processNotebook] Meta generation failed:", e)
+    );
   } catch (error) {
     console.error("[processNotebook] Error occurred, updating status to error:", {
       notebookId,
@@ -145,7 +151,7 @@ export async function getAllChunks(
     .order("chunk_index", { ascending: true });
 
   if (error) {
-    throw new Error(`Failed to retrieve document chunks: ${error.message}`);
+    throw new Error("Failed to load document");
   }
 
   const fullText = (data ?? []).map((row: { content: string }) => row.content).join("\n\n");
@@ -184,4 +190,30 @@ export async function retrieveChunks(
       similarity: row.similarity,
     })
   );
+}
+
+async function generateNotebookMeta(notebookId: string, sampleText: string): Promise<void> {
+  const supabase = getServiceClient();
+
+  const { text } = await generateText({
+    model: getLLM(),
+    system: 'You generate a short title and one-sentence description for a document. Return JSON only: {"title": "...", "description": "..."}. Title max 60 chars. Description max 150 chars. No markdown.',
+    messages: [{ role: "user", content: `Document excerpt:\n${sampleText.slice(0, 3000)}` }],
+  });
+
+  try {
+    let cleaned = text.trim();
+    if (cleaned.startsWith("```")) {
+      cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+    }
+    const meta = JSON.parse(cleaned) as { title?: string; description?: string };
+    if (meta.title && meta.description) {
+      await supabase
+        .from("notebooks")
+        .update({ title: meta.title, description: meta.description })
+        .eq("id", notebookId);
+    }
+  } catch {
+    console.error("[generateNotebookMeta] Failed to parse LLM response:", text.slice(0, 200));
+  }
 }

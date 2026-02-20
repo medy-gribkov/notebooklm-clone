@@ -5,6 +5,7 @@ export interface Notebook {
   file_url: string;
   status: 'processing' | 'ready' | 'error';
   page_count: number | null;
+  description: string | null;
   created_at: string;
 }
 

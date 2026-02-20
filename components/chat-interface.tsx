@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "ai/react";
 import type { Message as AIMessage } from "ai";
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SourcePanel } from "@/components/source-panel";
@@ -165,7 +167,15 @@ export function ChatInterface({ notebookId, initialMessages }: ChatInterfaceProp
                             : "bg-muted/40 border rounded-bl-md"
                         }`}
                       >
-                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                        {isUser ? (
+                          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                        ) : (
+                          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5 prose-pre:my-2 prose-code:text-xs">
+                            <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
+                              {message.content}
+                            </ReactMarkdown>
+                          </div>
+                        )}
                       </div>
                       {!isUser && sources && sources.length > 0 && (
                         <div className="w-full overflow-hidden">

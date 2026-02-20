@@ -12,13 +12,6 @@ const MAX_SIZE_MB = 5;
 const POLL_INTERVAL = 3000;
 const POLL_TIMEOUT = 90000;
 
-const STAGES = [
-  { label: "Uploading file...", pct: 15 },
-  { label: "Extracting text...", pct: 35 },
-  { label: "Building knowledge base...", pct: 60 },
-  { label: "Almost ready...", pct: 85 },
-];
-
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -28,12 +21,12 @@ function formatFileSize(bytes: number): string {
 export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [stageIndex, setStageIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [progressLabel, setProgressLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [pendingNotebook, setPendingNotebook] = useState<Notebook | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const stageTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollStartRef = useRef<number>(0);
 
@@ -44,19 +37,13 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
     return null;
   }
 
-  function startStageTimer() {
-    setStageIndex(0);
-    stageTimerRef.current = setInterval(() => {
-      setStageIndex((prev) => Math.min(prev + 1, STAGES.length - 1));
-    }, 4000);
-  }
-
-  function stopStageTimer() {
-    if (stageTimerRef.current) {
-      clearInterval(stageTimerRef.current);
-      stageTimerRef.current = null;
-    }
-  }
+  const resetState = useCallback(() => {
+    setUploading(false);
+    setPendingNotebook(null);
+    setSelectedFile(null);
+    setProgress(0);
+    setProgressLabel("");
+  }, []);
 
   function stopPolling() {
     if (pollTimerRef.current) {
@@ -65,17 +52,21 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
     }
   }
 
+  const pollFnRef = useRef<((id: string) => Promise<void>) | null>(null);
+
   const pollNotebookStatus = useCallback(
     async (notebookId: string) => {
-      if (Date.now() - pollStartRef.current > POLL_TIMEOUT) {
-        stopStageTimer();
-        setUploading(false);
-        setPendingNotebook(null);
-        setSelectedFile(null);
-        setStageIndex(0);
+      const elapsed = Date.now() - pollStartRef.current;
+
+      if (elapsed > POLL_TIMEOUT) {
+        resetState();
         setError("Processing timed out. The notebook may still finish. Check your dashboard.");
         return;
       }
+
+      // Smoothly interpolate progress during processing (50-95%)
+      const processingProgress = Math.min(elapsed / POLL_TIMEOUT, 1);
+      setProgress(50 + Math.round(processingProgress * 45));
 
       try {
         const res = await fetch(`/api/notebooks/${notebookId}`);
@@ -83,38 +74,37 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
         const notebook = (await res.json()) as Notebook;
 
         if (notebook.status === "ready") {
-          stopStageTimer();
-          setUploading(false);
-          setPendingNotebook(null);
-          setSelectedFile(null);
-          setStageIndex(0);
-          onNavigate(`/notebook/${notebookId}`);
+          setProgress(100);
+          setProgressLabel("Done!");
+          setTimeout(() => {
+            resetState();
+            onNavigate(`/notebook/${notebookId}`);
+          }, 400);
           return;
         }
 
         if (notebook.status === "error") {
-          stopStageTimer();
-          setUploading(false);
-          setPendingNotebook(null);
-          setSelectedFile(null);
-          setStageIndex(0);
+          resetState();
           setError("Processing failed. Please try uploading again.");
           return;
         }
 
         // Still processing, poll again
-        pollTimerRef.current = setTimeout(() => pollNotebookStatus(notebookId), POLL_INTERVAL);
+        pollTimerRef.current = setTimeout(() => pollFnRef.current?.(notebookId), POLL_INTERVAL);
       } catch {
         // Network error, retry
-        pollTimerRef.current = setTimeout(() => pollNotebookStatus(notebookId), POLL_INTERVAL);
+        pollTimerRef.current = setTimeout(() => pollFnRef.current?.(notebookId), POLL_INTERVAL);
       }
     },
-    [onNavigate]
+    [onNavigate, resetState]
   );
 
   useEffect(() => {
+    pollFnRef.current = pollNotebookStatus;
+  }, [pollNotebookStatus]);
+
+  useEffect(() => {
     return () => {
-      stopStageTimer();
       stopPolling();
     };
   }, []);
@@ -130,32 +120,61 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
     setError(null);
     setSelectedFile(file);
     setUploading(true);
-    startStageTimer();
+    setProgress(0);
+    setProgressLabel("Uploading file...");
 
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
+      // Phase 1: Real upload progress (0-50%) via XHR
+      const notebook = await new Promise<Notebook>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/upload");
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 50);
+            setProgress(pct);
+            if (pct >= 50) {
+              setProgressLabel("Processing document...");
+            }
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              resolve(JSON.parse(xhr.responseText));
+            } catch {
+              reject(new Error("Invalid server response"));
+            }
+          } else {
+            try {
+              const body = JSON.parse(xhr.responseText);
+              reject(new Error(body.error ?? "Upload failed"));
+            } catch {
+              reject(new Error("Upload failed"));
+            }
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.send(formData);
       });
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Upload failed. Please try again.");
-      }
-
-      const notebook = (await res.json()) as Notebook;
+      // Phase 2: Processing complete or needs polling
+      setProgress(50);
+      setProgressLabel("Processing document...");
       onNotebookCreated(notebook);
 
       if (notebook.status === "ready") {
-        // Already ready (unlikely but possible for tiny PDFs)
-        stopStageTimer();
-        setUploading(false);
-        setSelectedFile(null);
-        setStageIndex(0);
-        onNavigate(`/notebook/${notebook.id}`);
+        setProgress(100);
+        setProgressLabel("Done!");
+        setTimeout(() => {
+          resetState();
+          onNavigate(`/notebook/${notebook.id}`);
+        }, 400);
       } else {
         // Start polling for status
         setPendingNotebook(notebook);
@@ -163,10 +182,7 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
         pollTimerRef.current = setTimeout(() => pollNotebookStatus(notebook.id), POLL_INTERVAL);
       }
     } catch (e) {
-      stopStageTimer();
-      setUploading(false);
-      setStageIndex(0);
-      setSelectedFile(null);
+      resetState();
       setError(e instanceof Error ? e.message : "Upload failed. Please try again.");
     }
   }
@@ -184,7 +200,6 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
     e.target.value = "";
   }
 
-  const stage = STAGES[stageIndex];
   const isProcessing = uploading || pendingNotebook !== null;
 
   return (
@@ -236,11 +251,11 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
             )}
 
             <div className="space-y-3 w-full max-w-xs">
-              <p className="text-sm font-medium text-foreground/80">{stage.label}</p>
+              <p className="text-sm font-medium text-foreground/80">{progressLabel}</p>
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-[3000ms] ease-out"
-                  style={{ width: `${stage.pct}%` }}
+                  className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary transition-[width] duration-700 ease-out"
+                  style={{ width: `${progress}%` }}
                 />
               </div>
               <p className="text-[11px] text-muted-foreground">
