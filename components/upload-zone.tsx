@@ -52,6 +52,27 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
     }
   }
 
+  const processingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const processingStartRef = useRef<number>(0);
+
+  function startProcessingAnimation() {
+    processingStartRef.current = Date.now();
+    processingTimerRef.current = setInterval(() => {
+      const elapsed = Date.now() - processingStartRef.current;
+      // Ease from 50% to 90% over ~45 seconds, decelerating
+      const t = Math.min(elapsed / 45000, 1);
+      const eased = 1 - Math.pow(1 - t, 3); // cubic ease-out
+      setProgress(50 + Math.round(eased * 40));
+    }, 500);
+  }
+
+  function stopProcessingAnimation() {
+    if (processingTimerRef.current) {
+      clearInterval(processingTimerRef.current);
+      processingTimerRef.current = null;
+    }
+  }
+
   const pollFnRef = useRef<((id: string) => Promise<void>) | null>(null);
 
   const pollNotebookStatus = useCallback(
@@ -59,14 +80,11 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
       const elapsed = Date.now() - pollStartRef.current;
 
       if (elapsed > POLL_TIMEOUT) {
+        stopProcessingAnimation();
         resetState();
         setError("Processing timed out. The notebook may still finish. Check your dashboard.");
         return;
       }
-
-      // Smoothly interpolate progress during processing (50-95%)
-      const processingProgress = Math.min(elapsed / POLL_TIMEOUT, 1);
-      setProgress(50 + Math.round(processingProgress * 45));
 
       try {
         const res = await fetch(`/api/notebooks/${notebookId}`);
@@ -74,6 +92,7 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
         const notebook = (await res.json()) as Notebook;
 
         if (notebook.status === "ready") {
+          stopProcessingAnimation();
           setProgress(100);
           setProgressLabel("Done!");
           setTimeout(() => {
@@ -84,6 +103,7 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
         }
 
         if (notebook.status === "error") {
+          stopProcessingAnimation();
           resetState();
           setError("Processing failed. Please try uploading again.");
           return;
@@ -106,6 +126,7 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
   useEffect(() => {
     return () => {
       stopPolling();
+      stopProcessingAnimation();
     };
   }, []);
 
@@ -128,21 +149,32 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
 
     try {
       // Phase 1: Real upload progress (0-50%) via XHR
+      // Phase 2: Animated progress (50-90%) while server processes
+      // Phase 3: Jump to 100% when server responds
       const notebook = await new Promise<Notebook>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/upload");
+        let uploadDone = false;
 
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
             const pct = Math.round((e.loaded / e.total) * 50);
             setProgress(pct);
-            if (pct >= 50) {
-              setProgressLabel("Processing document...");
-            }
+          }
+        };
+
+        xhr.upload.onload = () => {
+          // Upload body sent, server is now processing
+          if (!uploadDone) {
+            uploadDone = true;
+            setProgress(50);
+            setProgressLabel("Processing document...");
+            startProcessingAnimation();
           }
         };
 
         xhr.onload = () => {
+          stopProcessingAnimation();
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               resolve(JSON.parse(xhr.responseText));
@@ -159,13 +191,14 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
           }
         };
 
-        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.onerror = () => {
+          stopProcessingAnimation();
+          reject(new Error("Network error during upload"));
+        };
         xhr.send(formData);
       });
 
-      // Phase 2: Processing complete or needs polling
-      setProgress(50);
-      setProgressLabel("Processing document...");
+      // Server responded with the notebook
       onNotebookCreated(notebook);
 
       if (notebook.status === "ready") {
@@ -176,12 +209,15 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
           onNavigate(`/notebook/${notebook.id}`);
         }, 400);
       } else {
-        // Start polling for status
+        // Still processing, start polling
+        setProgressLabel("Processing document...");
         setPendingNotebook(notebook);
         pollStartRef.current = Date.now();
+        startProcessingAnimation();
         pollTimerRef.current = setTimeout(() => pollNotebookStatus(notebook.id), POLL_INTERVAL);
       }
     } catch (e) {
+      stopProcessingAnimation();
       resetState();
       setError(e instanceof Error ? e.message : "Upload failed. Please try again.");
     }
