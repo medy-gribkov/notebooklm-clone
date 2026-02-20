@@ -43,10 +43,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!checkRateLimit(`studio:${user.id}`, 5, 3_600_000)) {
+  if (!checkRateLimit(`studio:${user.id}`, 30, 3_600_000)) {
     return NextResponse.json(
-      { error: "Studio rate limit reached. Max 5 generations per hour." },
-      { status: 429, headers: { "Retry-After": "600" } }
+      { error: "Studio rate limit reached. Max 30 generations per hour." },
+      { status: 429, headers: { "Retry-After": "120" } }
     );
   }
 

@@ -9,7 +9,10 @@
     "error": "משהו השתבש",
     "tryAgain": "נסה שוב",
     "switchToLight": "מעבר למצב בהיר",
-    "switchToDark": "מעבר למצב כהה"
+    "switchToDark": "מעבר למצב כהה",
+    "save": "שמור",
+    "saved": "נשמר",
+    "confirmDelete": "האם אתה בטוח?"
   },
   "login": {
     "title": "התחברות לחשבון שלך",
@@ -144,7 +147,9 @@
     "noteLabel": "הערה",
     "noteTitle": "כותרת הערה",
     "notePlaceholder": "התחל לכתוב...",
-    "saving": "שומר..."
+    "saving": "שומר...",
+    "deleteNoteConfirm": "פעולה זו תמחק את ההערה לצמיתות. לא ניתן לבטל פעולה זו.",
+    "history": "היסטוריה"
   },
   "upload": {
     "dropOrBrowse": "גרור PDF לכאן או {browse}",

@@ -6,6 +6,17 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { Note } from "@/types";
 
 interface NoteEditorProps {
@@ -21,8 +32,10 @@ export function NoteEditor({ note, notebookId, onBack, onUpdate, onDelete }: Not
   const tc = useTranslations("common");
   const [title, setTitle] = useState(note.title);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -42,6 +55,7 @@ export function NoteEditor({ note, notebookId, onBack, onUpdate, onDelete }: Not
 
   const save = useCallback(async (newTitle: string, newContent: string) => {
     setSaving(true);
+    setSaved(false);
     try {
       const res = await fetch(`/api/notebooks/${notebookId}/notes/${note.id}`, {
         method: "PATCH",
@@ -51,6 +65,9 @@ export function NoteEditor({ note, notebookId, onBack, onUpdate, onDelete }: Not
       if (res.ok) {
         const updated = await res.json();
         onUpdate(updated);
+        setSaved(true);
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+        savedTimerRef.current = setTimeout(() => setSaved(false), 2000);
       }
     } finally {
       setSaving(false);
@@ -62,7 +79,6 @@ export function NoteEditor({ note, notebookId, onBack, onUpdate, onDelete }: Not
     saveTimerRef.current = setTimeout(() => save(newTitle, newContent), 2000);
   }, [save]);
 
-  // Save on title change
   function handleTitleChange(newTitle: string) {
     setTitle(newTitle);
     if (editor) {
@@ -70,16 +86,33 @@ export function NoteEditor({ note, notebookId, onBack, onUpdate, onDelete }: Not
     }
   }
 
-  // Save on blur
-  function handleBlur() {
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    if (editor) save(title, editor.getHTML());
+  // Flush any pending debounce and save immediately
+  async function flushAndSave() {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    if (editor) {
+      await save(title, editor.getHTML());
+    }
   }
 
-  // Cleanup timer
+  // Explicit save button handler
+  async function handleSaveClick() {
+    await flushAndSave();
+  }
+
+  // Back: await save completion before navigating
+  async function handleBack() {
+    await flushAndSave();
+    onBack();
+  }
+
+  // Cleanup timers
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
     };
   }, []);
 
@@ -103,10 +136,7 @@ export function NoteEditor({ note, notebookId, onBack, onUpdate, onDelete }: Not
       {/* Header */}
       <div className="border-b px-4 py-3 flex items-center gap-3 shrink-0">
         <button
-          onClick={() => {
-            handleBlur();
-            onBack();
-          }}
+          onClick={handleBack}
           className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors text-xs"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,16 +146,56 @@ export function NoteEditor({ note, notebookId, onBack, onUpdate, onDelete }: Not
         </button>
         <span className="text-xs text-muted-foreground">{t("title")} &rsaquo; {t("noteLabel")}</span>
         <div className="flex-1" />
+
+        {/* Save status */}
         {saving && <span className="text-[10px] text-muted-foreground">{t("saving")}</span>}
+        {saved && !saving && (
+          <span className="text-[10px] text-emerald-500 flex items-center gap-1">
+            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            {tc("saved")}
+          </span>
+        )}
+
+        {/* Save button */}
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          onClick={handleDelete}
-          disabled={deleting}
-          className="h-7 text-xs text-destructive hover:text-destructive"
+          onClick={handleSaveClick}
+          disabled={saving}
+          className="h-7 text-xs"
         >
-          {deleting ? tc("loading") : tc("delete")}
+          {tc("save")}
         </Button>
+
+        {/* Delete with confirmation */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={deleting}
+              className="h-7 text-xs text-destructive hover:text-destructive"
+            >
+              {deleting ? tc("loading") : tc("delete")}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{tc("confirmDelete")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("deleteNoteConfirm")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                {tc("delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Title input */}
@@ -133,7 +203,7 @@ export function NoteEditor({ note, notebookId, onBack, onUpdate, onDelete }: Not
         <input
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
-          onBlur={handleBlur}
+          onBlur={() => flushAndSave()}
           className="w-full text-lg font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/40"
           placeholder={t("noteTitle")}
         />
@@ -185,7 +255,7 @@ export function NoteEditor({ note, notebookId, onBack, onUpdate, onDelete }: Not
       )}
 
       {/* Editor */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin" onBlur={handleBlur}>
+      <div className="flex-1 overflow-y-auto scrollbar-thin">
         <EditorContent editor={editor} />
       </div>
     </div>

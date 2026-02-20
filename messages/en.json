@@ -9,7 +9,10 @@
     "error": "Something went wrong",
     "tryAgain": "Try again",
     "switchToLight": "Switch to light mode",
-    "switchToDark": "Switch to dark mode"
+    "switchToDark": "Switch to dark mode",
+    "save": "Save",
+    "saved": "Saved",
+    "confirmDelete": "Are you sure?"
   },
   "login": {
     "title": "Sign in to your account",
@@ -144,7 +147,9 @@
     "noteLabel": "Note",
     "noteTitle": "Note title",
     "notePlaceholder": "Start writing...",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "deleteNoteConfirm": "This will permanently delete this note. This action cannot be undone.",
+    "history": "History"
   },
   "upload": {
     "dropOrBrowse": "Drop a PDF here or {browse}",

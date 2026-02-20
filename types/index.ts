@@ -45,6 +45,15 @@ export interface Note {
   updated_at: string;
 }
 
+export interface StudioGeneration {
+  id: string;
+  notebook_id: string;
+  user_id: string;
+  action: string;
+  result: unknown;
+  created_at: string;
+}
+
 export interface Message {
   id: string;
   notebook_id: string;
