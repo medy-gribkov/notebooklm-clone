@@ -1,6 +1,11 @@
 import pdfParse from "pdf-parse";
 
-export async function extractText(buffer: Buffer): Promise<string> {
+export interface PdfResult {
+  text: string;
+  pageCount: number;
+}
+
+export async function extractText(buffer: Buffer): Promise<PdfResult> {
   const data = await pdfParse(buffer);
 
   if (!data.text || data.text.trim().length === 0) {
@@ -9,5 +14,5 @@ export async function extractText(buffer: Buffer): Promise<string> {
     );
   }
 
-  return data.text;
+  return { text: data.text, pageCount: data.numpages };
 }

@@ -60,19 +60,25 @@ const ACTION_LABELS: Record<StudioAction, string> = {
   datatable: "Data Table",
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function parseStudioResult(action: StudioAction, text: string): any {
+interface Flashcard { front: string; back: string }
+interface QuizQuestion { question: string; options: string[]; correctIndex: number; explanation: string }
+interface ReportSection { heading: string; content: string }
+interface MindMapNode { label: string; children?: MindMapNode[] }
+interface DataTableData { columns: string[]; rows: string[][] }
+
+type StudioResult = Flashcard[] | QuizQuestion[] | ReportSection[] | MindMapNode | DataTableData;
+
+function parseStudioResult(_action: StudioAction, text: string): StudioResult {
   let cleaned = text.trim();
   if (cleaned.startsWith("```")) {
     cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
   }
-  return JSON.parse(cleaned);
+  return JSON.parse(cleaned) as StudioResult;
 }
 
 export function StudioPanel({ notebookId }: StudioPanelProps) {
   const [selectedAction, setSelectedAction] = useState<StudioAction | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<StudioResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generated, setGenerated] = useState<Set<StudioAction>>(new Set());
@@ -194,11 +200,11 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
               </div>
             )}
 
-            {result && selectedAction === "flashcards" && <FlashcardsView data={result} />}
-            {result && selectedAction === "quiz" && <QuizView data={result} />}
-            {result && selectedAction === "report" && <ReportView data={result} />}
-            {result && selectedAction === "mindmap" && <MindMapView data={result} />}
-            {result && selectedAction === "datatable" && <DataTableView data={result} />}
+            {result && selectedAction === "flashcards" && <FlashcardsView data={result as Flashcard[]} />}
+            {result && selectedAction === "quiz" && <QuizView data={result as QuizQuestion[]} />}
+            {result && selectedAction === "report" && <ReportView data={result as ReportSection[]} />}
+            {result && selectedAction === "mindmap" && <MindMapView data={result as MindMapNode} />}
+            {result && selectedAction === "datatable" && <DataTableView data={result as DataTableData} />}
           </div>
         </div>
       </div>

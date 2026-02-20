@@ -38,7 +38,8 @@ export default function DashboardPage() {
       .then((data) => {
         if (data) setNotebooks(data);
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
 
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {

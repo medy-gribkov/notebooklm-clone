@@ -1,5 +1,5 @@
 import { embedQuery } from "@/lib/gemini";
-import { extractText } from "@/lib/pdf";
+import { extractText, type PdfResult } from "@/lib/pdf";
 import { isValidUUID, sanitizeText } from "@/lib/validate";
 import type { Source } from "@/types";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
@@ -48,8 +48,8 @@ export async function processNotebook(
   const supabase = getServiceClient();
 
   try {
-    const rawText = await extractText(pdfBuffer);
-    const text = sanitizeText(rawText);
+    const pdfResult: PdfResult = await extractText(pdfBuffer);
+    const text = sanitizeText(pdfResult.text);
 
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 2000,
@@ -63,6 +63,9 @@ export async function processNotebook(
         "No content could be extracted. This may be an image-only PDF."
       );
     }
+
+    // Delete any existing chunks for this notebook (idempotent on re-process)
+    await supabase.from("chunks").delete().eq("notebook_id", notebookId);
 
     // Embed chunks in batches to respect 10 RPM
     const BATCH_SIZE = 5;
@@ -100,7 +103,7 @@ export async function processNotebook(
 
     await supabase
       .from("notebooks")
-      .update({ status: "ready" })
+      .update({ status: "ready", page_count: pdfResult.pageCount })
       .eq("id", notebookId);
   } catch (error) {
     console.error("[processNotebook] Error occurred, updating status to error:", {
@@ -109,7 +112,10 @@ export async function processNotebook(
       errorMessage: error instanceof Error ? error.message : String(error),
       error,
     });
-    
+
+    // Clean up any partially inserted chunks
+    await supabase.from("chunks").delete().eq("notebook_id", notebookId);
+
     await supabase
       .from("notebooks")
       .update({ status: "error" })
@@ -163,7 +169,7 @@ export async function retrieveChunks(
     match_notebook_id: notebookId,
     match_user_id: userId,
     match_count: 5,
-    match_threshold: 0.3,
+    match_threshold: 0.5,
   });
 
   if (error) {

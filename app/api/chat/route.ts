@@ -101,6 +101,8 @@ export async function POST(request: Request) {
     content: userMessage,
   });
 
+  let assistantText = "";
+
   try {
     const result = streamText({
       model: getLLM(),
@@ -112,7 +114,13 @@ export async function POST(request: Request) {
       onError: ({ error }) => {
         console.error("[chat] Stream error from LLM:", error);
       },
+      onChunk: ({ chunk }) => {
+        if (chunk.type === "text-delta") {
+          assistantText += chunk.textDelta;
+        }
+      },
       onFinish: async ({ text }) => {
+        assistantText = text;
         await serviceClient.from("messages").insert({
           notebook_id: notebookId,
           user_id: user.id,
@@ -125,6 +133,16 @@ export async function POST(request: Request) {
 
     return result.toDataStreamResponse();
   } catch (error) {
+    // Save whatever text was generated before the error
+    if (assistantText.trim()) {
+      await serviceClient.from("messages").insert({
+        notebook_id: notebookId,
+        user_id: user.id,
+        role: "assistant",
+        content: assistantText,
+        sources: sources.length > 0 ? sources : null,
+      }).then(null, (e: unknown) => console.error("[chat] Failed to save partial response:", e));
+    }
     const msg = error instanceof Error ? error.message : String(error);
     console.error("[chat] Stream failed:", { error: msg, fullError: error });
     return NextResponse.json({ error: msg }, { status: 500 });

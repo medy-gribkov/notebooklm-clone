@@ -111,6 +111,9 @@ export async function POST(request: Request) {
       errorType: error instanceof Error ? error.name : typeof error,
       fullError: error,
     });
+    // Clean up orphaned storage file
+    await serviceClient.storage.from("pdf-uploads").remove([storagePath])
+      .then(null, (e: unknown) => console.error("[upload] Failed to clean up storage:", e));
     const msg =
       error instanceof Error && error.message.includes("No text layer")
         ? "This PDF has no selectable text (scanned image). Please upload a text-based PDF."

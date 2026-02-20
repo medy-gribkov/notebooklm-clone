@@ -1,3 +1,4 @@
+import { authenticateRequest } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getAllChunks } from "@/lib/rag";
 import { getLLM } from "@/lib/gemini";
@@ -24,6 +25,11 @@ const PROMPTS: Record<StudioAction, string> = {
 };
 
 export async function POST(request: Request) {
+  const auth = await authenticateRequest(request);
+  if (auth === null) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -53,6 +59,7 @@ export async function POST(request: Request) {
   if (!VALID_ACTIONS.includes(action as StudioAction)) {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }
+  const validAction = action as StudioAction;
 
   const { data: notebook } = await supabase
     .from("notebooks")
@@ -90,7 +97,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const systemPrompt = `${PROMPTS[action as StudioAction]}\n\n===BEGIN DOCUMENT===\n${documentText}\n===END DOCUMENT===`;
+  const systemPrompt = `${PROMPTS[validAction]}\n\n===BEGIN DOCUMENT===\n${documentText}\n===END DOCUMENT===`;
 
   try {
     const result = streamText({
@@ -99,7 +106,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: `Generate ${action} from the document above. Return only valid JSON.`,
+          content: `Generate ${validAction} from the document above. Return only valid JSON.`,
         },
       ],
       onError: ({ error }) => {

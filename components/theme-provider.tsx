@@ -38,8 +38,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggleTheme = useCallback(() => {
     const next = getStoredTheme() === "dark" ? "light" : "dark";
     localStorage.setItem("theme", next);
-    document.documentElement.classList.toggle("dark", next === "dark");
-    // Trigger storage event listener for sync
+    // Trigger storage event listener, useEffect will apply the class
     window.dispatchEvent(new StorageEvent("storage", { key: "theme", newValue: next }));
   }, []);
 
