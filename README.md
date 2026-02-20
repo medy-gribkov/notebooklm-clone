@@ -10,7 +10,7 @@
 | AI/LLM | Groq (Llama 3.3 70B) with Gemini fallback, via Vercel AI SDK |
 | Embeddings | Gemini embedding-001 (768-dim), pgvector |
 | Database | Supabase (PostgreSQL + Auth + Storage) |
-| Auth | Supabase Auth (Google OAuth + GitHub OAuth + Magic Link) + JWT validation (jose) |
+| Auth | Supabase Auth (GitHub OAuth + Magic Link) + JWT validation (jose) |
 | Infrastructure | Docker, nginx (reverse proxy + SSL), Let's Encrypt |
 | CI/CD | GitHub Actions (typecheck, lint, build, Docker) |
 
@@ -42,9 +42,10 @@ Next.js App (standalone, port 3000)
 - **RAG Chat**: Questions answered from your document only, with source citations.
 - **Source Panel**: See which document sections each answer came from, with relevance scores.
 - **Streaming Responses**: Real-time token streaming via Vercel AI SDK.
-- **Auth**: Google OAuth, GitHub OAuth, or passwordless Magic Link sign-in.
-- **Security**: JWT validation with issuer claims, rate limiting (10 msg/min chat, 3/hr upload), PDF magic bytes check, prompt injection defense, CSP headers.
-- **Dark Mode**: Dark-first design with violet accent palette.
+- **Studio**: NotebookLM-style tools. Flashcards, Quiz, Report, Mind Map, Data Table, all generated from your document.
+- **Auth**: GitHub OAuth or passwordless Magic Link sign-in.
+- **Security**: JWT validation with issuer claims, rate limiting (10 msg/min chat, 3/hr upload, 5/hr studio), PDF magic bytes check, prompt injection defense, CSP headers.
+- **Light/Dark Mode**: Toggle between light and dark themes. Preference persists in localStorage.
 
 ## Local Development
 

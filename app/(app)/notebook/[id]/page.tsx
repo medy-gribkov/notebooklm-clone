@@ -1,8 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { ChatInterface } from "@/components/chat-interface";
+import { NotebookTabs } from "@/components/notebook-tabs";
 import { ViewPdfButton } from "@/components/view-pdf-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import type { Notebook, Message } from "@/types";
 
@@ -56,16 +57,15 @@ export default async function NotebookPage({ params }: PageProps) {
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-semibold truncate">{notebook.title}</h1>
           </div>
+          <ThemeToggle />
           <ViewPdfButton notebookId={id} />
         </div>
       </header>
 
-      <div className="flex-1 overflow-hidden">
-        <ChatInterface
-          notebookId={id}
-          initialMessages={(messages ?? []) as Message[]}
-        />
-      </div>
+      <NotebookTabs
+        notebookId={id}
+        initialMessages={(messages ?? []) as Message[]}
+      />
     </div>
   );
 }

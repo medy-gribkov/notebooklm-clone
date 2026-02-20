@@ -107,9 +107,14 @@ export function NotebookCard({ notebook, timedOut = false, onDelete }: NotebookC
         aria-disabled={!isClickable}
       >
         {/* Title */}
-        <h3 className="text-sm font-semibold leading-snug line-clamp-2 pr-8 mb-3">
-          {notebook.title}
-        </h3>
+        <div className="flex items-start gap-2.5 pr-8 mb-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+            {notebook.title.charAt(0).toUpperCase()}
+          </div>
+          <h3 className="text-sm font-semibold leading-snug line-clamp-2 pt-0.5">
+            {notebook.title}
+          </h3>
+        </div>
 
         {/* Bottom row */}
         <div className="flex items-center justify-between gap-2">
@@ -136,6 +141,13 @@ export function NotebookCard({ notebook, timedOut = false, onDelete }: NotebookC
               )}
               {status.label}
             </span>
+
+            {/* Page count */}
+            {notebook.page_count && (
+              <span className="text-[11px] text-muted-foreground">
+                {notebook.page_count} pg{notebook.page_count !== 1 ? "s" : ""}
+              </span>
+            )}
 
             {/* Time */}
             <span className="text-[11px] text-muted-foreground">

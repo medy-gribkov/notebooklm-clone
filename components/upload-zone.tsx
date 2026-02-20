@@ -195,7 +195,7 @@ export function UploadZone({ onNotebookCreated, onNavigate }: UploadZoneProps) {
       }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
-      className={`relative rounded-xl border-2 border-dashed p-8 text-center transition-all duration-300 ${
+      className={`relative rounded-xl border-2 border-dashed p-6 text-center transition-all duration-300 ${
         isProcessing
           ? "border-primary/30 bg-primary/[0.03] cursor-not-allowed"
           : dragging

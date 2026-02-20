@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { UploadZone } from "@/components/upload-zone";
 import { NotebookCard } from "@/components/notebook-card";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { Notebook } from "@/types";
 
 const PROCESSING_TIMEOUT_MS = 5 * 60 * 1000;
@@ -16,6 +17,12 @@ function isTimedOut(notebook: Notebook): boolean {
     notebook.status === "processing" &&
     Date.now() - new Date(notebook.created_at).getTime() > PROCESSING_TIMEOUT_MS
   );
+}
+
+function getFirstName(email: string): string {
+  const local = email.split("@")[0];
+  const name = local.replace(/[._-]/g, " ").split(" ")[0];
+  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 }
 
 export default function DashboardPage() {
@@ -74,7 +81,7 @@ export default function DashboardPage() {
       ).then((updates) => {
         setNotebooks((prev) =>
           prev.map((n) => {
-            const updated = updates.find((u) => u.id === n.id);
+            const updated = updates.find((u: Notebook) => u.id === n.id);
             return updated ?? n;
           })
         );
@@ -99,7 +106,7 @@ export default function DashboardPage() {
             </div>
             <span className="text-base font-semibold tracking-tight">DocChat</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {userEmail && (
               <div className="hidden sm:flex items-center gap-2">
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
@@ -110,6 +117,7 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
+            <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
               Sign out
             </Button>
@@ -117,32 +125,38 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-8 space-y-8 flex-1">
-        {/* Upload section */}
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6 space-y-5 flex-1 w-full">
+        {/* Welcome + Upload */}
         <section className="animate-slide-up [animation-delay:100ms]">
-          <div className="mb-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Upload a PDF
-            </h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Text-based PDFs only. Up to 5 MB.
-            </p>
+          <div className="flex items-baseline justify-between mb-3">
+            <div>
+              <h1 className="text-lg font-semibold tracking-tight">
+                {userEmail ? `Welcome back, ${getFirstName(userEmail)}` : "Welcome back"}
+              </h1>
+              {!loading && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {notebooks.length === 0
+                    ? "Upload a PDF to get started"
+                    : `${readyCount} notebook${readyCount !== 1 ? "s" : ""} ready to chat`}
+                </p>
+              )}
+            </div>
           </div>
           <UploadZone onNotebookCreated={handleNotebookCreated} onNavigate={(path) => router.push(path)} />
         </section>
 
-        {/* Notebooks section */}
+        {/* Notebooks */}
         <section className="animate-slide-up [animation-delay:200ms]">
-          <div className="flex items-baseline justify-between mb-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Your Notebooks
-            </h2>
-            {!loading && notebooks.length > 0 && (
+          {notebooks.length > 0 && (
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Your Notebooks
+              </h2>
               <span className="text-xs text-muted-foreground">
                 {readyCount} of {notebooks.length} ready
               </span>
-            )}
-          </div>
+            </div>
+          )}
 
           {loading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -153,19 +167,7 @@ export default function DashboardPage() {
                 />
               ))}
             </div>
-          ) : notebooks.length === 0 ? (
-            <div className="rounded-xl border border-dashed p-14 text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/5">
-                <svg className="h-7 w-7 text-primary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium">No notebooks yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Upload a PDF above to start chatting with your document.
-              </p>
-            </div>
-          ) : (
+          ) : notebooks.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {notebooks.map((notebook, i) => (
                 <div
@@ -181,11 +183,11 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
         </section>
       </main>
 
-      <footer className="border-t py-6">
+      <footer className="border-t py-5">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 flex flex-col items-center gap-2">
           <div className="flex items-center gap-3">
             <a href="https://github.com/medy-gribkov" target="_blank" rel="noopener noreferrer" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors" aria-label="GitHub">
