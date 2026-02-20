@@ -7,8 +7,8 @@ services:
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     env_file: .env.local
     restart: unless-stopped
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
 
   nginx:
     image: nginx:alpine
