@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+
+function readLocaleCookie(): string {
+  if (typeof document === "undefined") return "en";
+  const match = document.cookie.match(/(?:^|;\s*)locale=([^;]*)/);
+  return match ? match[1] : "en";
+}
 
 export function LanguageToggle() {
   const router = useRouter();
-  const [locale, setLocale] = useState("en");
-
-  useEffect(() => {
-    const match = document.cookie.match(/(?:^|;\s*)locale=([^;]*)/);
-    if (match) setLocale(match[1]);
-  }, []);
+  const [locale, setLocale] = useState(readLocaleCookie);
 
   function toggle() {
     const next = locale === "en" ? "he" : "en";

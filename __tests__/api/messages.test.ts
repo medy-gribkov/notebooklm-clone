@@ -17,11 +17,28 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue(mockSupabase),
 }));
 
+vi.mock("@/lib/supabase/service", () => ({
+  getServiceClient: vi.fn().mockReturnValue(mockSupabase),
+}));
+
 import { GET } from "@/app/api/messages/route";
 import { authenticateRequest } from "@/lib/auth";
 
 const mockedAuth = vi.mocked(authenticateRequest);
 const validUUID = "550e8400-e29b-41d4-a716-446655440000";
+
+function mockNotebookOwnership(userId = "user-123") {
+  return {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({
+          data: { id: validUUID, user_id: userId },
+          error: null,
+        }),
+      }),
+    }),
+  };
+}
 
 describe("GET /api/messages", () => {
   beforeEach(() => {
@@ -56,16 +73,17 @@ describe("GET /api/messages", () => {
       { id: "m1", role: "user", content: "Hello" },
       { id: "m2", role: "assistant", content: "Hi" },
     ];
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "notebooks") return mockNotebookOwnership();
+      return {
+        select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             order: vi.fn().mockReturnValue({
               limit: vi.fn().mockResolvedValue({ data: messages, error: null }),
             }),
           }),
         }),
-      }),
+      };
     });
 
     const req = new Request(`http://test/api/messages?notebookId=${validUUID}`);
@@ -76,16 +94,17 @@ describe("GET /api/messages", () => {
   });
 
   it("returns empty array for no messages", async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "notebooks") return mockNotebookOwnership();
+      return {
+        select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             order: vi.fn().mockReturnValue({
               limit: vi.fn().mockResolvedValue({ data: [], error: null }),
             }),
           }),
         }),
-      }),
+      };
     });
 
     const req = new Request(`http://test/api/messages?notebookId=${validUUID}`);
@@ -95,9 +114,10 @@ describe("GET /api/messages", () => {
   });
 
   it("returns 500 on database error", async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "notebooks") return mockNotebookOwnership();
+      return {
+        select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             order: vi.fn().mockReturnValue({
               limit: vi.fn().mockResolvedValue({
@@ -107,7 +127,7 @@ describe("GET /api/messages", () => {
             }),
           }),
         }),
-      }),
+      };
     });
 
     const req = new Request(`http://test/api/messages?notebookId=${validUUID}`);

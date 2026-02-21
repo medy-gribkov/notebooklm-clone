@@ -13,6 +13,7 @@ env:
   NEXT_PUBLIC_SUPABASE_ANON_KEY: stub
   SUPABASE_SERVICE_ROLE_KEY: stub
   SUPABASE_JWT_SECRET: stub
+  NEXT_PUBLIC_APP_URL: http://localhost:3000
 
 jobs:
   check:
@@ -97,5 +98,6 @@ jobs:
           build-args: |
             NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
             NEXT_PUBLIC_SUPABASE_ANON_KEY=stub
+            NEXT_PUBLIC_APP_URL=http://localhost:3000
           cache-from: type=gha
           cache-to: type=gha,mode=max

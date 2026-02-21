@@ -22,6 +22,10 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue(mockSupabase),
 }));
 
+vi.mock("@/lib/supabase/service", () => ({
+  getServiceClient: vi.fn().mockReturnValue(mockSupabase),
+}));
+
 import { GET, DELETE } from "@/app/api/notebooks/route";
 import { authenticateRequest } from "@/lib/auth";
 
@@ -45,19 +49,29 @@ describe("GET /api/notebooks", () => {
 
   it("returns notebooks list", async () => {
     const notebooks = [{ id: "nb-1", title: "Test" }];
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: notebooks, error: null }),
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "notebooks") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({ data: notebooks, error: null }),
+            }),
+          }),
+        };
+      }
+      // notebook_members
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
         }),
-      }),
+      };
     });
 
     const req = new Request("http://test/api/notebooks");
     const res = await GET(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(notebooks);
+    expect(body).toEqual({ notebooks, sharedNotebooks: [] });
   });
 
   it("returns 401 when no supabase user", async () => {
