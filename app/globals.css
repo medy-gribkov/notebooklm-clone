@@ -246,13 +246,13 @@
 
 /* Light mode shadows for cards and headers */
 :root {
-  --shadow-card: 0 1px 3px oklch(0 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.04);
-  --shadow-header: 0 1px 3px oklch(0 0 0 / 0.05);
+  --shadow-card: 0 1px 3px oklch(0 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.02);
+  --shadow-header: 0 1px 3px oklch(0 0 0 / 0.03);
 }
 
 .dark {
-  --shadow-card: none;
-  --shadow-header: none;
+  --shadow-card: 0 1px 3px oklch(1 1 1 / 0.02), 0 1px 2px oklch(1 1 1 / 0.01);
+  --shadow-header: 0 1px 3px oklch(1 1 1 / 0.01);
 }
 
 /* Typography scale */
