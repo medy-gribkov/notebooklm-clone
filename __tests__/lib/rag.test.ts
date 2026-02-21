@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock dependencies
 vi.mock("@/lib/llm", () => ({
@@ -101,7 +101,8 @@ describe("processNotebook", () => {
     const updateEq = vi.fn().mockResolvedValue({});
 
     return {
-      from: vi.fn((table: string) => ({
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      from: vi.fn((_table: string) => ({
         delete: vi.fn().mockReturnValue({
           eq: deleteEq,
         }),

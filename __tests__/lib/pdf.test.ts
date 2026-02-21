@@ -17,7 +17,7 @@ describe("extractText", () => {
       numrender: 5,
       info: {},
       metadata: null,
-      version: "1.0",
+      version: "1.0" as never,
     });
 
     const result = await extractText(Buffer.from("fake-pdf"));
@@ -34,7 +34,7 @@ describe("extractText", () => {
       numrender: 1,
       info: {},
       metadata: null,
-      version: "1.0",
+      version: "1.0" as never,
     });
 
     await expect(extractText(Buffer.from("fake"))).rejects.toThrow(
@@ -49,7 +49,7 @@ describe("extractText", () => {
       numrender: 1,
       info: {},
       metadata: null,
-      version: "1.0",
+      version: "1.0" as never,
     });
 
     await expect(extractText(Buffer.from("fake"))).rejects.toThrow(
@@ -72,7 +72,7 @@ describe("extractText", () => {
       numrender: 42,
       info: {},
       metadata: null,
-      version: "1.0",
+      version: "1.0" as never,
     });
 
     const result = await extractText(Buffer.from("fake"));

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // We need to re-import after each reset to get a fresh store
 // Use dynamic import with vi.resetModules
