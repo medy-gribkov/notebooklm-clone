@@ -8,6 +8,7 @@ import rehypeSanitize from "rehype-sanitize";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SourcePanel } from "@/components/source-panel";
+import { Mascot } from "@/components/mascot";
 import { useTranslations } from "next-intl";
 import type { Message, Source } from "@/types";
 
@@ -187,10 +188,8 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
                   className="hidden"
                   onChange={handleCenterFileChange}
                 />
-                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 border border-dashed border-muted-foreground/20">
-                  <svg className="h-8 w-8 text-muted-foreground/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                  </svg>
+                <div className="mb-6 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                  <Mascot size="lg" mood="happy" />
                 </div>
                 <p className="text-base font-semibold mb-1">{t("uploadToStart")}</p>
                 <p className="text-sm text-muted-foreground mb-4">{t("uploadToStartDesc")}</p>
@@ -219,20 +218,8 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
                     <span className="text-xs text-primary">{t("processingState")}</span>
                   </div>
                 )}
-                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/5">
-                  <svg
-                    className="h-8 w-8 text-primary/30"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
+                <div className="mb-6">
+                  <Mascot size="lg" mood={isProcessing ? "thinking" : "neutral"} />
                 </div>
                 <p className="text-base font-semibold mb-1">
                   {t("askAnything")}
@@ -283,8 +270,8 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
                     >
                       <div
                         className={`group/msg relative rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${isUser
-                            ? "bg-primary text-primary-foreground rounded-br-md shadow-sm shadow-black/[0.04]"
-                            : "bg-muted/30 border border-border/50 rounded-bl-md shadow-sm shadow-black/[0.02] dark:shadow-none"
+                          ? "bg-primary text-primary-foreground rounded-br-md shadow-sm shadow-black/[0.04]"
+                          : "bg-muted/30 border border-border/50 rounded-bl-md shadow-sm shadow-black/[0.02] dark:shadow-none"
                           }`}
                       >
                         {isUser ? (
