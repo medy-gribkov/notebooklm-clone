@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isValidUUID, sanitizeText } from "@/lib/validate";
 import { NextResponse } from "next/server";
 
-// PATCH /api/notebooks/[id]/notes/[noteId] — update a note
+// PATCH /api/notebooks/[id]/notes/[noteId] - update a note
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; noteId: string }> }
@@ -33,12 +33,12 @@ export async function PATCH(
     .select("id, notebook_id, title, content, created_at, updated_at")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Internal error" }, { status: 500 });
   if (!data) return NextResponse.json({ error: "Note not found" }, { status: 404 });
   return NextResponse.json(data);
 }
 
-// DELETE /api/notebooks/[id]/notes/[noteId] — delete a note
+// DELETE /api/notebooks/[id]/notes/[noteId] - delete a note
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string; noteId: string }> }
@@ -61,6 +61,6 @@ export async function DELETE(
     .eq("notebook_id", id)
     .eq("user_id", user.id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Internal error" }, { status: 500 });
   return NextResponse.json({ success: true });
 }

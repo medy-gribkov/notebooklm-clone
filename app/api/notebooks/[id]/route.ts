@@ -1,4 +1,5 @@
 import { authenticateRequest } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { isValidUUID, sanitizeText } from "@/lib/validate";
 import { NextResponse } from "next/server";
@@ -25,6 +26,11 @@ export async function GET(
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const limited = checkRateLimit(`notebook-get:${user.id}`, 60, 60_000);
+  if (!limited) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429, headers: { "Retry-After": "60" } });
   }
 
   const { data, error } = await supabase
@@ -55,6 +61,11 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const patchLimited = checkRateLimit(`notebook-patch:${user.id}`, 20, 60_000);
+  if (!patchLimited) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429, headers: { "Retry-After": "60" } });
+  }
+
   const body = await request.json().catch(() => ({}));
   const updates: Record<string, string> = {};
   if (body.title !== undefined) updates.title = sanitizeText(body.title).slice(0, 200);
@@ -72,7 +83,7 @@ export async function PATCH(
     .select(NOTEBOOK_COLUMNS)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Internal error" }, { status: 500 });
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(data);
 }
@@ -97,6 +108,11 @@ export async function DELETE(
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const delLimited = checkRateLimit(`notebook-delete:${user.id}`, 5, 60_000);
+  if (!delLimited) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429, headers: { "Retry-After": "60" } });
   }
 
   // Verify ownership before delete

@@ -29,11 +29,22 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
   }, [error]);
 
   const handleUpload = useCallback(async (file: File) => {
-    if (file.type !== "application/pdf") {
-      setError(t("pdfOnly"));
+    const ALLOWED = [
+      "application/pdf",
+      "text/plain",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+    if (!ALLOWED.includes(file.type)) {
+      setError(t("unsupportedType"));
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
+    const maxSize = file.type === "text/plain" ? 500 * 1024
+      : file.type.startsWith("application/vnd") ? 10 * 1024 * 1024
+      : 5 * 1024 * 1024;
+    if (file.size > maxSize) {
       setError(t("fileTooLarge"));
       return;
     }
@@ -167,7 +178,7 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
           <input
             ref={inputRef}
             type="file"
-            accept="application/pdf"
+            accept=".pdf,.txt,.docx,.jpg,.jpeg,.png,.webp"
             multiple
             className="hidden"
             onChange={handleFileChange}

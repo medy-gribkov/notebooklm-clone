@@ -17,7 +17,9 @@
   "login": {
     "title": "התחברות לחשבון שלך",
     "subtitle": "חדש כאן? התחברות יוצרת חשבון אוטומטית.",
-    "githubButton": "המשך עם GitHub",
+    "githubButton": "GitHub",
+    "googleButton": "Google",
+    "googleFailed": "ההתחברות עם Google נכשלה. נסה אימייל במקום.",
     "emailDivider": "או התחבר עם אימייל",
     "emailLabel": "כתובת אימייל",
     "emailPlaceholder": "you@example.com",
@@ -86,7 +88,14 @@
     "emptyTitle": "אין מחברות עדיין",
     "emptyDescription": "העלה PDF כדי להתחיל לשוחח עם המסמכים שלך",
     "noResults": "אין מחברות התואמות לחיפוש",
-    "featuredNotebooks": "תבניות מומלצות"
+    "featuredNotebooks": "תבניות מומלצות",
+    "tabAll": "הכל",
+    "tabMine": "המחברות שלי",
+    "tabFeatured": "מומלצות",
+    "createNew": "יצירה",
+    "createNewNotebook": "יצירת מחברת חדשה",
+    "recentNotebooks": "מחברות אחרונות",
+    "seeAll": "הצג הכל"
   },
   "featured": {
     "gettingStarted": "התחלה עם DocChat",
@@ -96,7 +105,15 @@
     "meetingOrganizer": "ארגון רשימות פגישות",
     "meetingOrganizerDesc": "ארגן וסכם מסמכי פגישות",
     "studyGuide": "בונה מדריך לימוד",
-    "studyGuideDesc": "צור חומרי לימוד מספרי הלימוד שלך"
+    "studyGuideDesc": "צור חומרי לימוד מספרי הלימוד שלך",
+    "dataAnalysis": "סביבת עבודה לניתוח נתונים",
+    "dataAnalysisDesc": "חלץ תובנות ממחקר נתונים וסטטיסטיקות",
+    "legalReview": "סקירת מסמכים משפטיים",
+    "legalReviewDesc": "נתח חוזים, סעיפים והתחייבויות",
+    "productSpecs": "מנתח מפרטי מוצר",
+    "productSpecsDesc": "פרק מסמכי דרישות ותכונות מוצר",
+    "literatureReview": "עוזר סקירת ספרות",
+    "literatureReviewDesc": "סנתז ממצאים ממאמרים אקדמיים"
   },
   "notebook": {
     "dashboard": "לוח בקרה",
@@ -133,7 +150,8 @@
     "viewPdf": "צפה ב-PDF",
     "deleteFile": "מחק קובץ",
     "pdfOnly": "רק קובצי PDF נתמכים",
-    "fileTooLarge": "הקובץ חייב להיות מתחת ל-5 MB",
+    "unsupportedType": "סוג קובץ לא נתמך. העלה PDF, DOCX, TXT או תמונות.",
+    "fileTooLarge": "הקובץ גדול מדי",
     "pages": "{count} עמודים",
     "failed": "נכשל"
   },
@@ -166,8 +184,6 @@
     "slidedeckDesc": "שקופיות מצגת עם נקודות מפתח",
     "audioOverview": "סקירה קולית",
     "audioOverviewDesc": "האזן לסיכום של המסמך שלך",
-    "videoOverview": "סקירת וידאו",
-    "videoOverviewDesc": "צפה בסיכום חזותי של המסמך שלך",
     "comingSoon": "בקרוב",
     "regenerate": "צור מחדש",
     "generating": "מייצר {type}...",
@@ -225,6 +241,8 @@
     "theme": "ערכת נושא",
     "themeLight": "בהיר",
     "themeDark": "כהה",
+    "accentColor": "צבע הדגשה",
+    "accentColorDesc": "בחר את צבע ההדגשה המועדף עליך",
     "language": "שפה",
     "english": "אנגלית",
     "hebrew": "עברית",
@@ -248,5 +266,42 @@
     "deleteAccount": "מחיקת חשבון",
     "deleteAccountConfirm": "האם אתה בטוח? פעולה זו תמחק לצמיתות את החשבון וכל הנתונים שלך.",
     "deleteAccountNote": "לא ניתן לבטל פעולה זו."
+  },
+  "share": {
+    "title": "שיתוף מחברת",
+    "createLink": "יצירת קישור שיתוף",
+    "viewOnly": "צפייה בלבד",
+    "viewAndChat": "צפייה וצ'אט",
+    "copyLink": "העתק קישור",
+    "linkCopied": "הקישור הועתק",
+    "expires": "פג תוקף {date}",
+    "noExpiry": "ללא תפוגה",
+    "revoke": "ביטול",
+    "activeLinks": "קישורים פעילים",
+    "noLinks": "אין קישורי שיתוף",
+    "readOnly": "זו מחברת משותפת. הירשם לגישה מלאה.",
+    "chatLimit": "מגבלת צ'אט הושגה. נסה שוב מאוחר יותר.",
+    "signUpCta": "הרשמה לגישה מלאה",
+    "expire7": "7 ימים",
+    "expire30": "30 ימים",
+    "expireNever": "לעולם לא"
+  },
+  "export": {
+    "title": "ייצוא",
+    "markdown": "ייצוא כ-Markdown",
+    "json": "ייצוא כ-JSON"
+  },
+  "members": {
+    "title": "חברים",
+    "invite": "הזמנת חבר",
+    "emailPlaceholder": "הזן כתובת אימייל",
+    "editor": "עורך",
+    "viewer": "צופה",
+    "owner": "בעלים",
+    "remove": "הסר",
+    "inviteButton": "הזמן",
+    "noMembers": "אין חברים עדיין",
+    "userNotFound": "משתמש לא נמצא. עליהם להירשם תחילה.",
+    "sharedWithMe": "שותף איתי"
   }
 }

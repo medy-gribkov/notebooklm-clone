@@ -16,9 +16,9 @@ interface NotebookCardProps {
   files?: NotebookFile[];
   timedOut?: boolean;
   onDelete: (id: string) => void;
+  description?: string;
 }
 
-// Consistent color from notebook title hash
 const ICON_COLORS = [
   "bg-blue-500/15 text-blue-600 dark:text-blue-400",
   "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
@@ -54,7 +54,7 @@ function relativeTime(dateStr: string): string {
   });
 }
 
-export function NotebookCard({ notebook, files = [], timedOut = false, onDelete }: NotebookCardProps) {
+export function NotebookCard({ notebook, files = [], timedOut = false, onDelete, description }: NotebookCardProps) {
   const [deleting, setDeleting] = useState(false);
   const t = useTranslations("notebookCard");
   const tc = useTranslations("common");
@@ -75,65 +75,68 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete 
   const isError = notebook.status === "error" || timedOut;
 
   return (
-    <div className="group relative rounded-xl border bg-card overflow-hidden transition-all duration-200 shadow-sm shadow-black/[0.03] dark:shadow-none hover:shadow-md hover:shadow-black/5 dark:hover:shadow-black/20 hover:-translate-y-0.5">
+    <div className="group relative rounded-2xl border bg-card overflow-hidden transition-all duration-200 shadow-sm shadow-black/[0.03] dark:shadow-none hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20 hover:-translate-y-1 min-h-[200px]">
       <Link
         href={isClickable ? `/notebook/${notebook.id}` : "#"}
-        className={`block p-4 ${!isClickable ? "pointer-events-none" : ""}`}
+        className={`block p-5 ${!isClickable ? "pointer-events-none" : ""}`}
         aria-disabled={!isClickable}
       >
-        <div className="flex items-start gap-3">
-          {/* First-letter avatar */}
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${colorClass} text-sm font-bold`}>
-            {notebook.title.charAt(0).toUpperCase()}
-          </div>
-
-          <div className="flex-1 min-w-0">
-            {/* Title */}
-            <h3 className="text-heading leading-snug line-clamp-1 pr-6">
-              {notebook.title}
-            </h3>
-
-            {/* Meta row: date + sources */}
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-caption">
-                {relativeTime(notebook.created_at)}
-              </span>
-              {files.length > 0 && (
-                <>
-                  <span className="text-muted-foreground/30">&middot;</span>
-                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    {t("sources", { count: files.length })}
-                  </span>
-                </>
-              )}
-            </div>
-
-            {/* Status indicator for non-ready */}
-            {isProcessing && (
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                <span className="text-[11px] text-amber-600 dark:text-amber-400">{t("processing")}</span>
-              </div>
-            )}
-            {isError && (
-              <div className="flex items-center gap-1.5 mt-2">
-                <svg className="h-3 w-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                <span className="text-[11px] text-red-600 dark:text-red-400">
-                  {timedOut ? t("timedOut") : t("failed")}
-                </span>
-              </div>
-            )}
-          </div>
+        {/* Large icon */}
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${colorClass} text-base font-bold mb-3`}>
+          {notebook.title.charAt(0).toUpperCase()}
         </div>
+
+        {/* Title */}
+        <h3 className="text-heading leading-snug line-clamp-2 pr-6 min-h-[2.5rem]">
+          {notebook.title}
+        </h3>
+
+        {/* Description */}
+        {(description || notebook.description) && (
+          <p className="text-xs text-muted-foreground line-clamp-1 mt-1 pr-4">
+            {description || notebook.description}
+          </p>
+        )}
+
+        {/* Meta row */}
+        <div className="flex items-center gap-2 mt-2.5">
+          <span className="text-caption">
+            {relativeTime(notebook.created_at)}
+          </span>
+          {files.length > 0 && (
+            <>
+              <span className="text-muted-foreground/30">&middot;</span>
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                {t("sources", { count: files.length })}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Status indicators */}
+        {isProcessing && (
+          <div className="flex items-center gap-1.5 mt-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+            <span className="text-[11px] text-amber-600 dark:text-amber-400">{t("processing")}</span>
+          </div>
+        )}
+        {isError && (
+          <div className="flex items-center gap-1.5 mt-3">
+            <svg className="h-3 w-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <span className="text-[11px] text-red-600 dark:text-red-400">
+              {timedOut ? t("timedOut") : t("failed")}
+            </span>
+          </div>
+        )}
       </Link>
 
       {/* Kebab menu */}
-      <div className="absolute right-2 top-3 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute right-3 top-4 opacity-0 group-hover:opacity-100 transition-opacity">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button

@@ -1,5 +1,7 @@
 import { authenticateRequest } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+import { getServiceClient } from "@/lib/supabase/service";
 import { isValidUUID } from "@/lib/validate";
 import { NextResponse } from "next/server";
 
@@ -25,11 +27,42 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabase
+  const limited = checkRateLimit(`messages-get:${user.id}`, 60, 60_000);
+  if (!limited) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429, headers: { "Retry-After": "60" } });
+  }
+
+  // Check if user owns the notebook or is a member
+  const serviceClient = getServiceClient();
+  const { data: notebook } = await serviceClient
+    .from("notebooks")
+    .select("id, user_id")
+    .eq("id", notebookId)
+    .single();
+
+  if (!notebook) {
+    return NextResponse.json({ error: "Notebook not found" }, { status: 404 });
+  }
+
+  const isOwner = notebook.user_id === user.id;
+  if (!isOwner) {
+    const { data: membership } = await serviceClient
+      .from("notebook_members")
+      .select("role")
+      .eq("notebook_id", notebookId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (!membership) {
+      return NextResponse.json({ error: "Notebook not found" }, { status: 404 });
+    }
+  }
+
+  // For shared notebooks, return ALL messages (from all users)
+  const { data, error } = await serviceClient
     .from("messages")
     .select("id, notebook_id, user_id, role, content, sources, created_at")
     .eq("notebook_id", notebookId)
-    .eq("user_id", user.id)
     .order("created_at", { ascending: true })
     .limit(100);
 

@@ -63,3 +63,23 @@ export interface Message {
   sources: Source[] | null;
   created_at: string;
 }
+
+export interface SharedLink {
+  id: string;
+  notebook_id: string;
+  user_id: string;
+  token: string;
+  permissions: 'view' | 'chat';
+  expires_at: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface NotebookMember {
+  id: string;
+  notebook_id: string;
+  user_id: string;
+  role: 'owner' | 'editor' | 'viewer';
+  invited_by: string | null;
+  created_at: string;
+}

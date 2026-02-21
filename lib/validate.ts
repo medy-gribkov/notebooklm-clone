@@ -7,7 +7,9 @@ export function isValidUUID(id: string): boolean {
 
 export function sanitizeText(text: string): string {
   // Strip null bytes and non-printable control chars (preserve \n \t \r)
-  const cleaned = text.replace(/[\x00\x01-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+  let cleaned = text.replace(/[\x00\x01-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+  // Strip prompt injection delimiter markers from user content
+  cleaned = cleaned.replace(/===BEGIN DOCUMENT===/g, "").replace(/===END DOCUMENT===/g, "");
   return cleaned.slice(0, 100_000);
 }
 

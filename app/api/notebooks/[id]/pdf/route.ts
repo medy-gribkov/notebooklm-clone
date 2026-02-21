@@ -1,4 +1,5 @@
 import { authenticateRequest } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { getServiceClient } from "@/lib/supabase/service";
 import { isValidUUID } from "@/lib/validate";
@@ -27,6 +28,11 @@ export async function GET(
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const limited = checkRateLimit(`pdf-get:${user.id}`, 30, 60_000);
+  if (!limited) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429, headers: { "Retry-After": "60" } });
   }
 
   let storagePath: string | null = null;

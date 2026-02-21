@@ -14,7 +14,7 @@ import { NoteEditor } from "@/components/studio/note-editor";
 import type { Note, StudioGeneration } from "@/types";
 
 type StudioAction = "flashcards" | "quiz" | "report" | "mindmap" | "datatable" | "infographic" | "slidedeck";
-type StubAction = "audio" | "video";
+// Audio is handled separately via Groq TTS, not through the studio generation endpoint
 
 interface StudioPanelProps {
   notebookId: string;
@@ -53,6 +53,10 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
   // Generation state
   const [generatingAction, setGeneratingAction] = useState<StudioAction | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Audio state
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [generatingAudio, setGeneratingAudio] = useState(false);
 
   // View state: which result is being viewed (from generation or history)
   const [viewingResult, setViewingResult] = useState<{ action: StudioAction; result: StudioResult } | null>(null);
@@ -116,10 +120,24 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
     { action: "slidedeck", label: t("slidedeck"), description: t("slidedeckDesc"), icon: "slides", color: "bg-orange-500/15 text-orange-600 dark:text-orange-400" },
   ];
 
-  const stubs: { action: StubAction; label: string; description: string; icon: string; color: string }[] = [
-    { action: "audio", label: t("audioOverview"), description: t("audioOverviewDesc"), icon: "audio", color: "bg-pink-500/15 text-pink-600 dark:text-pink-400" },
-    { action: "video", label: t("videoOverview"), description: t("videoOverviewDesc"), icon: "video", color: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400" },
-  ];
+  async function handleGenerateAudio() {
+    setGeneratingAudio(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/notebooks/${notebookId}/audio`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Failed (${res.status})`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setAudioUrl(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Audio generation failed");
+    } finally {
+      setGeneratingAudio(false);
+    }
+  }
 
   const generate = useCallback(
     async (action: StudioAction) => {
@@ -296,7 +314,15 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
             return (
               <button
                 key={feature.action}
-                onClick={() => !isGenerating && generate(feature.action)}
+                onClick={() => {
+                  if (isGenerating) return;
+                  const existing = history.find((g) => g.action === feature.action);
+                  if (existing) {
+                    viewHistoryItem(existing);
+                  } else {
+                    generate(feature.action);
+                  }
+                }}
                 disabled={isGenerating}
                 className="group relative flex flex-col items-start gap-2 rounded-xl border bg-card p-3 text-left transition-all hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-wait"
               >
@@ -320,23 +346,55 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
               </button>
             );
           })}
-          {/* Disabled stubs */}
-          {stubs.map((stub) => (
-            <div
-              key={stub.action}
-              className="relative flex flex-col items-start gap-2 rounded-xl border bg-card p-3 text-left opacity-50 cursor-not-allowed"
-              title={t("comingSoon")}
-            >
-              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${stub.color}`}>
-                <FeatureIcon type={stub.icon} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold mb-0.5">{stub.label}</p>
-                <p className="text-[10px] text-muted-foreground leading-snug">{t("comingSoon")}</p>
-              </div>
+          {/* Audio overview */}
+          <button
+            onClick={handleGenerateAudio}
+            disabled={generatingAudio}
+            className="group relative flex flex-col items-start gap-2 rounded-xl border bg-card p-3 text-left transition-all hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-wait"
+          >
+            {audioUrl && !generatingAudio && (
+              <span className="absolute top-2 right-2 flex h-2 w-2">
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+            )}
+            {generatingAudio && (
+              <span className="absolute top-2 right-2">
+                <span className="block h-3.5 w-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              </span>
+            )}
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-pink-500/15 text-pink-600 dark:text-pink-400 transition-colors">
+              <FeatureIcon type="audio" />
             </div>
-          ))}
+            <div className="min-w-0">
+              <p className="text-xs font-semibold mb-0.5">{t("audioOverview")}</p>
+              <p className="text-[10px] text-muted-foreground leading-snug line-clamp-2">{t("audioOverviewDesc")}</p>
+            </div>
+          </button>
         </div>
+
+        {/* Audio player */}
+        {audioUrl && (
+          <div className="mt-4 rounded-xl border bg-card p-4 animate-fade-in">
+            <div className="flex items-center gap-2 mb-2">
+              <FeatureIcon type="audio" />
+              <p className="text-xs font-semibold">{t("audioOverview")}</p>
+            </div>
+            <audio controls className="w-full h-8" src={audioUrl}>
+              Your browser does not support audio playback.
+            </audio>
+          </div>
+        )}
+
+        {/* Audio generating indicator */}
+        {generatingAudio && (
+          <div className="mt-4 rounded-xl border bg-card p-4 flex items-center gap-3 animate-fade-in">
+            <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" />
+            <div>
+              <p className="text-xs font-medium">{t("generating", { type: t("audioOverview") })}</p>
+              <p className="text-[10px] text-muted-foreground">{t("generatingNote")}</p>
+            </div>
+          </div>
+        )}
 
         {/* Generation loading indicator */}
         {generatingAction && (
@@ -519,12 +577,6 @@ function FeatureIcon({ type }: { type: string }) {
       return (
         <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4 0h8M12 15a3 3 0 003-3V6a3 3 0 00-6 0v6a3 3 0 003 3z" />
-        </svg>
-      );
-    case "video":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
       );
     default:

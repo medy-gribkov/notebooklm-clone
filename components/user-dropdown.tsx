@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -13,9 +14,10 @@ import {
 
 interface UserDropdownProps {
   email: string;
+  avatarUrl?: string | null;
 }
 
-export function UserDropdown({ email }: UserDropdownProps) {
+export function UserDropdown({ email, avatarUrl }: UserDropdownProps) {
   const router = useRouter();
   const t = useTranslations("settings");
   const tc = useTranslations("common");
@@ -29,8 +31,12 @@ export function UserDropdown({ email }: UserDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary hover:bg-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30">
-          {email[0].toUpperCase()}
+        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary hover:bg-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 overflow-hidden">
+          {avatarUrl ? (
+            <Image src={avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" unoptimized />
+          ) : (
+            email[0].toUpperCase()
+          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">

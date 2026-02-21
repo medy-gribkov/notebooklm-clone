@@ -1,15 +1,13 @@
 import { authenticateRequest } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getServiceClient } from "@/lib/supabase/service";
-import { processNotebook } from "@/lib/rag";
+import { processNotebook, type FileType } from "@/lib/rag";
 import { updateNotebookStatus } from "@/lib/notebook-status";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isValidUUID } from "@/lib/validate";
 import { NextResponse } from "next/server";
 
 export const maxDuration = 60;
-
-const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 export async function GET(
   request: Request,
@@ -108,24 +106,48 @@ export async function POST(
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
-  if (file.type !== "application/pdf") {
+  // Determine file type and validate
+  const ALLOWED_TYPES: Record<string, { fileType: FileType; maxSize: number }> = {
+    "application/pdf": { fileType: "pdf", maxSize: 5 * 1024 * 1024 },
+    "text/plain": { fileType: "txt", maxSize: 500 * 1024 },
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": { fileType: "docx", maxSize: 10 * 1024 * 1024 },
+    "image/jpeg": { fileType: "image", maxSize: 5 * 1024 * 1024 },
+    "image/png": { fileType: "image", maxSize: 5 * 1024 * 1024 },
+    "image/webp": { fileType: "image", maxSize: 5 * 1024 * 1024 },
+  };
+
+  const typeInfo = ALLOWED_TYPES[file.type];
+  if (!typeInfo) {
     return NextResponse.json(
-      { error: "Only PDF files are supported" },
+      { error: "Unsupported file type. Upload PDF, DOCX, TXT, or images (JPEG, PNG, WebP)." },
       { status: 400 }
     );
   }
 
-  if (file.size > MAX_SIZE_BYTES) {
+  if (file.size > typeInfo.maxSize) {
+    const sizeMB = Math.round(typeInfo.maxSize / (1024 * 1024));
     return NextResponse.json(
-      { error: "File exceeds 5MB limit" },
+      { error: `File exceeds ${sizeMB}MB limit` },
       { status: 400 }
     );
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  if (buffer.slice(0, 5).toString("ascii") !== "%PDF-") {
+  // Magic byte validation
+  if (typeInfo.fileType === "pdf" && buffer.slice(0, 5).toString("ascii") !== "%PDF-") {
     return NextResponse.json({ error: "Invalid PDF file" }, { status: 400 });
+  }
+  if (typeInfo.fileType === "docx" && (buffer.length < 4 || buffer[0] !== 0x50 || buffer[1] !== 0x4b || buffer[2] !== 0x03 || buffer[3] !== 0x04)) {
+    return NextResponse.json({ error: "Invalid DOCX file" }, { status: 400 });
+  }
+  if (typeInfo.fileType === "image") {
+    const isJpeg = buffer[0] === 0xff && buffer[1] === 0xd8;
+    const isPng = buffer[0] === 0x89 && buffer[1] === 0x50;
+    const isWebp = buffer[0] === 0x52 && buffer[1] === 0x49;
+    if (!isJpeg && !isPng && !isWebp) {
+      return NextResponse.json({ error: "Invalid image file" }, { status: 400 });
+    }
   }
 
   const serviceClient = getServiceClient();
@@ -133,7 +155,7 @@ export async function POST(
   const storagePath = `${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
   const { error: uploadError } = await serviceClient.storage
     .from("pdf-uploads")
-    .upload(storagePath, buffer, { contentType: "application/pdf" });
+    .upload(storagePath, buffer, { contentType: file.type });
 
   if (uploadError) {
     console.error("[notebooks/files] Storage upload failed:", uploadError);
@@ -176,7 +198,9 @@ export async function POST(
       user.id,
       buffer,
       notebookFile.id,
-      file.name
+      file.name,
+      typeInfo.fileType,
+      file.type
     );
 
     await serviceClient

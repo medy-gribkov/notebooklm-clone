@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
-// GET /api/user/export — download all user data as JSON
+// GET /api/user/export - download all user data as JSON
 export async function GET(request: Request) {
   const auth = await authenticateRequest(request);
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

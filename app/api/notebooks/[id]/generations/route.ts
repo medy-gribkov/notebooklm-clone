@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isValidUUID } from "@/lib/validate";
 import { NextRequest, NextResponse } from "next/server";
 
-// GET /api/notebooks/[id]/generations — list saved generations
+// GET /api/notebooks/[id]/generations - list saved generations
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -25,11 +25,11 @@ export async function GET(
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Internal error" }, { status: 500 });
   return NextResponse.json(data);
 }
 
-// POST /api/notebooks/[id]/generations — save a generation
+// POST /api/notebooks/[id]/generations - save a generation
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -77,7 +77,7 @@ export async function POST(
     .select("id, notebook_id, action, result, created_at")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Internal error" }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
 }
 
@@ -107,6 +107,6 @@ export async function DELETE(
     .eq("notebook_id", id)
     .eq("user_id", user.id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Internal error" }, { status: 500 });
   return NextResponse.json({ success: true });
 }

@@ -1,9 +1,10 @@
 import { authenticateRequest } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { isValidUUID, sanitizeText } from "@/lib/validate";
 import { NextResponse } from "next/server";
 
-// GET /api/notebooks/[id]/notes — list notes for a notebook
+// GET /api/notebooks/[id]/notes - list notes for a notebook
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -18,6 +19,11 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const getLimited = checkRateLimit(`notes-get:${user.id}`, 60, 60_000);
+  if (!getLimited) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429, headers: { "Retry-After": "60" } });
+  }
+
   const { data, error } = await supabase
     .from("notes")
     .select("id, notebook_id, title, content, created_at, updated_at")
@@ -25,11 +31,11 @@ export async function GET(
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Internal error" }, { status: 500 });
   return NextResponse.json(data);
 }
 
-// POST /api/notebooks/[id]/notes — create a note
+// POST /api/notebooks/[id]/notes - create a note
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -43,6 +49,11 @@ export async function POST(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const postLimited = checkRateLimit(`notes-post:${user.id}`, 20, 60_000);
+  if (!postLimited) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429, headers: { "Retry-After": "60" } });
+  }
 
   // Verify notebook ownership
   const { data: notebook } = await supabase
@@ -63,6 +74,6 @@ export async function POST(
     .select("id, notebook_id, title, content, created_at, updated_at")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Internal error" }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
 }

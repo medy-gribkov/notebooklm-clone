@@ -1,5 +1,7 @@
 import { authenticateRequest } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+import { getServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import type { NotebookFile } from "@/types";
 
@@ -21,6 +23,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const limited = checkRateLimit(`notebooks-list:${user.id}`, 60, 60_000);
+  if (!limited) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429, headers: { "Retry-After": "60" } });
+  }
+
+  // Fetch user's own notebooks
   const { data, error } = await supabase
     .from("notebooks")
     .select(NOTEBOOK_COLUMNS)
@@ -33,6 +41,28 @@ export async function GET(request: Request) {
   }
 
   const notebooks = data ?? [];
+
+  // Fetch shared notebooks (where user is a member)
+  const serviceClient = getServiceClient();
+  const { data: memberships } = await serviceClient
+    .from("notebook_members")
+    .select("notebook_id, role")
+    .eq("user_id", user.id);
+
+  let sharedNotebooks: Array<Record<string, unknown>> = [];
+  if (memberships && memberships.length > 0) {
+    const sharedIds = memberships.map((m: { notebook_id: string }) => m.notebook_id);
+    const { data: shared } = await serviceClient
+      .from("notebooks")
+      .select(NOTEBOOK_COLUMNS)
+      .in("id", sharedIds)
+      .order("created_at", { ascending: false });
+
+    sharedNotebooks = (shared ?? []).map((n: Record<string, unknown>) => {
+      const membership = memberships.find((m: { notebook_id: string }) => m.notebook_id === n.id);
+      return { ...n, memberRole: membership?.role ?? "viewer" };
+    });
+  }
 
   // Optional batch include of files (avoids N+1 on dashboard)
   const url = new URL(request.url);
@@ -52,13 +82,13 @@ export async function GET(request: Request) {
       filesByNotebook[nid].push(file);
     }
 
-    return NextResponse.json({ notebooks, filesByNotebook });
+    return NextResponse.json({ notebooks, sharedNotebooks, filesByNotebook });
   }
 
-  return NextResponse.json(notebooks);
+  return NextResponse.json({ notebooks, sharedNotebooks });
 }
 
-// DELETE /api/notebooks — delete all notebooks for the user
+// DELETE /api/notebooks - delete all notebooks for the user
 export async function DELETE(request: Request) {
   const auth = await authenticateRequest(request);
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -83,6 +113,6 @@ export async function DELETE(request: Request) {
     .delete()
     .eq("user_id", user.id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Internal error" }, { status: 500 });
   return NextResponse.json({ success: true });
 }

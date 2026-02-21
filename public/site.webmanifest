@@ -1,0 +1,21 @@
+{
+  "name": "DocChat",
+  "short_name": "DocChat",
+  "description": "Chat with your documents using AI",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f5f0e8",
+  "theme_color": "#4a5ebd",
+  "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

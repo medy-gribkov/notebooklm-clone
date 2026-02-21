@@ -1,5 +1,8 @@
 import { embedQuery, getLLM } from "@/lib/llm";
 import { extractText, type PdfResult } from "@/lib/pdf";
+import { extractTextFromTxt } from "@/lib/extractors/txt";
+import { extractTextFromDocx } from "@/lib/extractors/docx";
+import { extractTextFromImage } from "@/lib/extractors/image";
 import { isValidUUID, sanitizeText } from "@/lib/validate";
 import type { Source } from "@/types";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
@@ -44,12 +47,16 @@ export interface ProcessResult {
   sampleText: string;
 }
 
+export type FileType = "pdf" | "txt" | "docx" | "image";
+
 export async function processNotebook(
   notebookId: string,
   userId: string,
-  pdfBuffer: Buffer,
+  fileBuffer: Buffer,
   fileId?: string,
-  fileName?: string
+  fileName?: string,
+  fileType: FileType = "pdf",
+  mimeType?: string
 ): Promise<ProcessResult> {
   if (!isValidUUID(notebookId)) throw new Error("Invalid notebookId");
   if (!isValidUUID(userId)) throw new Error("Invalid userId");
@@ -57,8 +64,32 @@ export async function processNotebook(
   const supabase = getServiceClient();
 
   try {
-    const pdfResult: PdfResult = await extractText(pdfBuffer);
-    const text = sanitizeText(pdfResult.text);
+    let rawText: string;
+    let pageCount = 0;
+
+    switch (fileType) {
+      case "txt":
+        rawText = extractTextFromTxt(fileBuffer);
+        pageCount = 1;
+        break;
+      case "docx":
+        rawText = await extractTextFromDocx(fileBuffer);
+        pageCount = 1;
+        break;
+      case "image":
+        rawText = await extractTextFromImage(fileBuffer, mimeType ?? "image/jpeg");
+        pageCount = 1;
+        break;
+      case "pdf":
+      default: {
+        const pdfResult: PdfResult = await extractText(fileBuffer);
+        rawText = pdfResult.text;
+        pageCount = pdfResult.pageCount;
+        break;
+      }
+    }
+
+    const text = sanitizeText(rawText);
 
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 2000,
@@ -126,7 +157,7 @@ export async function processNotebook(
     // Update notebook status and page count
     await supabase
       .from("notebooks")
-      .update({ status: "ready", page_count: pdfResult.pageCount })
+      .update({ status: "ready", page_count: pageCount })
       .eq("id", notebookId);
 
     // Generate title and description (fire-and-forget)
@@ -135,7 +166,7 @@ export async function processNotebook(
     );
 
     return {
-      pageCount: pdfResult.pageCount,
+      pageCount,
       chunkCount: chunks.length,
       sampleText: chunks.slice(0, 3).join("\n\n"),
     };
@@ -216,6 +247,44 @@ export async function retrieveChunks(
 
   if (error) {
     console.error("[rag] Vector search failed:", error);
+    throw new Error("Failed to retrieve document context");
+  }
+
+  return (data ?? []).map(
+    (row: { id: string; content: string; similarity: number; metadata?: { file_name?: string } }) => ({
+      chunkId: row.id,
+      content: row.content,
+      similarity: row.similarity,
+      fileName: row.metadata?.file_name,
+    })
+  );
+}
+
+/**
+ * Retrieve chunks for shared/group notebooks.
+ * Uses match_chunks_shared which checks notebook_members table.
+ */
+export async function retrieveChunksShared(
+  query: string,
+  notebookId: string,
+  requestingUserId: string
+): Promise<Source[]> {
+  if (!isValidUUID(notebookId)) throw new Error("Invalid notebookId");
+  if (!isValidUUID(requestingUserId)) throw new Error("Invalid userId");
+
+  const supabase = getServiceClient();
+  const queryEmbedding = await embedText(query);
+
+  const { data, error } = await supabase.rpc("match_chunks_shared", {
+    query_embedding: JSON.stringify(queryEmbedding),
+    match_notebook_id: notebookId,
+    requesting_user_id: requestingUserId,
+    match_count: 5,
+    match_threshold: 0.5,
+  });
+
+  if (error) {
+    console.error("[rag] Shared vector search failed:", error);
     throw new Error("Failed to retrieve document context");
   }
 

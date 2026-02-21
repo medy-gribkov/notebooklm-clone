@@ -17,7 +17,9 @@
   "login": {
     "title": "Sign in to your account",
     "subtitle": "New here? Signing in creates your account automatically.",
-    "githubButton": "Continue with GitHub",
+    "githubButton": "GitHub",
+    "googleButton": "Google",
+    "googleFailed": "Google sign-in failed. Please try email instead.",
     "emailDivider": "or sign in with email",
     "emailLabel": "Email address",
     "emailPlaceholder": "you@example.com",
@@ -86,7 +88,14 @@
     "emptyTitle": "No notebooks yet",
     "emptyDescription": "Upload a PDF to start chatting with your documents",
     "noResults": "No notebooks match your search",
-    "featuredNotebooks": "Featured Templates"
+    "featuredNotebooks": "Featured notebooks",
+    "tabAll": "All",
+    "tabMine": "My notebooks",
+    "tabFeatured": "Featured notebooks",
+    "createNew": "Create new",
+    "seeAll": "See all",
+    "recentNotebooks": "Recent notebooks",
+    "createNewNotebook": "Create new notebook"
   },
   "featured": {
     "gettingStarted": "Getting Started with DocChat",
@@ -96,7 +105,15 @@
     "meetingOrganizer": "Meeting Notes Organizer",
     "meetingOrganizerDesc": "Organize and summarize meeting documents",
     "studyGuide": "Study Guide Builder",
-    "studyGuideDesc": "Create study materials from your textbooks"
+    "studyGuideDesc": "Create study materials from your textbooks",
+    "dataAnalysis": "Data Analysis Workspace",
+    "dataAnalysisDesc": "Extract insights from research data and statistics",
+    "legalReview": "Legal Document Review",
+    "legalReviewDesc": "Analyze contracts, clauses, and obligations",
+    "productSpecs": "Product Specs Analyzer",
+    "productSpecsDesc": "Break down PRDs and feature requirements",
+    "literatureReview": "Literature Review Assistant",
+    "literatureReviewDesc": "Synthesize findings across academic papers"
   },
   "notebook": {
     "dashboard": "Dashboard",
@@ -133,7 +150,8 @@
     "viewPdf": "View PDF",
     "deleteFile": "Delete file",
     "pdfOnly": "Only PDF files are supported",
-    "fileTooLarge": "File must be under 5 MB",
+    "unsupportedType": "Unsupported file type. Upload PDF, DOCX, TXT, or images.",
+    "fileTooLarge": "File is too large",
     "pages": "{count} pages",
     "failed": "Failed"
   },
@@ -166,8 +184,6 @@
     "slidedeckDesc": "Presentation slides with key points",
     "audioOverview": "Audio Overview",
     "audioOverviewDesc": "Listen to a summary of your document",
-    "videoOverview": "Video Overview",
-    "videoOverviewDesc": "Watch a visual summary of your document",
     "comingSoon": "Coming soon",
     "regenerate": "Regenerate",
     "generating": "Generating {type}...",
@@ -225,6 +241,8 @@
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
+    "accentColor": "Accent color",
+    "accentColorDesc": "Choose your preferred accent color",
     "language": "Language",
     "english": "English",
     "hebrew": "Hebrew",
@@ -248,5 +266,42 @@
     "deleteAccount": "Delete account",
     "deleteAccountConfirm": "Are you sure? This will permanently delete your account and all data.",
     "deleteAccountNote": "This action cannot be undone."
+  },
+  "share": {
+    "title": "Share notebook",
+    "createLink": "Create share link",
+    "viewOnly": "View only",
+    "viewAndChat": "View and chat",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "expires": "Expires {date}",
+    "noExpiry": "No expiration",
+    "revoke": "Revoke",
+    "activeLinks": "Active links",
+    "noLinks": "No shared links yet",
+    "readOnly": "This is a shared notebook. Sign up for full access.",
+    "chatLimit": "Chat limit reached. Try again later.",
+    "signUpCta": "Sign up for full access",
+    "expire7": "7 days",
+    "expire30": "30 days",
+    "expireNever": "Never"
+  },
+  "export": {
+    "title": "Export",
+    "markdown": "Export as Markdown",
+    "json": "Export as JSON"
+  },
+  "members": {
+    "title": "Members",
+    "invite": "Invite member",
+    "emailPlaceholder": "Enter email address",
+    "editor": "Editor",
+    "viewer": "Viewer",
+    "owner": "Owner",
+    "remove": "Remove",
+    "inviteButton": "Invite",
+    "noMembers": "No members yet",
+    "userNotFound": "User not found. They must sign up first.",
+    "sharedWithMe": "Shared with me"
   }
 }
