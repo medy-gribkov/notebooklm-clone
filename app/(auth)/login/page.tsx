@@ -148,13 +148,13 @@ function LoginContent() {
       {/* Left panel - theme-adaptive */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
         {/* Light mode gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[oklch(0.95_0.03_250)] via-[oklch(0.90_0.06_270)] to-[oklch(0.85_0.10_260)] dark:from-[oklch(0.35_0.2_275)] dark:via-[oklch(0.25_0.15_290)] dark:to-[oklch(0.18_0.12_260)] animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F0F0EB] via-[#EBDBBC] to-[#D4A27F] dark:from-[#191919] dark:via-[#262625] dark:to-[#40403E] animate-gradient" />
 
         {/* Floating decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-[15%] left-[10%] h-64 w-64 rounded-full bg-primary/10 dark:bg-[oklch(0.5_0.2_275_/_0.1)] blur-3xl animate-float" />
-          <div className="absolute bottom-[20%] right-[15%] h-48 w-48 rounded-full bg-primary/8 dark:bg-[oklch(0.6_0.18_290_/_0.08)] blur-3xl animate-float [animation-delay:1.5s]" />
-          <div className="absolute top-[50%] left-[50%] h-32 w-32 rounded-full bg-primary/6 dark:bg-[oklch(0.7_0.15_260_/_0.06)] blur-2xl animate-float [animation-delay:3s]" />
+          <div className="absolute top-[15%] left-[10%] h-64 w-64 rounded-full bg-[#CC785C]/10 dark:bg-[#CC785C]/5 blur-3xl animate-float" />
+          <div className="absolute bottom-[20%] right-[15%] h-48 w-48 rounded-full bg-[#CC785C]/8 dark:bg-[#D4A27F]/5 blur-3xl animate-float [animation-delay:1.5s]" />
+          <div className="absolute top-[50%] left-[50%] h-32 w-32 rounded-full bg-[#EBDBBC]/30 dark:bg-[#40403E]/20 blur-2xl animate-float [animation-delay:3s]" />
         </div>
 
         {/* Content */}
@@ -165,7 +165,7 @@ function LoginContent() {
             <h1 className="text-display text-4xl animate-slide-up">
               {t("heroTitle1")}
               <br />
-              <span className="bg-gradient-to-r from-primary via-[oklch(0.55_0.18_275)] to-[oklch(0.45_0.2_290)] dark:from-white dark:via-[oklch(0.85_0.1_275)] dark:to-[oklch(0.75_0.15_290)] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#CC785C] via-[#D4A27F] to-[#EBDBBC] dark:from-[#FAFAF7] dark:via-[#EBDBBC] dark:to-[#D4A27F] bg-clip-text text-transparent">
                 {t("heroTitle2")}
               </span>
             </h1>

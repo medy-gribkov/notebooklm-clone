@@ -56,6 +56,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to create notebook" }, { status: 500 });
   }
 
+  // Calculate estimated pages from content length
+  const estimatedPages = content.content
+    ? Math.max(1, Math.ceil(content.content.length / 3000))
+    : 1;
+
+  // Insert a synthetic file entry so sources panel isn't empty
+  const { error: fileError } = await supabase.from("notebook_files").insert({
+    notebook_id: notebook.id,
+    user_id: user.id,
+    file_name: `${title}.pdf`,
+    storage_path: `featured/${slug}`,
+    status: "ready",
+    page_count: estimatedPages,
+  });
+
+  if (fileError) {
+    console.error("[clone-featured] Failed to insert file entry:", fileError);
+  }
+
   // Insert pre-generated studio content as generations
   const actions: { action: string; result: unknown }[] = [
     { action: "quiz", result: content.quiz },
@@ -116,8 +135,7 @@ export async function POST(request: Request) {
         }
       }
 
-      // Update page count based on content length
-      const estimatedPages = Math.max(1, Math.ceil(content.content.length / 3000));
+      // Update page count on the notebook record
       await supabase
         .from("notebooks")
         .update({ page_count: estimatedPages })

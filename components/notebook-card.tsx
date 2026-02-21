@@ -75,7 +75,7 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete,
   const isError = notebook.status === "error" || timedOut;
 
   return (
-    <div className="group relative rounded-2xl border bg-card overflow-hidden transition-all duration-200 shadow-sm shadow-black/[0.03] dark:shadow-none hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20 hover:-translate-y-1 min-h-[200px]">
+    <div className="group relative rounded-2xl border bg-card overflow-hidden transition-all duration-200 shadow-sm shadow-black/[0.03] dark:shadow-none hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20 hover:-translate-y-0.5 min-h-[180px]">
       <Link
         href={isClickable ? `/notebook/${notebook.id}` : "#"}
         className={`block p-5 ${!isClickable ? "pointer-events-none" : ""}`}

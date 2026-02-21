@@ -222,10 +222,10 @@ export default function DashboardPage() {
 
   const gridColsClass =
     gridDensity === "compact"
-      ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5"
+      ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
       : gridDensity === "spacious"
-        ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-        : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+        ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
+        : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5";
 
   function handleDensityChange(d: GridDensity) {
     setGridDensity(d);
@@ -236,7 +236,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-10">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
           <Logo />
           <div className="flex items-center gap-2">
             <LanguageToggle />
@@ -246,7 +246,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+      <main className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
         {/* Tab bar + Toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b pb-3 animate-slide-up [animation-delay:50ms]">
           {/* Tabs */}
@@ -348,7 +348,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3 mb-4">
               <h2 className="text-title flex-1">{t("recentNotebooks")}</h2>
               {!loading && notebooks.length > 0 && (
-                <div className="relative w-56">
+                <div className="relative w-48 lg:w-64">
                   <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -433,7 +433,7 @@ export default function DashboardPage() {
         )}
       </main>
 
-      <footer className="border-t py-4">
+      <footer className="border-t py-6">
         <p className="text-center text-xs text-muted-foreground/40">
           Built by{" "}
           <a href="https://mahdygribkov.vercel.app" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-muted-foreground transition-colors">
@@ -488,7 +488,7 @@ function FeaturedCarousel({
   function scroll(direction: "left" | "right") {
     const el = scrollRef.current;
     if (!el) return;
-    const amount = (CARD_WIDTH + GAP) * 2;
+    const amount = el.clientWidth - GAP;
     el.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
   }
 
@@ -496,6 +496,68 @@ function FeaturedCarousel({
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ left: idx * (CARD_WIDTH + GAP), behavior: "smooth" });
+  }
+
+  const isGridMode = activeTab === "featured";
+
+  function renderCard(fn: FeaturedNotebook, i: number, fullWidth?: boolean) {
+    return (
+      <button
+        key={fn.slug}
+        onClick={() => onOpenFeatured(fn.slug)}
+        className="relative shrink-0 rounded-xl overflow-hidden group hover:scale-[1.02] hover:shadow-xl transition-all duration-200 featured-shadow cursor-pointer"
+        style={{
+          width: fullWidth ? "100%" : CARD_WIDTH,
+          height: 220,
+          scrollSnapAlign: fullWidth ? undefined : "start",
+          animationDelay: `${i * 60}ms`,
+        }}
+      >
+        {/* Gradient background */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${fn.gradient}`} />
+        {/* Decorative pattern */}
+        <div className="absolute inset-0 opacity-[0.08]">
+          <CardPattern pattern={fn.pattern} />
+        </div>
+        {/* Mesh overlay */}
+        <div className="absolute inset-0 featured-mesh" />
+
+        {/* Large decorative icon */}
+        <div className="absolute top-3 right-3 text-3xl opacity-30 z-10 drop-shadow-sm">
+          <FeaturedIcon type={fn.icon} />
+        </div>
+
+        {/* Author badge (top-left) */}
+        <div className="absolute top-3 left-3 flex items-center gap-2 z-10">
+          <div className="h-6 w-6 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-xs">
+            <FeaturedIcon type={fn.icon} />
+          </div>
+          <span className="text-xs font-medium text-white/90 drop-shadow-sm">
+            {fn.author}
+          </span>
+        </div>
+
+        {/* Content (bottom) */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-10">
+          <h3 className="text-white font-semibold text-base leading-tight mb-1 drop-shadow-sm">
+            {tf(fn.titleKey)}
+          </h3>
+          <p className="text-white/70 text-xs leading-snug mb-2 line-clamp-2">
+            {tf(fn.descriptionKey)}
+          </p>
+          <div className="flex items-center gap-2 text-xs text-white/60">
+            <span>{fn.date}</span>
+            <span className="text-white/30">&middot;</span>
+            <span className="flex items-center gap-1">
+              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              {fn.sourceCount} sources
+            </span>
+          </div>
+        </div>
+      </button>
+    );
   }
 
   return (
@@ -517,109 +579,66 @@ function FeaturedCarousel({
         </div>
       </div>
 
-      <div className="relative group/carousel">
-        {/* Left arrow */}
-        {canScrollLeft && (
-          <button
-            onClick={() => scroll("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-background/90 border shadow-lg flex items-center justify-center text-foreground transition-opacity -translate-x-1/2 hover:bg-background hidden sm:flex"
-            aria-label="Scroll left"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-        )}
-
-        {/* Right arrow */}
-        {canScrollRight && (
-          <button
-            onClick={() => scroll("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-background/90 border shadow-lg flex items-center justify-center text-foreground transition-opacity translate-x-1/2 hover:bg-background hidden sm:flex"
-            aria-label="Scroll right"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        )}
-
-        {/* Cards container */}
-        <div
-          ref={scrollRef}
-          className="flex gap-4 overflow-x-auto pb-3 scrollbar-none carousel-fade-edges"
-          style={{ scrollSnapType: "x mandatory" }}
-        >
-          {notebooks.map((fn, i) => (
+      {isGridMode ? (
+        /* Grid layout for "Featured notebooks" tab */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {notebooks.map((fn, i) => renderCard(fn, i, true))}
+        </div>
+      ) : (
+        /* Carousel layout for "All" tab */
+        <div className="relative group/carousel overflow-hidden">
+          {/* Left arrow */}
+          {canScrollLeft && (
             <button
-              key={fn.slug}
-              onClick={() => onOpenFeatured(fn.slug)}
-              className="relative shrink-0 rounded-xl overflow-hidden group hover:scale-[1.02] hover:shadow-xl transition-all duration-200 featured-shadow cursor-pointer"
-              style={{ width: CARD_WIDTH, height: 220, scrollSnapAlign: "start", animationDelay: `${i * 60}ms` }}
+              onClick={() => scroll("left")}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-background/90 border shadow-lg hidden sm:flex items-center justify-center text-foreground hover:bg-background"
+              aria-label="Scroll left"
             >
-              {/* Gradient background */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${fn.gradient}`} />
-              {/* Decorative pattern */}
-              <div className="absolute inset-0 opacity-[0.08]">
-                <CardPattern pattern={fn.pattern} />
-              </div>
-              {/* Mesh overlay */}
-              <div className="absolute inset-0 featured-mesh" />
-
-              {/* Large decorative icon */}
-              <div className="absolute top-3 right-3 text-3xl opacity-30 z-10 drop-shadow-sm">
-                <FeaturedIcon type={fn.icon} />
-              </div>
-
-              {/* Author badge (top-left) */}
-              <div className="absolute top-3 left-3 flex items-center gap-2 z-10">
-                <div className="h-6 w-6 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-xs">
-                  <FeaturedIcon type={fn.icon} />
-                </div>
-                <span className="text-xs font-medium text-white/90 drop-shadow-sm">
-                  {fn.author}
-                </span>
-              </div>
-
-              {/* Content (bottom) */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-10">
-                <h3 className="text-white font-semibold text-base leading-tight mb-1 drop-shadow-sm">
-                  {tf(fn.titleKey)}
-                </h3>
-                <p className="text-white/70 text-xs leading-snug mb-2 line-clamp-2">
-                  {tf(fn.descriptionKey)}
-                </p>
-                <div className="flex items-center gap-2 text-xs text-white/60">
-                  <span>{fn.date}</span>
-                  <span className="text-white/30">&middot;</span>
-                  <span className="flex items-center gap-1">
-                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    {fn.sourceCount} sources
-                  </span>
-                </div>
-              </div>
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
-          ))}
-        </div>
+          )}
 
-        {/* Dot indicators */}
-        <div className="flex justify-center gap-1.5 mt-3">
-          {notebooks.map((fn, i) => (
+          {/* Right arrow */}
+          {canScrollRight && (
             <button
-              key={fn.slug}
-              onClick={() => scrollToIndex(i)}
-              className={`h-1.5 rounded-full transition-all ${
-                i === activeIndex
-                  ? "w-6 bg-primary"
-                  : "w-1.5 bg-muted-foreground/20 hover:bg-muted-foreground/40"
-              }`}
-              aria-label={`Go to ${tf(fn.titleKey)}`}
-            />
-          ))}
+              onClick={() => scroll("right")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-background/90 border shadow-lg hidden sm:flex items-center justify-center text-foreground hover:bg-background"
+              aria-label="Scroll right"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Cards container */}
+          <div
+            ref={scrollRef}
+            className="flex gap-4 overflow-x-auto pb-3 scrollbar-none carousel-fade-edges"
+            style={{ scrollSnapType: "x mandatory" }}
+          >
+            {notebooks.map((fn, i) => renderCard(fn, i))}
+          </div>
+
+          {/* Dot indicators */}
+          <div className="flex justify-center gap-1.5 mt-3">
+            {notebooks.map((fn, i) => (
+              <button
+                key={fn.slug}
+                onClick={() => scrollToIndex(i)}
+                className={`h-2 rounded-full transition-all ${
+                  i === activeIndex
+                    ? "w-6 bg-primary"
+                    : "w-2 bg-muted-foreground/20 hover:bg-muted-foreground/40"
+                }`}
+                aria-label={`Go to ${tf(fn.titleKey)}`}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
