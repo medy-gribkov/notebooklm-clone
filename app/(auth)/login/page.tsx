@@ -416,12 +416,6 @@ function LoginContent() {
                 </Button>
               </form>
 
-              {mode === "signin" && (
-                <p className="text-caption text-center">
-                  {t("emailNote")}
-                </p>
-              )}
-
               {error && (
                 <p
                   role="alert"
