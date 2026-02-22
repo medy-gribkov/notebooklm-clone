@@ -32,7 +32,11 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   output: "standalone",
+  compress: true,
   serverExternalPackages: ["pdf-parse"],
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "*.supabase.co" }],
+  },
   async headers() {
     return [
       {

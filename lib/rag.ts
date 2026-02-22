@@ -340,17 +340,18 @@ export function buildContextBlock(sources: Source[]): string {
 async function generateNotebookMeta(notebookId: string, sampleText: string): Promise<void> {
   const supabase = getServiceClient();
 
-  const systemPrompt = `You generate metadata for a document. Return ONLY valid JSON, no markdown.
+  const systemPrompt = `You generate metadata for uploaded sources. Return ONLY valid JSON, no markdown.
 Format: {"title": "...", "description": "...", "starterPrompts": ["...", "...", "...", "...", "...", "..."]}
 
 Rules:
 - title: A clear, descriptive title (max 60 chars). Not the filename.
-- description: Describe what the document is about and its key topics (max 150 chars).
-- starterPrompts: 6 diverse questions a user might ask about this document (max 80 chars each).
-  Include a mix: summary, key findings, comparisons, evidence, methodology, implications.
+- description: Describe what these sources cover and their key topics (max 150 chars).
+- starterPrompts: 6 diverse questions a user might ask about these sources (max 80 chars each).
+  Adapt prompts to the content type (business, creative, academic, technical, legal, etc.).
+  Include a mix: overview, key details, comparisons, data points, takeaways, action items.
 
-Example:
-{"title": "Climate Change Impact Report 2024", "description": "Analysis of climate change effects on agriculture, water resources, and coastal ecosystems with policy recommendations.", "starterPrompts": ["Summarize the key findings of this report", "What are the main impacts on agriculture?", "How does climate change affect water resources?", "What policy recommendations are proposed?", "Compare the impacts across different regions", "What evidence supports the main conclusions?"]}`;
+Example for a business report:
+{"title": "Q3 Revenue Analysis Report", "description": "Quarterly revenue breakdown by region with growth trends, cost analysis, and strategic recommendations.", "starterPrompts": ["What are the key takeaways from this report?", "Which region had the highest growth?", "What cost trends are highlighted?", "What strategic recommendations are made?", "How does Q3 compare to previous quarters?", "What risks or concerns are mentioned?"]}`;
 
   async function attemptGenerate(excerpt: string): Promise<{ title?: string; description?: string; starterPrompts?: string[] } | null> {
     try {

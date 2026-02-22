@@ -86,8 +86,8 @@ describe("checkRateLimit", () => {
     for (let i = 0; i <= 10_000; i++) {
       checkRateLimit(`flood-${i}`, 100, 999_999_999);
     }
-    // After exceeding MAX_ENTRIES, store.clear() is called on next call.
-    // The next call for a previously-added key should succeed (was cleared)
+    // After exceeding MAX_ENTRIES, oldest 1000 entries are evicted on next call.
+    // The next call for an evicted key should succeed (creates fresh entry)
     expect(checkRateLimit("flood-0", 1, 60_000)).toBe(true);
   });
 });

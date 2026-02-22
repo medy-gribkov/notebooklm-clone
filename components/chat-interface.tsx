@@ -307,7 +307,7 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
                       <div
                         className={`group/msg relative rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${isUser
                           ? "bg-primary text-primary-foreground rounded-br-md shadow-sm shadow-black/[0.04]"
-                          : "bg-muted/30 border border-border/50 rounded-bl-md shadow-sm shadow-black/[0.02] dark:shadow-none"
+                          : "bg-muted/30 border border-border/50 border-l-2 border-l-primary/30 rounded-bl-md shadow-sm shadow-black/[0.02] dark:shadow-none"
                           }`}
                       >
                         {isUser ? (

@@ -2,16 +2,18 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { FlashcardsView } from "@/components/studio/flashcards";
-import { QuizView } from "@/components/studio/quiz";
-import { ReportView } from "@/components/studio/report";
-import { MindMapView } from "@/components/studio/mindmap";
-import { DataTableView } from "@/components/studio/datatable";
-import { InfographicView } from "@/components/studio/infographic";
-import { SlideDeckView } from "@/components/studio/slidedeck";
-import { NoteEditor } from "@/components/studio/note-editor";
 import type { Note, StudioGeneration } from "@/types";
+
+const FlashcardsView = dynamic(() => import("@/components/studio/flashcards").then(m => ({ default: m.FlashcardsView })));
+const QuizView = dynamic(() => import("@/components/studio/quiz").then(m => ({ default: m.QuizView })));
+const ReportView = dynamic(() => import("@/components/studio/report").then(m => ({ default: m.ReportView })));
+const MindMapView = dynamic(() => import("@/components/studio/mindmap").then(m => ({ default: m.MindMapView })));
+const DataTableView = dynamic(() => import("@/components/studio/datatable").then(m => ({ default: m.DataTableView })));
+const InfographicView = dynamic(() => import("@/components/studio/infographic").then(m => ({ default: m.InfographicView })));
+const SlideDeckView = dynamic(() => import("@/components/studio/slidedeck").then(m => ({ default: m.SlideDeckView })));
+const NoteEditor = dynamic(() => import("@/components/studio/note-editor").then(m => ({ default: m.NoteEditor })));
 
 type StudioAction = "flashcards" | "quiz" | "report" | "mindmap" | "datatable" | "infographic" | "slidedeck";
 // Audio is handled separately via Groq TTS, not through the studio generation endpoint
@@ -57,6 +59,13 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
   // Audio state
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [generatingAudio, setGeneratingAudio] = useState(false);
+
+  // Cleanup audio object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+    };
+  }, [audioUrl]);
 
   // View state: which result is being viewed (from generation or history)
   const [viewingResult, setViewingResult] = useState<{ action: StudioAction; result: StudioResult } | null>(null);
@@ -135,8 +144,10 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
         throw new Error(body.error ?? `Failed (${res.status})`);
       }
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      setAudioUrl(url);
+      setAudioUrl(prev => {
+        if (prev) URL.revokeObjectURL(prev);
+        return URL.createObjectURL(blob);
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Audio generation failed");
     } finally {

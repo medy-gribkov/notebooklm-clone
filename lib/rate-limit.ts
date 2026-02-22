@@ -18,9 +18,10 @@ export function checkRateLimit(
     if (v.resetAt <= now) store.delete(k);
   }
 
-  // Prevent unbounded growth from spoofed keys
+  // Prevent unbounded growth: evict oldest 1000 entries instead of clearing all
   if (store.size > MAX_ENTRIES) {
-    store.clear();
+    const toDelete = Array.from(store.keys()).slice(0, 1000);
+    for (const k of toDelete) store.delete(k);
   }
 
   const entry = store.get(key);
