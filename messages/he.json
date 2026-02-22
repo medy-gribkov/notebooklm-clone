@@ -164,7 +164,9 @@
     "fileTooLarge": "הקובץ גדול מדי",
     "pages": "{count} עמודים",
     "failed": "נכשל",
-    "duplicateFile": "קובץ זה כבר הועלה"
+    "duplicateFile": "קובץ זה כבר הועלה",
+    "fileLimitReached": "מקסימום 5 קבצים למחברת. מחק קובץ כדי להעלות עוד.",
+    "uploadingCount": "מעלה {count} {count, plural, one {קובץ} other {קבצים}}..."
   },
   "sourcePanel": {
     "sourcesCited": "מקורות מצוטטים",

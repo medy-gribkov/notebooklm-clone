@@ -80,7 +80,7 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!checkRateLimit(user.id + ":upload", 3, 3_600_000)) {
+  if (!checkRateLimit(user.id + ":file-upload", 15, 3_600_000)) {
     return NextResponse.json(
       { error: "Too many uploads. Please wait before uploading again." },
       { status: 429, headers: { "Retry-After": "60" } }
@@ -97,6 +97,21 @@ export async function POST(
 
   if (!notebook) {
     return NextResponse.json({ error: "Notebook not found" }, { status: 404 });
+  }
+
+  // Enforce max 5 files per notebook
+  const MAX_FILES_PER_NOTEBOOK = 5;
+  const { count: fileCount } = await supabase
+    .from("notebook_files")
+    .select("id", { count: "exact", head: true })
+    .eq("notebook_id", notebookId)
+    .eq("user_id", user.id);
+
+  if ((fileCount ?? 0) >= MAX_FILES_PER_NOTEBOOK) {
+    return NextResponse.json(
+      { error: "Maximum 5 files per notebook. Delete a file to upload more." },
+      { status: 400 }
+    );
   }
 
   const formData = await request.formData();

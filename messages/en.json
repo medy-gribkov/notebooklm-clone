@@ -164,7 +164,9 @@
     "fileTooLarge": "File is too large",
     "pages": "{count} pages",
     "failed": "Failed",
-    "duplicateFile": "This file has already been uploaded"
+    "duplicateFile": "This file has already been uploaded",
+    "fileLimitReached": "Maximum 5 files per notebook. Delete a file to upload more.",
+    "uploadingCount": "Uploading {count} {count, plural, one {file} other {files}}..."
   },
   "sourcePanel": {
     "sourcesCited": "Sources Cited",

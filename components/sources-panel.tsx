@@ -14,9 +14,13 @@ interface SourcesPanelProps {
 export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
   const t = useTranslations("sources");
   const [files, setFiles] = useState<NotebookFile[]>(initialFiles);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingFiles, setUploadingFiles] = useState<Map<string, number>>(new Map());
+  const uploading = uploadingFiles.size > 0;
+  const uploadProgress = uploading
+    ? Math.round([...uploadingFiles.values()].reduce((a, b) => a + b, 0) / uploadingFiles.size)
+    : 0;
   const [error, setError] = useState<string | null>(null);
+  const MAX_FILES = 5;
   const [dragging, setDragging] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,10 +43,14 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
       setError(t("duplicateFile"));
       return;
     }
+    if (files.length >= MAX_FILES) {
+      setError(t("fileLimitReached"));
+      return;
+    }
 
+    const uploadKey = `${file.name}-${Date.now()}`;
     setError(null);
-    setUploading(true);
-    setUploadProgress(0);
+    setUploadingFiles((prev) => new Map(prev).set(uploadKey, 0));
 
     const formData = new FormData();
     formData.append("file", file);
@@ -53,11 +61,12 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
       const result = await new Promise<NotebookFile>((resolve, reject) => {
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
-            setUploadProgress(Math.round((e.loaded / e.total) * 80));
+            const pct = Math.round((e.loaded / e.total) * 80);
+            setUploadingFiles((prev) => new Map(prev).set(uploadKey, pct));
           }
         };
         xhr.upload.onloadend = () => {
-          setUploadProgress(90);
+          setUploadingFiles((prev) => new Map(prev).set(uploadKey, 90));
         };
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
@@ -80,14 +89,17 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
         xhr.send(formData);
       });
 
-      setUploadProgress(100);
+      setUploadingFiles((prev) => new Map(prev).set(uploadKey, 100));
       setFiles((prev) => [result, ...prev]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setTimeout(() => {
-        setUploading(false);
-        setUploadProgress(0);
+        setUploadingFiles((prev) => {
+          const next = new Map(prev);
+          next.delete(uploadKey);
+          return next;
+        });
       }, 500);
     }
   }, [notebookId, t, files]);
@@ -109,7 +121,13 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
-    const selected = Array.from(fileList).slice(0, 10);
+    const remaining = MAX_FILES - files.length;
+    if (remaining <= 0) {
+      setError(t("fileLimitReached"));
+      e.target.value = "";
+      return;
+    }
+    const selected = Array.from(fileList).slice(0, remaining);
     for (const file of selected) {
       handleUpload(file);
     }
@@ -144,7 +162,12 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
     e.stopPropagation();
     setDragging(false);
     dragCounterRef.current = 0;
-    const dropped = Array.from(e.dataTransfer.files).slice(0, 10);
+    const remaining = MAX_FILES - files.length;
+    if (remaining <= 0) {
+      setError(t("fileLimitReached"));
+      return;
+    }
+    const dropped = Array.from(e.dataTransfer.files).slice(0, remaining);
     for (const file of dropped) {
       handleUpload(file);
     }
@@ -180,7 +203,7 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
           />
           <button
             onClick={() => inputRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading || files.length >= MAX_FILES}
             className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
           >
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,7 +221,7 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
             ? "border-primary bg-primary/5 scale-[1.01]"
             : "border-muted-foreground/20 hover:border-primary/40 hover:bg-primary/[0.02]"
         } ${uploading ? "pointer-events-none opacity-60" : ""}`}
-        onClick={() => !uploading && inputRef.current?.click()}
+        onClick={() => !uploading && files.length < MAX_FILES && inputRef.current?.click()}
       >
         <div className="flex items-center justify-center gap-2">
           <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,7 +243,9 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
             />
           </div>
           <p className="text-[10px] text-muted-foreground mt-1">
-            {uploadProgress < 80 ? t("uploading") : t("processing")}
+            {uploadingFiles.size > 1
+              ? t("uploadingCount", { count: uploadingFiles.size })
+              : uploadProgress < 80 ? t("uploading") : t("processing")}
           </p>
         </div>
       )}

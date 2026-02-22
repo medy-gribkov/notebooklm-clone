@@ -12,13 +12,13 @@ export async function updateNotebookStatus(notebookId: string): Promise<void> {
 
   const { data: files } = await supabase
     .from("notebook_files")
-    .select("status")
+    .select("status, page_count")
     .eq("notebook_id", notebookId);
 
   if (!files || files.length === 0) {
     await supabase
       .from("notebooks")
-      .update({ status: "ready" })
+      .update({ status: "ready", page_count: 0 })
       .eq("id", notebookId);
     return;
   }
@@ -33,8 +33,13 @@ export async function updateNotebookStatus(notebookId: string): Promise<void> {
     ? "ready"
     : "error";
 
+  const totalPageCount = files.reduce(
+    (sum: number, f: { page_count: number | null }) => sum + (f.page_count ?? 0),
+    0
+  );
+
   await supabase
     .from("notebooks")
-    .update({ status: notebookStatus })
+    .update({ status: notebookStatus, page_count: totalPageCount })
     .eq("id", notebookId);
 }

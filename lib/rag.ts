@@ -154,12 +154,6 @@ export async function processNotebook(
       }
     }
 
-    // Update notebook status and page count
-    await supabase
-      .from("notebooks")
-      .update({ status: "ready", page_count: pageCount })
-      .eq("id", notebookId);
-
     // Generate title and description (fire-and-forget)
     generateNotebookMeta(notebookId, chunks.slice(0, 3).join("\n\n")).catch((e) =>
       console.error("[processNotebook] Meta generation failed:", e)
@@ -189,10 +183,6 @@ export async function processNotebook(
       await supabase.from("chunks").delete().eq("notebook_id", notebookId);
     }
 
-    await supabase
-      .from("notebooks")
-      .update({ status: "error" })
-      .eq("id", notebookId);
     throw error;
   }
 }

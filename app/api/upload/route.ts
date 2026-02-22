@@ -1,6 +1,7 @@
 import { authenticateRequest } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { processNotebook } from "@/lib/rag";
+import { updateNotebookStatus } from "@/lib/notebook-status";
 import { getServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!checkRateLimit(user.id + ":upload", 3, 3_600_000)) {
+  if (!checkRateLimit(user.id + ":notebook-create", 5, 3_600_000)) {
     return NextResponse.json(
       { error: "Too many requests" },
       { status: 429, headers: { "Retry-After": "60" } }
@@ -144,6 +145,10 @@ export async function POST(request: Request) {
     // Clean up orphaned storage file
     await serviceClient.storage.from("pdf-uploads").remove([storagePath])
       .then(null, (e: unknown) => console.error("[upload] Failed to clean up storage:", e));
+
+    // Recompute notebook status from all files
+    await updateNotebookStatus(notebook.id);
+
     const msg =
       error instanceof Error && error.message.includes("No text layer")
         ? "This PDF has no selectable text (scanned image). Please upload a text-based PDF."
@@ -158,9 +163,11 @@ export async function POST(request: Request) {
         : error instanceof Error && error.message.includes("embedding shape")
         ? "Processing failed. Please try again."
         : "Processing failed. Please try again.";
-    // Notebook row already set to "error" status by processNotebook
     return NextResponse.json({ error: msg }, { status: 500 });
   }
+
+  // Recompute notebook status from all files
+  await updateNotebookStatus(notebook.id);
 
   // Return the updated notebook
   const { data: updated } = await serviceClient
