@@ -168,7 +168,8 @@
     "failed": "Failed",
     "duplicateFile": "This file has already been uploaded",
     "fileLimitReached": "Maximum 5 files per notebook. Delete a file to upload more.",
-    "uploadingCount": "Uploading {count} {count, plural, one {file} other {files}}..."
+    "uploadingCount": "Uploading {count} {count, plural, one {file} other {files}}...",
+    "uploadInProgress": "Upload in progress from another panel..."
   },
   "sourcePanel": {
     "sourcesCited": "Sources Cited",
@@ -213,7 +214,8 @@
     "notePlaceholder": "Start writing...",
     "saving": "Saving...",
     "deleteNoteConfirm": "This will permanently delete this note. This action cannot be undone.",
-    "history": "History"
+    "history": "History",
+    "oneAtATime": "One generation at a time. Please wait for the current one to finish."
   },
   "upload": {
     "dropOrBrowse": "Drop a PDF here or {browse}",

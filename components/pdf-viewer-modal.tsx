@@ -29,7 +29,11 @@ export function PdfViewerModal({ notebookId, fileId, trigger }: PdfViewerModalPr
       const res = await fetch(`/api/notebooks/${notebookId}/pdf${params}`);
       if (!res.ok) throw new Error("Failed to load PDF");
       const { url } = await res.json();
-      setPdfUrl(url);
+      if (typeof url === "string" && url.startsWith("https://")) {
+        setPdfUrl(url);
+      } else {
+        throw new Error("Invalid PDF URL");
+      }
     } catch {
       setError("Could not load PDF. Please try again.");
     } finally {

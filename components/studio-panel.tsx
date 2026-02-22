@@ -311,6 +311,18 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
           </div>
         )}
 
+        {/* Concurrency message */}
+        {(generatingAction || generatingAudio) && (
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center mb-4 animate-fade-in">
+            <p className="text-xs text-primary font-medium">
+              {t("oneAtATime")}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {t("generating", { type: generatingAction ? t(generatingAction) : t("audioOverview") })}
+            </p>
+          </div>
+        )}
+
         {/* Tool grid */}
         <div className="grid grid-cols-2 gap-2.5">
           {features.map((feature) => {
@@ -320,16 +332,21 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
               <button
                 key={feature.action}
                 onClick={() => {
-                  if (isGenerating) return;
                   const existing = history.find((g) => g.action === feature.action);
                   if (existing) {
                     viewHistoryItem(existing);
-                  } else {
+                  } else if (!generatingAction && !generatingAudio) {
                     generate(feature.action);
                   }
                 }}
-                disabled={isGenerating}
-                className="group relative flex flex-col items-start gap-2 rounded-xl border bg-card p-3 text-left transition-all hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-wait"
+                disabled={!!(generatingAction || generatingAudio) && !hasHistory}
+                className={`group relative flex flex-col items-start gap-2 rounded-xl border bg-card p-3 text-left transition-all ${
+                  isGenerating
+                    ? "opacity-70 cursor-wait"
+                    : (generatingAction || generatingAudio) && !hasHistory
+                      ? "opacity-40 cursor-not-allowed"
+                      : "hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5"
+                }`}
               >
                 {hasHistory && !isGenerating && (
                   <span className="absolute top-2 right-2 flex h-2 w-2">
@@ -353,9 +370,23 @@ export function StudioPanel({ notebookId }: StudioPanelProps) {
           })}
           {/* Audio overview */}
           <button
-            onClick={handleGenerateAudio}
-            disabled={generatingAudio}
-            className="group relative flex flex-col items-start gap-2 rounded-xl border bg-card p-3 text-left transition-all hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-wait"
+            onClick={() => {
+              if (audioUrl && !generatingAudio) {
+                // Already have audio, scroll to player
+                return;
+              }
+              if (!generatingAction && !generatingAudio) {
+                handleGenerateAudio();
+              }
+            }}
+            disabled={!!(generatingAction || generatingAudio) && !audioUrl}
+            className={`group relative flex flex-col items-start gap-2 rounded-xl border bg-card p-3 text-left transition-all ${
+              generatingAudio
+                ? "opacity-70 cursor-wait"
+                : (generatingAction || generatingAudio) && !audioUrl
+                  ? "opacity-40 cursor-not-allowed"
+                  : "hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5"
+            }`}
           >
             {audioUrl && !generatingAudio && (
               <span className="absolute top-2 right-2 flex h-2 w-2">

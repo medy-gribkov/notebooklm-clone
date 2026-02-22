@@ -21,9 +21,11 @@ interface ChatInterfaceProps {
   description?: string | null;
   starterPrompts?: string[] | null;
   onFileUploaded?: (file: NotebookFile) => void;
+  isUploading?: boolean;
+  setIsUploading?: (v: boolean) => void;
 }
 
-export function ChatInterface({ notebookId, initialMessages, isProcessing = false, hasFiles = true, description, starterPrompts: dynamicPrompts, onFileUploaded }: ChatInterfaceProps) {
+export function ChatInterface({ notebookId, initialMessages, isProcessing = false, hasFiles = true, description, starterPrompts: dynamicPrompts, onFileUploaded, isUploading: externalUploading, setIsUploading }: ChatInterfaceProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -153,6 +155,7 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
       return;
     }
     setCenterUploading(true);
+    setIsUploading?.(true);
     const formData = new FormData();
     formData.append("file", file);
     fetch(`/api/notebooks/${notebookId}/files`, { method: "POST", body: formData })
@@ -166,7 +169,7 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
         }
       })
       .catch(() => setErrorMessage(t("genericError")))
-      .finally(() => setCenterUploading(false));
+      .finally(() => { setCenterUploading(false); setIsUploading?.(false); });
     e.target.value = "";
   }
 
@@ -220,7 +223,7 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
                 <p className="text-sm text-muted-foreground mb-4">{t("uploadToStartDesc")}</p>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={centerUploading}
+                  disabled={centerUploading || !!externalUploading}
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {centerUploading ? (

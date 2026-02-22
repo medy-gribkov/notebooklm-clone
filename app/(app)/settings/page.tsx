@@ -76,7 +76,7 @@ export default function SettingsPage() {
 
   function handleLocaleChange(newLocale: string) {
     setLocale(newLocale);
-    document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
+    document.cookie = `locale=${newLocale};path=/;max-age=31536000;Secure;SameSite=Lax`;
     router.refresh();
   }
 

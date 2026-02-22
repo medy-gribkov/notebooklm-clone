@@ -117,73 +117,72 @@ export async function POST(request: Request) {
     console.error("[clone-featured] Failed to insert generations:", genError);
   }
 
-  // Split content into chunks and generate embeddings for RAG
+  // Return immediately so the user can start using the notebook.
+  // Embeddings run in the background (fire-and-forget).
   if (fileEntries.length > 0) {
-    try {
-      const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 2000,
-        chunkOverlap: 200,
-      });
-      const serviceClient = getServiceClient();
+    const nbId = notebook.id;
+    const uid = user.id;
+    void (async () => {
+      try {
+        const splitter = new RecursiveCharacterTextSplitter({
+          chunkSize: 2000,
+          chunkOverlap: 200,
+        });
+        const serviceClient = getServiceClient();
 
-      let globalChunkIndex = 0;
-      const allChunkRows: {
-        notebook_id: string;
-        user_id: string;
-        content: string;
-        embedding: string;
-        chunk_index: number;
-        metadata: { file_id: string; file_name: string };
-      }[] = [];
+        let globalChunkIndex = 0;
+        const allChunkRows: {
+          notebook_id: string;
+          user_id: string;
+          content: string;
+          embedding: string;
+          chunk_index: number;
+          metadata: { file_id: string; file_name: string };
+        }[] = [];
 
-      // Process each file: split into chunks and embed
-      for (const file of fileEntries) {
-        const docs = await splitter.createDocuments([file.content]);
-        const chunks = docs.map((d) => d.pageContent);
+        for (const file of fileEntries) {
+          const docs = await splitter.createDocuments([file.content]);
+          const chunks = docs.map((d) => d.pageContent);
 
-        const BATCH_SIZE = 5;
-        for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-          const batch = chunks.slice(i, i + BATCH_SIZE);
-          const embeddings = await Promise.all(batch.map((chunk) => embedText(chunk)));
+          const BATCH_SIZE = 5;
+          for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+            const batch = chunks.slice(i, i + BATCH_SIZE);
+            const embeddings = await Promise.all(batch.map((chunk) => embedText(chunk)));
 
-          for (let idx = 0; idx < batch.length; idx++) {
-            allChunkRows.push({
-              notebook_id: notebook.id,
-              user_id: user.id,
-              content: batch[idx],
-              embedding: JSON.stringify(embeddings[idx]),
-              chunk_index: globalChunkIndex++,
-              metadata: { file_id: file.id, file_name: file.fileName },
-            });
+            for (let idx = 0; idx < batch.length; idx++) {
+              allChunkRows.push({
+                notebook_id: nbId,
+                user_id: uid,
+                content: batch[idx],
+                embedding: JSON.stringify(embeddings[idx]),
+                chunk_index: globalChunkIndex++,
+                metadata: { file_id: file.id, file_name: file.fileName },
+              });
+            }
+
+            if (i + BATCH_SIZE < chunks.length) {
+              await new Promise((r) => setTimeout(r, 6500));
+            }
           }
 
-          // Rate limit delay between batches
-          if (i + BATCH_SIZE < chunks.length) {
-            await new Promise((r) => setTimeout(r, 6500));
+          await new Promise((r) => setTimeout(r, 6500));
+        }
+
+        if (allChunkRows.length > 0) {
+          const { error: chunkError } = await serviceClient.from("chunks").insert(allChunkRows);
+          if (chunkError) {
+            console.error("[clone-featured] Failed to insert chunks:", chunkError.message);
           }
         }
 
-        // Delay between files to respect rate limits
-        await new Promise((r) => setTimeout(r, 6500));
+        await getServiceClient()
+          .from("notebooks")
+          .update({ page_count: totalPages })
+          .eq("id", nbId);
+      } catch (e) {
+        console.error("[clone-featured] Background embedding failed:", e);
       }
-
-      // Insert all chunks in one batch
-      if (allChunkRows.length > 0) {
-        const { error: chunkError } = await serviceClient.from("chunks").insert(allChunkRows);
-        if (chunkError) {
-          console.error("[clone-featured] Failed to insert chunks:", chunkError.message);
-        }
-      }
-
-      // Update page count on the notebook record
-      await supabase
-        .from("notebooks")
-        .update({ page_count: totalPages })
-        .eq("id", notebook.id);
-    } catch (e) {
-      console.error("[clone-featured] Embedding failed (non-fatal):", e);
-      // Non-fatal: notebook and studio content were created, chat just won't have RAG context
-    }
+    })();
   }
 
   return NextResponse.json({ notebookId: notebook.id }, { status: 201 });

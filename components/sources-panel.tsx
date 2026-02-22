@@ -9,13 +9,16 @@ import type { NotebookFile } from "@/types";
 interface SourcesPanelProps {
   notebookId: string;
   initialFiles: NotebookFile[];
+  isUploading?: boolean;
+  setIsUploading?: (v: boolean) => void;
 }
 
-export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
+export function SourcesPanel({ notebookId, initialFiles, isUploading: externalUploading, setIsUploading }: SourcesPanelProps) {
   const t = useTranslations("sources");
   const [files, setFiles] = useState<NotebookFile[]>(initialFiles);
   const [uploadingFiles, setUploadingFiles] = useState<Map<string, number>>(new Map());
-  const uploading = uploadingFiles.size > 0;
+  const localUploading = uploadingFiles.size > 0;
+  const uploading = localUploading || !!externalUploading;
   const uploadProgress = uploading
     ? Math.round([...uploadingFiles.values()].reduce((a, b) => a + b, 0) / uploadingFiles.size)
     : 0;
@@ -52,6 +55,7 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
     const uploadKey = `${file.name}-${Date.now()}`;
     setError(null);
     setUploadingFiles((prev) => new Map(prev).set(uploadKey, 0));
+    setIsUploading?.(true);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -99,11 +103,12 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
         setUploadingFiles((prev) => {
           const next = new Map(prev);
           next.delete(uploadKey);
+          if (next.size === 0) setIsUploading?.(false);
           return next;
         });
       }, 500);
     }
-  }, [notebookId, t]);
+  }, [notebookId, t, setIsUploading]);
 
   async function handleDelete(fileId: string) {
     setConfirmDeleteId(null);
@@ -235,7 +240,7 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
       </div>
 
       {/* Upload progress */}
-      {uploading && (
+      {localUploading && (
         <div className="mx-3 mt-2 shrink-0">
           <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
             <div
@@ -248,6 +253,13 @@ export function SourcesPanel({ notebookId, initialFiles }: SourcesPanelProps) {
               ? t("uploadingCount", { count: uploadingFiles.size })
               : uploadProgress < 80 ? t("uploading") : t("processing")}
           </p>
+        </div>
+      )}
+
+      {/* External upload lock message */}
+      {!localUploading && !!externalUploading && (
+        <div className="mx-3 mt-2 shrink-0">
+          <p className="text-[10px] text-muted-foreground">{t("uploadInProgress")}</p>
         </div>
       )}
 

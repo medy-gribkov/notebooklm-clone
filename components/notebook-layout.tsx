@@ -41,6 +41,7 @@ export function NotebookLayout({ notebookId, notebookTitle, notebookFiles, initi
   const [editValue, setEditValue] = useState(notebookTitle);
   const [shareOpen, setShareOpen] = useState(false);
   const [files, setFiles] = useState<NotebookFile[]>(notebookFiles);
+  const [isUploading, setIsUploading] = useState(false);
   const [currentStarterPrompts, setCurrentStarterPrompts] = useState<string[] | null | undefined>(starterPrompts);
   const promptRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -219,7 +220,7 @@ export function NotebookLayout({ notebookId, notebookTitle, notebookFiles, initi
             }`}
         >
           <div className="w-[260px] h-full min-w-[260px]">
-            <SourcesPanel notebookId={notebookId} initialFiles={files} />
+            <SourcesPanel notebookId={notebookId} initialFiles={files} isUploading={isUploading} setIsUploading={setIsUploading} />
           </div>
         </div>
 
@@ -233,6 +234,8 @@ export function NotebookLayout({ notebookId, notebookTitle, notebookFiles, initi
             description={notebookDescription}
             starterPrompts={currentStarterPrompts}
             onFileUploaded={handleFileUploaded}
+            isUploading={isUploading}
+            setIsUploading={setIsUploading}
           />
         </div>
 
@@ -266,7 +269,7 @@ export function NotebookLayout({ notebookId, notebookTitle, notebookFiles, initi
                 </button>
               </div>
               <div className="h-[calc(100%-49px)] overflow-hidden">
-                <SourcesPanel notebookId={notebookId} initialFiles={files} />
+                <SourcesPanel notebookId={notebookId} initialFiles={files} isUploading={isUploading} setIsUploading={setIsUploading} />
               </div>
             </div>
           </div>

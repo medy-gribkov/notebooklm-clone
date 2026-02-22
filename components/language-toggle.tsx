@@ -16,7 +16,7 @@ export function LanguageToggle() {
   function toggle() {
     const next = locale === "en" ? "he" : "en";
     setLocale(next);
-    document.cookie = `locale=${next};path=/;max-age=31536000`;
+    document.cookie = `locale=${next};path=/;max-age=31536000;Secure;SameSite=Lax`;
     router.refresh();
   }
 

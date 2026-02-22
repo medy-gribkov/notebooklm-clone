@@ -168,7 +168,8 @@
     "failed": "נכשל",
     "duplicateFile": "קובץ זה כבר הועלה",
     "fileLimitReached": "מקסימום 5 קבצים למחברת. מחק קובץ כדי להעלות עוד.",
-    "uploadingCount": "מעלה {count} {count, plural, one {קובץ} other {קבצים}}..."
+    "uploadingCount": "מעלה {count} {count, plural, one {קובץ} other {קבצים}}...",
+    "uploadInProgress": "העלאה בתהליך מפאנל אחר..."
   },
   "sourcePanel": {
     "sourcesCited": "מקורות מצוטטים",
@@ -213,7 +214,8 @@
     "notePlaceholder": "התחל לכתוב...",
     "saving": "שומר...",
     "deleteNoteConfirm": "פעולה זו תמחק את ההערה לצמיתות. לא ניתן לבטל פעולה זו.",
-    "history": "היסטוריה"
+    "history": "היסטוריה",
+    "oneAtATime": "יצירה אחת בכל פעם. אנא המתן לסיום הנוכחית."
   },
   "upload": {
     "dropOrBrowse": "גרור PDF לכאן או {browse}",
