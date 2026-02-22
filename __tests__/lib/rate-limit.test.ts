@@ -79,4 +79,15 @@ describe("checkRateLimit", () => {
     // At exactly the boundary, resetAt <= now, so entry is expired
     expect(checkRateLimit("boundary", 1, 10_000)).toBe(true);
   });
+
+  it("clears store when exceeding MAX_ENTRIES (10,000)", async () => {
+    const checkRateLimit = await getCheckRateLimit();
+    // Fill store with 10,001 unique keys (window far in the future so they don't expire)
+    for (let i = 0; i <= 10_000; i++) {
+      checkRateLimit(`flood-${i}`, 100, 999_999_999);
+    }
+    // After exceeding MAX_ENTRIES, store.clear() is called on next call.
+    // The next call for a previously-added key should succeed (was cleared)
+    expect(checkRateLimit("flood-0", 1, 60_000)).toBe(true);
+  });
 });

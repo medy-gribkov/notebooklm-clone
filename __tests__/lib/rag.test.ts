@@ -33,6 +33,9 @@ import { embedText, processNotebook, getAllChunks, retrieveChunks } from "@/lib/
 import { embedQuery } from "@/lib/llm";
 import { extractText } from "@/lib/pdf";
 import { getServiceClient } from "@/lib/supabase/service";
+import { generateText } from "ai";
+
+const mockedGenerateText = vi.mocked(generateText);
 
 const mockedEmbedQuery = vi.mocked(embedQuery);
 const mockedExtractText = vi.mocked(extractText);
@@ -253,5 +256,216 @@ describe("retrieveChunks", () => {
         fileName: "test.pdf",
       },
     ]);
+  });
+});
+
+describe("retrieveChunksShared", () => {
+  const validUUID = "550e8400-e29b-41d4-a716-446655440000";
+  const validUserUUID = "660e8400-e29b-41d4-a716-446655440000";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedEmbedQuery.mockResolvedValue(Array.from({ length: 768 }, () => 0.1));
+  });
+
+  it("throws for invalid notebookId", async () => {
+    const { retrieveChunksShared } = await import("@/lib/rag");
+    await expect(retrieveChunksShared("query", "bad", validUserUUID)).rejects.toThrow("Invalid notebookId");
+  });
+
+  it("throws for invalid userId", async () => {
+    const { retrieveChunksShared } = await import("@/lib/rag");
+    await expect(retrieveChunksShared("query", validUUID, "bad")).rejects.toThrow("Invalid userId");
+  });
+
+  it("returns mapped Source array from shared RPC", async () => {
+    mockedGetServiceClient.mockReturnValue({
+      from: vi.fn(),
+      rpc: vi.fn().mockResolvedValue({
+        data: [
+          { id: "sc-1", content: "Shared content", similarity: 0.9, metadata: { file_name: "shared.pdf" } },
+        ],
+        error: null,
+      }),
+    } as never);
+
+    const { retrieveChunksShared } = await import("@/lib/rag");
+    const result = await retrieveChunksShared("test", validUUID, validUserUUID);
+    expect(result).toEqual([
+      { chunkId: "sc-1", content: "Shared content", similarity: 0.9, fileName: "shared.pdf" },
+    ]);
+  });
+
+  it("throws on RPC error", async () => {
+    mockedGetServiceClient.mockReturnValue({
+      from: vi.fn(),
+      rpc: vi.fn().mockResolvedValue({ data: null, error: { message: "RPC failed" } }),
+    } as never);
+
+    const { retrieveChunksShared } = await import("@/lib/rag");
+    await expect(retrieveChunksShared("query", validUUID, validUserUUID)).rejects.toThrow("Failed to retrieve");
+  });
+
+  it("returns empty array when no data", async () => {
+    mockedGetServiceClient.mockReturnValue({
+      from: vi.fn(),
+      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    } as never);
+
+    const { retrieveChunksShared } = await import("@/lib/rag");
+    const result = await retrieveChunksShared("query", validUUID, validUserUUID);
+    expect(result).toEqual([]);
+  });
+});
+
+describe("generateNotebookMeta (via processNotebook)", () => {
+  const validUUID = "550e8400-e29b-41d4-a716-446655440000";
+  const validUserUUID = "660e8400-e29b-41d4-a716-446655440000";
+  let mockUpdate: ReturnType<typeof vi.fn>;
+
+  function createMetaMockSupabase() {
+    mockUpdate = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({}),
+    });
+    const deleteEq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({}),
+    });
+    const insertResult = vi.fn().mockResolvedValue({ error: null });
+
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      from: vi.fn((_table: string) => ({
+        delete: vi.fn().mockReturnValue({ eq: deleteEq }),
+        insert: insertResult,
+        update: mockUpdate,
+      })),
+    };
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    mockedExtractText.mockResolvedValue({ text: "Sample doc content", pageCount: 2 });
+    mockedEmbedQuery.mockResolvedValue(Array.from({ length: 768 }, () => 0.1));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("saves starterPrompts when generateText returns them", async () => {
+    const mock = createMetaMockSupabase();
+    mockedGetServiceClient.mockReturnValue(mock as never);
+    mockedGenerateText.mockResolvedValue({
+      text: '{"title":"Doc Title","description":"A description","starterPrompts":["Q1","Q2","Q3","Q4","Q5","Q6"]}',
+    } as never);
+
+    await processNotebook(validUUID, validUserUUID, Buffer.from("pdf"));
+    // Wait for fire-and-forget
+    await vi.advanceTimersByTimeAsync(100);
+
+    // generateNotebookMeta calls update with title, description, starter_prompts
+    const updateCalls = mockUpdate.mock.calls;
+    const metaCall = updateCalls.find(
+      (call: unknown[]) => {
+        const arg = call[0] as Record<string, unknown>;
+        return arg && arg.title === "Doc Title";
+      }
+    );
+    expect(metaCall).toBeDefined();
+    const metaArg = metaCall![0] as Record<string, unknown>;
+    expect(metaArg.starter_prompts).toEqual(["Q1", "Q2", "Q3", "Q4", "Q5", "Q6"]);
+  });
+
+  it("retries and sets fallback on double failure", async () => {
+    const mock = createMetaMockSupabase();
+    mockedGetServiceClient.mockReturnValue(mock as never);
+    mockedGenerateText.mockRejectedValue(new Error("API error"));
+
+    await processNotebook(validUUID, validUserUUID, Buffer.from("pdf"));
+    // Wait for retry delay (2s) + execution
+    await vi.advanceTimersByTimeAsync(5000);
+
+    // Should have been called twice (first attempt + retry)
+    expect(mockedGenerateText).toHaveBeenCalledTimes(2);
+
+    // Fallback description should be set
+    const updateCalls = mockUpdate.mock.calls;
+    const fallbackCall = updateCalls.find(
+      (call: unknown[]) => {
+        const arg = call[0] as Record<string, unknown>;
+        return arg && typeof arg.description === "string" && !arg.title;
+      }
+    );
+    expect(fallbackCall).toBeDefined();
+  });
+
+  it("strips markdown fences from LLM response", async () => {
+    const mock = createMetaMockSupabase();
+    mockedGetServiceClient.mockReturnValue(mock as never);
+    mockedGenerateText.mockResolvedValue({
+      text: '```json\n{"title":"Fenced Title","description":"Fenced desc"}\n```',
+    } as never);
+
+    await processNotebook(validUUID, validUserUUID, Buffer.from("pdf"));
+    await vi.advanceTimersByTimeAsync(100);
+
+    const updateCalls = mockUpdate.mock.calls;
+    const metaCall = updateCalls.find(
+      (call: unknown[]) => {
+        const arg = call[0] as Record<string, unknown>;
+        return arg && arg.title === "Fenced Title";
+      }
+    );
+    expect(metaCall).toBeDefined();
+  });
+
+  it("returns null when response has no title", async () => {
+    const mock = createMetaMockSupabase();
+    mockedGetServiceClient.mockReturnValue(mock as never);
+    // First call returns valid JSON but no title, second call also no title
+    mockedGenerateText
+      .mockResolvedValueOnce({ text: '{"description":"no title here"}' } as never)
+      .mockResolvedValueOnce({ text: '{"description":"still no title"}' } as never);
+
+    await processNotebook(validUUID, validUserUUID, Buffer.from("pdf"));
+    await vi.advanceTimersByTimeAsync(5000);
+
+    // Should have tried twice
+    expect(mockedGenerateText).toHaveBeenCalledTimes(2);
+
+    // Should have set fallback description (no title field)
+    const updateCalls = mockUpdate.mock.calls;
+    const fallbackCall = updateCalls.find(
+      (call: unknown[]) => {
+        const arg = call[0] as Record<string, unknown>;
+        return arg && typeof arg.description === "string" && !arg.title;
+      }
+    );
+    expect(fallbackCall).toBeDefined();
+  });
+
+  it("retries with shorter text on first parse failure", async () => {
+    const mock = createMetaMockSupabase();
+    mockedGetServiceClient.mockReturnValue(mock as never);
+    mockedGenerateText
+      .mockResolvedValueOnce({ text: "not json at all" } as never)
+      .mockResolvedValueOnce({
+        text: '{"title":"Retry Title","description":"Retry desc"}',
+      } as never);
+
+    await processNotebook(validUUID, validUserUUID, Buffer.from("pdf"));
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(mockedGenerateText).toHaveBeenCalledTimes(2);
+
+    const updateCalls = mockUpdate.mock.calls;
+    const metaCall = updateCalls.find(
+      (call: unknown[]) => {
+        const arg = call[0] as Record<string, unknown>;
+        return arg && arg.title === "Retry Title";
+      }
+    );
+    expect(metaCall).toBeDefined();
   });
 });
