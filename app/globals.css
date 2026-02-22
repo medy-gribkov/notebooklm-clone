@@ -464,17 +464,6 @@
   -webkit-mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
 }
 
-/* Toast progress bar */
-@keyframes toast-progress {
-  from {
-    width: 100%;
-  }
-
-  to {
-    width: 0%;
-  }
-}
-
 /* RTL layout overrides */
 [dir="rtl"] .animate-slide-in-left {
   animation-name: slide-in-right;
