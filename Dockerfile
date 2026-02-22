@@ -51,9 +51,9 @@ USER nextjs
 EXPOSE 3000
 
 ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO /dev/null http://127.0.0.1:3000/ || exit 1
 
-CMD ["node", "server.js"]
+# HOSTNAME must be inline, not ENV — orchestrators override HOSTNAME env var
+CMD HOSTNAME="0.0.0.0" node server.js
