@@ -288,6 +288,55 @@ export async function retrieveChunksShared(
   );
 }
 
+// ---------- Deduplication & Context Builder ----------
+
+function contentOverlap(a: string, b: string): number {
+  const wordsA = new Set(a.toLowerCase().split(/\s+/));
+  const wordsB = new Set(b.toLowerCase().split(/\s+/));
+  let intersection = 0;
+  for (const w of wordsA) {
+    if (wordsB.has(w)) intersection++;
+  }
+  const union = wordsA.size + wordsB.size - intersection;
+  return union === 0 ? 1 : intersection / union;
+}
+
+/** Remove near-duplicate sources (>90% word overlap). */
+export function deduplicateSources(sources: Source[]): Source[] {
+  const result: Source[] = [];
+  for (const source of sources) {
+    const norm = source.content.replace(/\s+/g, " ").trim();
+    const isDup = result.some((existing) => {
+      const existNorm = existing.content.replace(/\s+/g, " ").trim();
+      return contentOverlap(norm, existNorm) > 0.9;
+    });
+    if (!isDup) result.push(source);
+  }
+  return result;
+}
+
+/** Build structured context block grouped by file name. */
+export function buildContextBlock(sources: Source[]): string {
+  if (sources.length === 0) return "";
+
+  const grouped = new Map<string, Array<{ index: number; content: string }>>();
+  sources.forEach((s, i) => {
+    const fn = s.fileName ?? "document";
+    if (!grouped.has(fn)) grouped.set(fn, []);
+    grouped.get(fn)!.push({ index: i + 1, content: s.content });
+  });
+
+  const sections: string[] = [];
+  for (const [fileName, chunks] of grouped) {
+    const body = chunks
+      .map((c) => `[Source ${c.index}]\n${c.content}`)
+      .join("\n\n");
+    sections.push(`## File: ${fileName}\n${body}`);
+  }
+
+  return sections.join("\n\n---\n\n");
+}
+
 async function generateNotebookMeta(notebookId: string, sampleText: string): Promise<void> {
   const supabase = getServiceClient();
 

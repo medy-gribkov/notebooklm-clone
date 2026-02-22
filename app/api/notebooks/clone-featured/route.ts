@@ -62,16 +62,20 @@ export async function POST(request: Request) {
     : 1;
 
   // Insert a synthetic file entry so sources panel isn't empty
-  const { error: fileError } = await supabase.from("notebook_files").insert({
-    notebook_id: notebook.id,
-    user_id: user.id,
-    file_name: `${title}.pdf`,
-    storage_path: `featured/${slug}`,
-    status: "ready",
-    page_count: estimatedPages,
-  });
+  const { data: notebookFile, error: fileError } = await supabase
+    .from("notebook_files")
+    .insert({
+      notebook_id: notebook.id,
+      user_id: user.id,
+      file_name: `${title}.pdf`,
+      storage_path: `featured/${slug}`,
+      status: "ready",
+      page_count: estimatedPages,
+    })
+    .select("id")
+    .single();
 
-  if (fileError) {
+  if (fileError || !notebookFile) {
     console.error("[clone-featured] Failed to insert file entry:", fileError);
   }
 
@@ -99,7 +103,7 @@ export async function POST(request: Request) {
   }
 
   // Split content into chunks and generate embeddings for RAG
-  if (content.content) {
+  if (notebookFile && content.content) {
     try {
       const splitter = new RecursiveCharacterTextSplitter({
         chunkSize: 2000,
@@ -120,7 +124,7 @@ export async function POST(request: Request) {
           content: text,
           embedding: JSON.stringify(embeddings[idx]),
           chunk_index: i + idx,
-          metadata: { file_name: "Featured content" },
+          metadata: { file_id: notebookFile.id, file_name: `${title}.pdf` },
         }));
 
         const { error: chunkError } = await serviceClient.from("chunks").insert(rows);

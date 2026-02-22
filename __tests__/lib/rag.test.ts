@@ -29,7 +29,7 @@ vi.mock("ai", () => ({
   }),
 }));
 
-import { embedText, processNotebook, getAllChunks, retrieveChunks } from "@/lib/rag";
+import { embedText, processNotebook, getAllChunks, retrieveChunks, deduplicateSources, buildContextBlock } from "@/lib/rag";
 import { embedQuery } from "@/lib/llm";
 import { extractText } from "@/lib/pdf";
 import { getServiceClient } from "@/lib/supabase/service";
@@ -467,5 +467,78 @@ describe("generateNotebookMeta (via processNotebook)", () => {
       }
     );
     expect(metaCall).toBeDefined();
+  });
+});
+
+describe("deduplicateSources", () => {
+  it("returns empty array for empty input", () => {
+    expect(deduplicateSources([])).toEqual([]);
+  });
+
+  it("keeps unique sources", () => {
+    const sources = [
+      { chunkId: "1", content: "Alpha beta gamma delta", similarity: 0.9, fileName: "a.pdf" },
+      { chunkId: "2", content: "Completely different text here", similarity: 0.8, fileName: "b.pdf" },
+    ];
+    expect(deduplicateSources(sources)).toHaveLength(2);
+  });
+
+  it("removes near-duplicate sources (>90% word overlap)", () => {
+    const sources = [
+      { chunkId: "1", content: "The quick brown fox jumps over the lazy dog", similarity: 0.9, fileName: "a.pdf" },
+      { chunkId: "2", content: "The quick brown fox jumps over the lazy dog", similarity: 0.85, fileName: "a.pdf" },
+      { chunkId: "3", content: "The quick brown fox jumps over the lazy cat", similarity: 0.8, fileName: "a.pdf" },
+    ];
+    const result = deduplicateSources(sources);
+    // Exact duplicate removed, near-duplicate (dog vs cat) also >90% overlap
+    expect(result.length).toBeLessThan(3);
+    expect(result[0].chunkId).toBe("1");
+  });
+
+  it("keeps sources with different content from same file", () => {
+    const sources = [
+      { chunkId: "1", content: "Introduction to machine learning algorithms and neural networks", similarity: 0.9, fileName: "paper.pdf" },
+      { chunkId: "2", content: "Results show significant improvement in accuracy over baseline methods", similarity: 0.85, fileName: "paper.pdf" },
+    ];
+    expect(deduplicateSources(sources)).toHaveLength(2);
+  });
+});
+
+describe("buildContextBlock", () => {
+  it("returns empty string for empty sources", () => {
+    expect(buildContextBlock([])).toBe("");
+  });
+
+  it("groups sources by fileName", () => {
+    const sources = [
+      { chunkId: "1", content: "Content A", similarity: 0.9, fileName: "resume.pdf" },
+      { chunkId: "2", content: "Content B", similarity: 0.8, fileName: "cover.docx" },
+      { chunkId: "3", content: "Content C", similarity: 0.7, fileName: "resume.pdf" },
+    ];
+    const result = buildContextBlock(sources);
+    expect(result).toContain("## File: resume.pdf");
+    expect(result).toContain("## File: cover.docx");
+    // resume.pdf should have both Source 1 and Source 3
+    expect(result).toContain("[Source 1]");
+    expect(result).toContain("[Source 3]");
+    // cover.docx should have Source 2
+    expect(result).toContain("[Source 2]");
+  });
+
+  it("uses 'document' as fallback when fileName is undefined", () => {
+    const sources = [
+      { chunkId: "1", content: "Some text", similarity: 0.9 },
+    ];
+    const result = buildContextBlock(sources);
+    expect(result).toContain("## File: document");
+  });
+
+  it("separates file groups with ---", () => {
+    const sources = [
+      { chunkId: "1", content: "A", similarity: 0.9, fileName: "a.pdf" },
+      { chunkId: "2", content: "B", similarity: 0.8, fileName: "b.pdf" },
+    ];
+    const result = buildContextBlock(sources);
+    expect(result).toContain("---");
   });
 });

@@ -3,7 +3,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { hashIP } from "@/lib/share";
 import { validateUserMessage, sanitizeText } from "@/lib/validate";
 import { getLLM } from "@/lib/llm";
-import { embedText } from "@/lib/rag";
+import { embedText, deduplicateSources, buildContextBlock } from "@/lib/rag";
 import { streamText, StreamData } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -20,6 +20,11 @@ Rules:
 - Each source is labeled [Source 1], [Source 2], etc. Reference these numbers.
 - When information spans multiple sources, cite all relevant ones, e.g., [1][3].
 - The user may have uploaded multiple documents. Synthesize across all sources when relevant.
+- Documents are grouped under "## File: <filename>" headers inside the document markers.
+- When answering, attribute claims to the specific file they come from, e.g., "According to resume.pdf [1]..."
+- When the user asks about their files (how many, what they contain), list the unique file names visible in the document headers.
+- [Source N] numbers refer to text chunks, not whole files. Multiple sources can come from the same file.
+- If multiple files contain similar or identical content, note the overlap and clarify which file each piece comes from.
 - Structure longer responses with headers (##) and bullet points.
 - This is a shared read-only session. Keep responses concise but thorough.`;
 
@@ -103,25 +108,22 @@ export async function POST(
       match_threshold: 0.3,
     });
 
-    let context = "";
-    const sources: Array<{ chunkId: string; content: string; similarity: number; fileName?: string }> = [];
+    let sources: Array<{ chunkId: string; content: string; similarity: number; fileName?: string }> = [];
 
     if (chunks && chunks.length > 0) {
-      context = chunks
-        .map((c: { id: string; content: string; similarity: number; metadata?: { file_name?: string } }, i: number) => {
-          sources.push({
-            chunkId: c.id,
-            content: c.content,
-            similarity: c.similarity,
-            fileName: c.metadata?.file_name,
-          });
-          return `[Source ${i + 1}] (${c.metadata?.file_name ?? "document"})\n${c.content}`;
-        })
-        .join("\n\n---\n\n");
+      sources = (chunks as Array<{ id: string; content: string; similarity: number; metadata?: { file_name?: string } }>).map((c) => ({
+        chunkId: c.id,
+        content: c.content,
+        similarity: c.similarity,
+        fileName: c.metadata?.file_name,
+      }));
     }
 
+    sources = deduplicateSources(sources);
+    const context = buildContextBlock(sources);
+
     const systemMessage =
-      context.length > 0
+      sources.length > 0
         ? `${SYSTEM_PROMPT}\n\n===BEGIN DOCUMENT===\n${context}\n===END DOCUMENT===`
         : `${SYSTEM_PROMPT}\n\nNo relevant document context was found.`;
 
