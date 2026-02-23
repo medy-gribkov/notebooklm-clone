@@ -104,7 +104,7 @@ export async function POST(
           },
         });
       }
-    } catch (e) {
+    } catch {
       // Ignore cache lookup errors (migration pending)
     }
 
