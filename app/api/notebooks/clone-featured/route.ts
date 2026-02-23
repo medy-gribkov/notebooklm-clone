@@ -4,7 +4,7 @@ import { getFeaturedBySlug } from "@/lib/featured-notebooks";
 import { getFeaturedContent } from "@/lib/featured-content";
 import { embedText } from "@/lib/rag";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
-import { generateHash } from "@/lib/hash";
+import { getNotebookHash } from "@/lib/hash";
 import { NextResponse } from "next/server";
 
 export const maxDuration = 60;
@@ -98,7 +98,6 @@ export async function POST(request: Request) {
 
   // Calculate source_hash for caching (matches studio API logic)
   const fullText = content.files.map((f) => f.content).join("\n\n");
-  const { getNotebookHash } = await import("@/lib/hash");
   const sourceHash = getNotebookHash(fullText);
 
   // Insert pre-generated studio content

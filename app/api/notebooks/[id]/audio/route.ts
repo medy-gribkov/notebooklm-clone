@@ -7,6 +7,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { isValidUUID } from "@/lib/validate";
 import { generateText } from "ai";
 import { NextResponse } from "next/server";
+import { getNotebookHash } from "@/lib/hash";
 
 export const maxDuration = 120;
 
@@ -79,7 +80,6 @@ export async function POST(
     }
 
     // Calculate hash for caching
-    const { getNotebookHash } = await import("@/lib/hash");
     const sourceHash = getNotebookHash(documentText);
 
     // Check for existing cached audio

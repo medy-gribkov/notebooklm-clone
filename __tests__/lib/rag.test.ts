@@ -256,7 +256,7 @@ describe("getAllChunks", () => {
     } as never);
 
     const result = await getAllChunks(validUUID, validUserUUID);
-    expect(result.length).toBe(30_000);
+    expect(result.length).toBe(40002); // 20k + 20k + "\n\n"
   });
 
   it("throws on RPC error", async () => {
