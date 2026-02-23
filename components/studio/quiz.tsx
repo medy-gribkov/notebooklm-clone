@@ -55,22 +55,44 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
   }
 
   if (finished) {
+    const pct = Math.round((score / data.length) * 100);
+    const isPerfect = score === data.length;
+    const circumference = 2 * Math.PI * 40;
+    const offset = circumference - (pct / 100) * circumference;
+
     return (
       <div className="space-y-6">
-        <div className="text-center py-8">
-          <div className="text-4xl font-bold mb-2">
-            {score}/{data.length}
+        {/* Score circle */}
+        <div className={`flex flex-col items-center py-6 ${isPerfect ? "animate-pulse-once" : ""}`}>
+          <div className="relative h-28 w-28 mb-3">
+            <svg className="h-28 w-28 -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="6" className="text-muted/30" />
+              <circle
+                cx="50" cy="50" r="40" fill="none" strokeWidth="6"
+                className="text-primary transition-all duration-1000"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={offset}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold">{pct}%</span>
+            </div>
+          </div>
+          <div className="text-lg font-bold">
+            {score}/{data.length} correct
           </div>
           <p className="text-sm text-muted-foreground">
-            {score === data.length
-              ? "Perfect score!"
+            {isPerfect
+              ? "Perfect score! Outstanding!"
               : score >= data.length * 0.7
-              ? "Great job!"
-              : "Keep studying!"}
+              ? "Great job! Almost there."
+              : "Keep studying, you'll get there!"}
           </p>
         </div>
 
-        <div className="space-y-3">
+        {/* Answer review */}
+        <div className="space-y-2">
           {data.map((question, i) => {
             const userAnswer = answers[i];
             const isCorrect = userAnswer === question.correctIndex;
@@ -83,14 +105,21 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
                     : "border-destructive/20 bg-destructive/5"
                 }`}
               >
-                <p className="font-medium mb-1">
-                  {i + 1}. {question.question}
-                </p>
-                {!isCorrect && (
-                  <p className="text-xs text-muted-foreground">
-                    Correct: {question.options[question.correctIndex]}
-                  </p>
-                )}
+                <div className="flex items-start gap-2">
+                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
+                    isCorrect ? "bg-primary" : "bg-destructive"
+                  }`}>
+                    {isCorrect ? "\u2713" : "\u2717"}
+                  </span>
+                  <div>
+                    <p className="font-medium mb-0.5">{question.question}</p>
+                    {!isCorrect && (
+                      <p className="text-xs text-muted-foreground">
+                        Correct: {question.options[question.correctIndex]}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -107,20 +136,31 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
     <div className="space-y-5">
       {/* Progress */}
       <div className="flex items-center gap-3">
-        <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full rounded-full bg-primary transition-all duration-300"
-            style={{ width: `${((current + 1) / data.length) * 100}%` }}
-          />
+        <div className="flex gap-1">
+          {data.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 rounded-full transition-all ${
+                i === current
+                  ? "w-6 bg-primary"
+                  : i < current
+                  ? "w-3 bg-primary/40"
+                  : "w-3 bg-muted"
+              }`}
+            />
+          ))}
         </div>
-        <span className="text-xs text-muted-foreground shrink-0">
-          {current + 1}/{data.length}
+        <span className="text-xs text-muted-foreground shrink-0 ml-auto">
+          Q{current + 1} of {data.length}
         </span>
       </div>
 
       {/* Question */}
-      <div>
-        <p className="text-base font-medium leading-relaxed">{q.question}</p>
+      <div className="flex items-start gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+          Q{current + 1}
+        </span>
+        <p className="text-base font-medium leading-relaxed pt-1">{q.question}</p>
       </div>
 
       {/* Options */}
@@ -144,8 +184,8 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
               disabled={checked}
               className={`w-full text-left rounded-lg px-4 py-3 text-sm transition-all ${optionClass}`}
             >
-              <span className="font-medium mr-2 text-muted-foreground">
-                {String.fromCharCode(65 + i)}.
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-bold mr-2.5 text-muted-foreground">
+                {String.fromCharCode(65 + i)}
               </span>
               {option}
             </button>
@@ -156,6 +196,7 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
       {/* Explanation */}
       {checked && q.explanation && (
         <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground animate-fade-in">
+          <span className="font-semibold text-foreground">Explanation: </span>
           {q.explanation}
         </div>
       )}

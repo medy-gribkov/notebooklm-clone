@@ -102,6 +102,9 @@ export async function POST(request: Request) {
     { action: "flashcards", result: content.flashcards },
     { action: "report", result: content.report },
     { action: "mindmap", result: content.mindmap },
+    { action: "datatable", result: content.datatable },
+    { action: "infographic", result: content.infographic },
+    { action: "slidedeck", result: content.slidedeck },
   ];
 
   const { error: genError } = await supabase

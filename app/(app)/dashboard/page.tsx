@@ -585,7 +585,7 @@ function FeaturedCarousel({
         </div>
       ) : (
         /* Carousel layout for "All" tab */
-        <div className="relative group/carousel overflow-hidden">
+        <div className="relative group/carousel overflow-x-hidden overflow-y-visible">
           {/* Left arrow */}
           {canScrollLeft && (
             <button
@@ -615,7 +615,7 @@ function FeaturedCarousel({
           {/* Cards container */}
           <div
             ref={scrollRef}
-            className="flex gap-4 overflow-x-auto pb-3 scrollbar-none carousel-fade-edges"
+            className="flex gap-4 overflow-x-auto pt-2 pb-3 scrollbar-none carousel-fade-edges"
             style={{ scrollSnapType: "x mandatory" }}
           >
             {notebooks.map((fn, i) => renderCard(fn, i))}

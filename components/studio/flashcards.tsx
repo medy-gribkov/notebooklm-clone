@@ -52,7 +52,7 @@ export const FlashcardsView = memo(function FlashcardsView({ data }: FlashcardsV
           Reset
         </Button>
         <span className="text-xs text-muted-foreground ml-auto">
-          {cards.length} cards
+          {flipped.size}/{cards.length} flipped
         </span>
       </div>
 
@@ -63,11 +63,20 @@ export const FlashcardsView = memo(function FlashcardsView({ data }: FlashcardsV
             <button
               key={`${card.front}-${i}`}
               onClick={() => toggleFlip(i)}
-              className="group relative h-40 rounded-xl border bg-card text-left transition-all hover:shadow-md hover:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className={`group relative h-44 rounded-xl border bg-card text-left transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+                isFlipped
+                  ? "border-primary/30 shadow-sm"
+                  : "hover:border-primary/30"
+              }`}
               style={{ perspective: "600px" }}
             >
+              {/* Card number */}
+              <span className="absolute top-2.5 left-3 text-[10px] font-bold text-muted-foreground/40">
+                {i + 1}/{cards.length}
+              </span>
+
               <div
-                className="absolute inset-0 p-4 flex flex-col justify-center transition-all duration-300 backface-hidden"
+                className="absolute inset-0 p-4 pt-7 flex flex-col justify-center transition-all duration-300 backface-hidden"
                 style={{
                   transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
                   backfaceVisibility: "hidden",
@@ -81,7 +90,7 @@ export const FlashcardsView = memo(function FlashcardsView({ data }: FlashcardsV
                 </p>
               </div>
               <div
-                className="absolute inset-0 p-4 flex flex-col justify-center transition-all duration-300 backface-hidden"
+                className="absolute inset-0 p-4 pt-7 flex flex-col justify-center transition-all duration-300 backface-hidden"
                 style={{
                   transform: isFlipped ? "rotateY(0deg)" : "rotateY(-180deg)",
                   backfaceVisibility: "hidden",
@@ -90,7 +99,7 @@ export const FlashcardsView = memo(function FlashcardsView({ data }: FlashcardsV
                 <span className="text-[10px] font-medium uppercase tracking-wider text-primary mb-2">
                   Answer
                 </span>
-                <p className="text-sm leading-relaxed line-clamp-4 text-muted-foreground">
+                <p className="text-sm leading-relaxed line-clamp-5 text-muted-foreground">
                   {card.back}
                 </p>
               </div>

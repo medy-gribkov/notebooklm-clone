@@ -12,10 +12,10 @@ interface MindMapViewProps {
 }
 
 const DEPTH_COLORS = [
-  "text-primary",
-  "text-primary/80",
-  "text-primary/60",
-  "text-muted-foreground",
+  { text: "text-foreground", dot: "bg-primary", line: "border-primary/30" },
+  { text: "text-foreground/90", dot: "bg-primary/70", line: "border-primary/20" },
+  { text: "text-muted-foreground", dot: "bg-muted-foreground/50", line: "border-border" },
+  { text: "text-muted-foreground/70", dot: "bg-muted-foreground/30", line: "border-border/50" },
 ];
 
 function TreeNode({
@@ -27,45 +27,53 @@ function TreeNode({
 }) {
   const [expanded, setExpanded] = useState(depth < 2);
   const hasChildren = node.children && node.children.length > 0;
-  const colorClass = DEPTH_COLORS[Math.min(depth, DEPTH_COLORS.length - 1)];
+  const colors = DEPTH_COLORS[Math.min(depth, DEPTH_COLORS.length - 1)];
 
   const toggle = useCallback(() => {
     if (hasChildren) setExpanded((prev) => !prev);
   }, [hasChildren]);
 
   return (
-    <div className={depth > 0 ? "ml-5 border-l border-border pl-4" : ""}>
+    <div className={depth > 0 ? `ml-5 border-l ${colors.line} pl-4` : ""}>
       <button
         onClick={toggle}
-        className={`flex items-center gap-2 py-1.5 text-left transition-colors hover:text-foreground ${colorClass}`}
+        className={`flex items-center gap-2.5 py-1.5 text-left transition-colors hover:text-foreground group ${colors.text}`}
       >
-        {hasChildren && (
-          <svg
-            className={`h-3 w-3 shrink-0 transition-transform ${
-              expanded ? "rotate-90" : ""
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        )}
-        {!hasChildren && (
-          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-40" />
+        {hasChildren ? (
+          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md transition-colors ${
+            expanded ? "bg-primary/10" : "bg-muted group-hover:bg-primary/10"
+          }`}>
+            <svg
+              className={`h-3 w-3 shrink-0 transition-transform text-primary ${
+                expanded ? "rotate-90" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </span>
+        ) : (
+          <span className={`h-2 w-2 shrink-0 rounded-full ${colors.dot} ml-1.5 mr-0.5`} />
         )}
         <span
           className={`text-sm ${
-            depth === 0 ? "font-semibold text-base" : depth === 1 ? "font-medium" : ""
+            depth === 0 ? "font-bold text-base" : depth === 1 ? "font-semibold" : "font-normal"
           }`}
         >
           {node.label}
         </span>
+        {hasChildren && (
+          <span className="text-[10px] text-muted-foreground/40">
+            ({node.children!.length})
+          </span>
+        )}
       </button>
 
       {expanded && hasChildren && (
@@ -82,14 +90,17 @@ function TreeNode({
 export const MindMapView = memo(function MindMapView({ data }: MindMapViewProps) {
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        Topic Map
-      </h3>
+      <div className="flex items-center gap-3">
+        <div className="h-8 w-1 rounded-full bg-primary" />
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Topic Map
+        </h3>
+      </div>
       <div className="rounded-xl border bg-card p-4">
         <TreeNode node={data} />
       </div>
-      <p className="text-[11px] text-muted-foreground">
-        Click nodes to expand or collapse.
+      <p className="text-[10px] text-muted-foreground/50 text-center">
+        Click nodes to expand or collapse
       </p>
     </div>
   );
