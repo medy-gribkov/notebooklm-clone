@@ -15,7 +15,7 @@ import { useToast } from "@/components/toast";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import type { Notebook, NotebookFile } from "@/types";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Rocket,
   Microscope,
@@ -466,6 +466,8 @@ function FeaturedCarousel({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+  const locale = useLocale();
+  const isRTL = locale === "he";
 
   const CARD_WIDTH = 320;
   const GAP = 16;
@@ -473,11 +475,25 @@ function FeaturedCarousel({
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 10);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
-    const idx = Math.round(el.scrollLeft / (CARD_WIDTH + GAP));
+
+    // In modern browsers, scrollLeft is 0 at the right edge in RTL and becomes negative as we scroll left.
+    // We normalize this to a positive scroll position for logic consistency.
+    const scrollPos = isRTL ? Math.abs(el.scrollLeft) : el.scrollLeft;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+
+    // Visually "Left" (Next in LTR, Prev in RTL)
+    // Visually "Right" (Prev in LTR, Next in RTL)
+    if (isRTL) {
+      setCanScrollLeft(scrollPos < maxScroll - 10); // Can we scroll "Next" (visually left)?
+      setCanScrollRight(scrollPos > 10); // Can we scroll "Prev" (visually right)?
+    } else {
+      setCanScrollLeft(scrollPos > 10); // Can we scroll "Prev" (visually left)?
+      setCanScrollRight(scrollPos < maxScroll - 10); // Can we scroll "Next" (visually right)?
+    }
+
+    const idx = Math.round(scrollPos / (CARD_WIDTH + GAP));
     setActiveIndex(Math.min(idx, notebooks.length - 1));
-  }, [notebooks.length]);
+  }, [isRTL, notebooks.length]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -491,13 +507,15 @@ function FeaturedCarousel({
     const el = scrollRef.current;
     if (!el) return;
     const amount = el.clientWidth - GAP;
+    // Visually scroll left or right regardless of mode
     el.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
   }
 
   function scrollToIndex(idx: number) {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollTo({ left: idx * (CARD_WIDTH + GAP), behavior: "smooth" });
+    const target = idx * (CARD_WIDTH + GAP);
+    el.scrollTo({ left: isRTL ? -target : target, behavior: "smooth" });
   }
 
   const isGridMode = activeTab === "featured";
@@ -523,12 +541,12 @@ function FeaturedCarousel({
         <div className="absolute inset-0 featured-mesh opacity-50 mix-blend-overlay" />
 
         {/* Large decorative icon */}
-        <div className="absolute -top-4 -right-4 text-8xl opacity-10 z-10 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
+        <div className="absolute -top-4 -right-4 rtl:right-auto rtl:-left-4 text-8xl opacity-10 z-10 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
           <FeaturedIcon type={fn.icon} />
         </div>
 
-        {/* Author badge (top-left) */}
-        <div className="absolute top-5 left-5 flex items-center gap-2 z-10">
+        {/* Author badge (top-start) */}
+        <div className="absolute top-5 left-5 rtl:left-auto rtl:right-5 flex items-center gap-2 z-10">
           <div className="h-7 w-7 rounded-full bg-black/5 dark:bg-white/10 backdrop-blur-md flex items-center justify-center text-xs">
             <FeaturedIcon type={fn.icon} />
           </div>
@@ -538,7 +556,7 @@ function FeaturedCarousel({
         </div>
 
         {/* Content (bottom) */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 z-10 text-left">
+        <div className="absolute bottom-0 left-0 right-0 p-6 z-10 text-start">
           <h3 className="font-bold text-2xl tracking-tight leading-none mb-2 drop-shadow-sm opacity-100">
             {tf(fn.titleKey)}
           </h3>
@@ -570,7 +588,7 @@ function FeaturedCarousel({
               className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
             >
               {t("seeAll")}
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-4 w-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -586,12 +604,12 @@ function FeaturedCarousel({
       ) : (
         /* Carousel layout for "All" tab */
         <div className="relative group/carousel overflow-x-hidden overflow-y-visible">
-          {/* Left arrow */}
+          {/* Visual Left arrow (Prev in LTR, Next in RTL) */}
           {canScrollLeft && (
             <button
               onClick={() => scroll("left")}
               className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-background/90 border shadow-lg hidden sm:flex items-center justify-center text-foreground hover:bg-background"
-              aria-label="Scroll left"
+              aria-label={isRTL ? "Scroll right" : "Scroll left"}
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -599,12 +617,12 @@ function FeaturedCarousel({
             </button>
           )}
 
-          {/* Right arrow */}
+          {/* Visual Right arrow (Next in LTR, Prev in RTL) */}
           {canScrollRight && (
             <button
               onClick={() => scroll("right")}
               className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-background/90 border shadow-lg hidden sm:flex items-center justify-center text-foreground hover:bg-background"
-              aria-label="Scroll right"
+              aria-label={isRTL ? "Scroll left" : "Scroll right"}
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

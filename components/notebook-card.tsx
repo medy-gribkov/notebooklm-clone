@@ -98,14 +98,14 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete,
         </div>
 
         {/* Title */}
-        <h3 className="text-base font-bold leading-snug line-clamp-2 pr-6 min-h-[2.5rem]">
+        <h3 className="text-base font-bold leading-snug line-clamp-2 pe-6 min-h-[2.5rem]">
           {notebook.title}
         </h3>
 
         {/* Description */}
         <div className="h-5 mt-1 mb-2">
           {(description || notebook.description) && (
-            <p className="text-sm text-muted-foreground line-clamp-1 pr-4">
+            <p className="text-sm text-muted-foreground line-clamp-1 pe-4">
               {description || notebook.description}
             </p>
           )}
@@ -148,7 +148,7 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete,
       </Link>
 
       {/* Kebab menu */}
-      <div className="absolute right-3 top-4 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute right-3 rtl:right-auto rtl:left-3 top-4 opacity-0 group-hover:opacity-100 transition-opacity">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -168,7 +168,7 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete,
               <DropdownMenuItem
                 onClick={() => window.location.href = `/notebook/${notebook.id}`}
               >
-                <svg className="h-3.5 w-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-3.5 w-3.5 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
                 {t("open")}
@@ -179,7 +179,7 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete,
               disabled={deleting}
               className="text-destructive focus:text-destructive"
             >
-              <svg className="h-3.5 w-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-3.5 w-3.5 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
               {deleting ? t("deleting") : tc("delete")}
