@@ -224,8 +224,7 @@ export async function getAllChunks(
     throw new Error("Failed to load document");
   }
 
-  const fullText = (data ?? []).map((row: { content: string }) => row.content).join("\n\n");
-  return fullText.slice(0, 30_000);
+  return (data ?? []).map((row: { content: string }) => row.content).join("\n\n");
 }
 
 export async function retrieveChunks(

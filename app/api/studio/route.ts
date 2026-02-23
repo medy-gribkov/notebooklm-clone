@@ -146,7 +146,9 @@ export async function POST(request: Request) {
       onFinish: async ({ text }) => {
         // Validate output against Zod schema
         try {
-          const parsed = await parser.parse(text);
+          const { sanitizeAIJSON } = await import("@/lib/json-fix");
+          const cleanedText = sanitizeAIJSON(text);
+          const parsed = await parser.parse(cleanedText);
           // Save new generation with source_hash
           try {
             await supabase.from("studio_generations").insert({
