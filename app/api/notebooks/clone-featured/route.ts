@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       title,
       user_id: user.id,
       status: "processing",
-      description: content.description,
+      description: `featured.${featured.descriptionKey}`,
     })
     .select("id")
     .single();
@@ -123,27 +123,6 @@ export async function POST(request: Request) {
         source_hash: sourceHash,
       })),
     );
-
-  // This block is added based on the user's instruction, assuming `summary` and `audioBuffer`
-  // would be defined elsewhere in a complete implementation.
-  // For now, it's inserted as provided, but will cause a compilation error due to undefined variables.
-  // Persist to database for future sessions
-  try {
-    const { sanitizeAIJSON } = await import("@/lib/json-fix");
-    // NOTE: `summary` and `audioBuffer` are not defined in this context.
-    // This code snippet is inserted as provided by the user, but will cause a runtime error.
-    const sanitizedSummary = sanitizeAIJSON(summary);
-    const audioBase64 = Buffer.from(audioBuffer).toString("base64");
-    await supabase.from("studio_generations").insert({
-      notebook_id: notebook.id, // Changed from `notebookId` to `notebook.id` for correctness
-      user_id: user.id,
-      action: "audio",
-      result: { summary: sanitizedSummary, audioBase64 },
-      source_hash: sourceHash,
-    });
-  } catch (saveError) {
-    console.error("[clone-featured] Failed to insert audio generation:", saveError); // Changed error message and variable
-  }
 
   if (genError) {
     console.error("[clone-featured] Failed to insert generations:", genError);

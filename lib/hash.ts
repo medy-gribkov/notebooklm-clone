@@ -9,16 +9,19 @@ import { sanitizeText } from "./validate";
  * It applies sanitization, trims whitespace, and limits to 30,000 chars
  * to match the RAG retrieval limit used in the studio API.
  */
-// 1. Slice Raw FIRST (The "Window Anchor")
-// This ensures we are always looking at the same bytes regardless of formatting.
-const snapshot = text.slice(0, 30_000);
+export function getNotebookHash(text: string): string {
+    if (!text) return "";
 
-// 2. Sanitize and Normalize
-const sanitized = sanitizeText(snapshot);
-const normalized = sanitized.replace(/\s+/g, " ").trim();
+    // 1. Slice Raw FIRST (The "Window Anchor")
+    // This ensures we are always looking at the same bytes regardless of formatting.
+    const snapshot = text.slice(0, 30_000);
 
-// 3. Deterministic SHA-256
-return createHash("sha256").update(normalized).digest("hex");
+    // 2. Sanitize and Normalize
+    const sanitized = sanitizeText(snapshot);
+    const normalized = sanitized.replace(/\s+/g, " ").trim();
+
+    // 3. Deterministic SHA-256
+    return createHash("sha256").update(normalized).digest("hex");
 }
 
 /**

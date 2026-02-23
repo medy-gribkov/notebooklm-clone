@@ -65,6 +65,7 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete,
   const [deleting, setDeleting] = useState(false);
   const t = useTranslations("notebookCard");
   const tc = useTranslations("common");
+  const tf = useTranslations("featured");
   const isClickable = notebook.status === "ready" && !timedOut;
   const colorIndex = hashTitle(notebook.title) % ICON_COLORS.length;
   const colorClass = ICON_COLORS[colorIndex];
@@ -106,7 +107,19 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete,
         <div className="h-5 mt-1 mb-2">
           {(description || notebook.description) && (
             <p className="text-sm text-muted-foreground line-clamp-1 pe-4">
-              {description || notebook.description}
+              {(() => {
+                const desc = description || notebook.description || "";
+                if (desc.startsWith("featured.")) {
+                  const key = desc.replace("featured.", "");
+                  // If translation fails, it returns the key
+                  try {
+                    return tf(key);
+                  } catch {
+                    return desc;
+                  }
+                }
+                return desc;
+              })()}
             </p>
           )}
         </div>
