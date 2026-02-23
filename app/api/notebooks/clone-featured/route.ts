@@ -61,20 +61,45 @@ export async function POST(request: Request) {
   const sourceHash = getNotebookHash(fullText);
 
   // Create notebook in "processing" state
-  const { data: notebook, error: nbError } = await supabase
-    .from("notebooks")
-    .insert({
-      title,
-      user_id: user.id,
-      status: "processing",
-      description: `featured.${featured.descriptionKey}`,
-      source_hash: sourceHash,
-    })
-    .select("id")
-    .single();
+  let notebook;
+  try {
+    const { data, error: nbError } = await supabase
+      .from("notebooks")
+      .insert({
+        title,
+        user_id: user.id,
+        status: "processing",
+        description: `featured.${featured.descriptionKey}`,
+        source_hash: sourceHash,
+      })
+      .select("id")
+      .single();
 
-  if (nbError || !notebook) {
-    console.error("[clone-featured] Failed to create notebook:", nbError);
+    if (nbError) {
+      // Fallback for missing source_hash column
+      console.warn("[clone-featured] Retrying without source_hash...");
+      const { data: retryData, error: retryError } = await supabase
+        .from("notebooks")
+        .insert({
+          title,
+          user_id: user.id,
+          status: "processing",
+          description: `featured.${featured.descriptionKey}`,
+        })
+        .select("id")
+        .single();
+
+      if (retryError) throw retryError;
+      notebook = retryData;
+    } else {
+      notebook = data;
+    }
+  } catch (e) {
+    console.error("[clone-featured] Critical failure creating notebook:", e);
+    return NextResponse.json({ error: "Database error. Please try again later." }, { status: 500 });
+  }
+
+  if (!notebook) {
     return NextResponse.json({ error: "Failed to create notebook" }, { status: 500 });
   }
 
@@ -138,7 +163,18 @@ export async function POST(request: Request) {
       );
 
     if (genError) {
-      console.error("[clone-featured] Failed to insert generations:", genError);
+      console.warn("[clone-featured] Failed to insert generations with source_hash, retrying without...", genError);
+      const { error: retryGenError } = await supabase
+        .from("studio_generations")
+        .insert(
+          actions.map((a) => ({
+            notebook_id: notebook.id,
+            user_id: user.id,
+            action: a.action,
+            result: a.result,
+          })),
+        );
+      if (retryGenError) console.error("[clone-featured] Final failure inserting generations:", retryGenError);
     }
   } catch (e) {
     console.error("[clone-featured] Database error during studio generation insertion:", e);

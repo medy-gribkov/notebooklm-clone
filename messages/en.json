@@ -98,6 +98,8 @@
     "createNewNotebook": "Create new notebook",
     "notebookCreated": "Notebook created",
     "cloneFailed": "Failed to open featured notebook. Try again.",
+    "next": "Next",
+    "back": "Back",
     "notebookDeleted": "Notebook deleted"
   },
   "featured": {
