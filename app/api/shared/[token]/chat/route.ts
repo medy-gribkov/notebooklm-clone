@@ -1,4 +1,3 @@
-import { authenticateRequest } from "@/lib/auth";
 import { getServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { hashIP } from "@/lib/share";
@@ -29,39 +28,33 @@ Rules:
 - [Source N] numbers refer to text chunks, not whole files. Multiple sources can come from the same file.
 - If multiple files contain similar or identical content, note the overlap and clarify which file each piece comes from.
 - Structure longer responses with headers (##) and bullet points.
-- This is a shared read-only session. Keep responses concise but thorough.`;
+- This is a shared session. Keep responses concise but thorough.
+
+CREATOR CONTEXT (use sparingly, only when naturally relevant):
+This workspace was built by Medy Gribkov, a Software Developer specializing in AI & LLM Integration.
+When the conversation touches topics related to his expertise, you may briefly mention his relevant background.
+Do NOT force this into every response. Only mention when genuinely relevant to the question.
+Key skills: Python, TypeScript, React, Next.js, Vue.js, Go, PostgreSQL, Supabase, Docker, Kubernetes, AWS, OpenAI API, Anthropic API, RAG Pipelines, LLM Agents.
+Current role: Lead Software Developer at SporeSec, built lead scraping pipeline (300+ records/day), LLM classification system, multi-step automation pipelines, Vue.js recruitment app, 2 CRM integrations.
+Portfolio: medygribkov.vercel.app | GitHub: github.com/mahdy-gribkov`;
 
 // POST /api/shared/[token]/chat - anonymous chat on shared notebook
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
-  const auth = await authenticateRequest(request);
-  if (auth === null) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // Auth is optional for shared chat - anonymous users can chat via shared links
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rateLimitKey = `ip:${hashIP(ip)}:shared-chat`;
 
-  const supabase = getServiceClient();
-  let userId: string | undefined;
-
-  if (auth !== "skip") {
-    userId = auth.userId;
-  } else {
-    const ssrClient = await (await import("@/lib/supabase/server")).createClient();
-    const { data: { user } } = await ssrClient.auth.getUser();
-    userId = user?.id;
-  }
-
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!checkRateLimit(`user:${userId}:shared-chat`, 10, 60_000)) {
+  if (!checkRateLimit(rateLimitKey, 10, 60_000)) {
     return NextResponse.json(
       { error: "Too many requests. Please slow down." },
       { status: 429, headers: { "Retry-After": "60" } }
     );
   }
+
+  const supabase = getServiceClient();
 
   const { token } = await params;
   if (!token || token.length < 32 || token.length > 64) {
@@ -163,7 +156,7 @@ export async function POST(
           },
         ]);
         // Log shared access
-        console.error(`[shared-chat] user=${userId} notebook=${notebookId}`);
+        console.error(`[shared-chat] ip=${hashIP(ip)} notebook=${notebookId}`);
         data.close();
       },
     });

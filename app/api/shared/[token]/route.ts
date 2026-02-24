@@ -76,11 +76,25 @@ export async function GET(
     .order("created_at", { ascending: false })
     .limit(50);
 
+  // Fetch company info if linked
+  let company: { name: string; website: string | null; category: string | null } | null = null;
+  try {
+    const { data: companyData } = await supabase
+      .from("companies")
+      .select("name, website, category")
+      .eq("notebook_id", notebookId)
+      .single();
+    if (companyData) company = companyData;
+  } catch {
+    // companies table may not exist yet (migration pending)
+  }
+
   return NextResponse.json({
     notebook,
     permissions: shareInfo.permissions,
     messages: messages ?? [],
     notes: notes ?? [],
     generations: generations ?? [],
+    company,
   });
 }

@@ -260,4 +260,4 @@ MIT
 
 ## Author
 
-Built by [Mahdy Gribkov](https://mahdygribkov.vercel.app)
+Built by [Medy Gribkov](https://medygribkov.vercel.app)

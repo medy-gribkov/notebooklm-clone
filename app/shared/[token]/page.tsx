@@ -23,12 +23,19 @@ interface Quiz {
 }
 
 
+interface Company {
+  name: string;
+  website: string | null;
+  category: string | null;
+}
+
 interface SharedData {
   notebook: { id: string; title: string; description: string | null; created_at: string };
   permissions: "view" | "chat";
   messages: Omit<Message, "notebook_id" | "user_id">[];
   notes: Omit<Note, "notebook_id" | "updated_at">[];
   generations: Omit<StudioGeneration, "notebook_id" | "user_id">[];
+  company: Company | null;
 }
 
 type Tab = "chat" | "notes" | "studio";
@@ -191,9 +198,22 @@ export default function SharedNotebookPage() {
       <header className="sticky top-0 z-20 border-b bg-card/80 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            <Logo size="sm" />
+            {data.company?.website ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://logo.clearbit.com/${new URL(data.company.website.startsWith("http") ? data.company.website : `https://${data.company.website}`).hostname}`}
+                  alt={data.company.name}
+                  className="h-7 w-7 rounded"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+                <span className="text-sm font-semibold">{data.company.name}</span>
+              </>
+            ) : (
+              <Logo size="sm" />
+            )}
             <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-              Shared
+              {data.company?.category || "Shared"}
             </span>
           </div>
           <ThemeToggle />
@@ -386,17 +406,28 @@ export default function SharedNotebookPage() {
         )}
       </div>
 
-      {/* Footer CTA */}
+      {/* Footer */}
       <footer className="border-t bg-card/50 py-4">
         <div className="mx-auto max-w-5xl px-4 flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            Shared via DocChat
+            Built by{" "}
+            <a
+              href="https://medygribkov.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline underline-offset-2"
+            >
+              Medy Gribkov
+            </a>
+            {" "}with DocChat
           </p>
           <a
-            href="/login"
-            className="text-xs text-primary font-medium hover:underline underline-offset-2"
+            href="https://github.com/mahdy-gribkov"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            Sign up for full access
+            GitHub
           </a>
         </div>
       </footer>

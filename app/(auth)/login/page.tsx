@@ -198,8 +198,8 @@ function LoginContent() {
             </p>
             <p className="text-caption opacity-30">
               Built by{" "}
-              <a href="https://mahdygribkov.vercel.app" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-60 transition-opacity">
-                Mahdy Gribkov
+              <a href="https://medygribkov.vercel.app" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-60 transition-opacity">
+                Medy Gribkov
               </a>
             </p>
           </div>

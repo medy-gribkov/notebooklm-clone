@@ -438,8 +438,8 @@ export default function DashboardPage() {
       <footer className="border-t py-6">
         <p className="text-center text-xs text-muted-foreground/40">
           Built by{" "}
-          <a href="https://mahdygribkov.vercel.app" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-muted-foreground transition-colors">
-            Mahdy Gribkov
+          <a href="https://medygribkov.vercel.app" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-muted-foreground transition-colors">
+            Medy Gribkov
           </a>
         </p>
       </footer>

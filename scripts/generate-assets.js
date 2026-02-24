@@ -59,7 +59,7 @@ const ogSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"
 
   <!-- Author -->
   <text x="600" y="580" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#999">
-    by Mahdy Gribkov
+    by Medy Gribkov
   </text>
 </svg>`;
 

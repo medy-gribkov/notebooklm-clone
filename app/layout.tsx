@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description:
     "Upload documents. Ask questions in plain English. Get AI-powered answers with cited sources.",
   keywords: ["PDF", "chat", "AI", "RAG", "document", "research", "study", "notes"],
-  authors: [{ name: "Mahdy Gribkov", url: "https://mahdygribkov.vercel.app" }],
+  authors: [{ name: "Medy Gribkov", url: "https://medygribkov.vercel.app" }],
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   openGraph: {
     title: "DocChat",

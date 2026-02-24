@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import QRCode from "qrcode";
 
 interface ShareLink {
   id: string;
@@ -26,6 +27,8 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
   const [expiry, setExpiry] = useState<number | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [qrToken, setQrToken] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   const fetchLinks = useCallback(async () => {
     setLoading(true);
@@ -101,6 +104,18 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
     } catch {
       // Clipboard not available
     }
+  }
+
+  async function toggleQR(token: string) {
+    if (qrToken === token) {
+      setQrToken(null);
+      setQrDataUrl(null);
+      return;
+    }
+    const url = `${window.location.origin}/shared/${token}`;
+    const dataUrl = await QRCode.toDataURL(url, { width: 160, margin: 2 });
+    setQrToken(token);
+    setQrDataUrl(dataUrl);
   }
 
   if (!open) return null;
@@ -218,7 +233,7 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
                 {links.map((link) => (
                   <div
                     key={link.id}
-                    className="flex items-center gap-2 rounded-lg border p-2.5"
+                    className="relative flex items-center gap-2 rounded-lg border p-2.5"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
@@ -235,6 +250,15 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
                           : t("noExpiry")}
                       </p>
                     </div>
+                    <button
+                      onClick={() => toggleQR(link.token)}
+                      className={`shrink-0 flex h-7 w-7 items-center justify-center rounded-md transition-colors ${qrToken === link.token ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}
+                      aria-label="QR Code"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm14 3h.01M17 14h.01M14 17h.01M14 14h3v3h-3v-3zm3 3h3v3h-3v-3z" />
+                      </svg>
+                    </button>
                     <button
                       onClick={() => copyLink(link.token)}
                       className="shrink-0 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
@@ -259,6 +283,14 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
+                    {qrToken === link.token && qrDataUrl && (
+                      <div className="absolute top-full left-0 right-0 mt-1 flex justify-center">
+                        <div className="bg-white rounded-lg p-2 shadow-lg border">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={qrDataUrl} alt="QR Code" width={160} height={160} />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

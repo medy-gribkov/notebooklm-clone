@@ -1,5 +1,4 @@
-// Pre-generated studio content for featured notebooks.
-// This content is curated by the DocChat team and displayed in read-only mode.
+// Pre-generated studio content for featured company notebooks.
 
 export interface FeaturedStudioContent {
   description: string;
@@ -14,286 +13,100 @@ export interface FeaturedStudioContent {
 }
 
 const contentMap: Record<string, FeaturedStudioContent> = {
-  "getting-started": {
-    description: "Learn how to upload documents, ask questions, and use DocChat's AI-powered research tools.",
+  wix: {
+    description: "AI-generated analysis of Wix, the leading cloud-based website builder and web development platform.",
     files: [
       {
-        fileName: "Getting Started Guide.pdf",
-        content: `DocChat: Getting Started Guide\n\nDocChat is an AI-powered research assistant that lets you upload documents and have natural conversations about their content. It uses Retrieval-Augmented Generation (RAG) technology to provide accurate, cited answers drawn exclusively from your uploaded materials.\n\nSupported File Types\nDocChat supports multiple document formats. PDF files up to 5MB can be uploaded and processed. Microsoft Word documents (DOCX) up to 10MB are supported. Plain text files (TXT) up to 500KB work well for notes and transcripts. Image files including JPEG, PNG, and WebP up to 5MB can be processed using OCR to extract text from photographs of documents or screenshots.\n\nHow It Works\nWhen you upload a document, DocChat processes it through several stages. First, the text is extracted from the file. Then the text is split into overlapping chunks of approximately 2000 characters each. Each chunk is converted into a numerical embedding using Google's text-embedding model, which captures the semantic meaning of the text. These embeddings are stored in a PostgreSQL database with pgvector for efficient similarity search.\n\nWhen you ask a question, your query is also converted to an embedding. DocChat finds the most semantically similar chunks from your documents and provides them as context to the AI model. The AI then generates a response based only on the retrieved document content, citing specific passages.`,
-      },
-      {
-        fileName: "Feature Reference.pdf",
-        content: `DocChat Feature Reference\n\nThe Chat Interface\nThe center panel is where you interact with the AI. Type questions in natural language and receive answers with source citations. Each AI response includes references to the specific document passages used, shown as numbered citations like [1], [2]. You can copy messages, save responses as notes, and see similarity scores for cited sources. The chat supports markdown formatting including headers, bullet points, and code blocks.\n\nThe Sources Panel\nThe left panel manages your uploaded files. Drag and drop files or click to browse. Each file shows its processing status: a green dot means ready, amber means processing, and red indicates an error. You can view PDFs directly in the browser and delete files you no longer need. Each notebook supports up to 5 files.\n\nThe Studio Panel\nThe right panel offers AI-powered study tools. Generate flashcards for active recall practice. Create quizzes to test your understanding. Build structured reports summarizing the document. Visualize topic hierarchies with mind maps. Extract data tables from structured content. Create slide decks with key points. Listen to audio overviews of your documents.\n\nNotebooks\nDocChat organizes your work into notebooks. Each notebook can contain multiple source files. All documents in a notebook are searchable together, allowing cross-referencing between files. You can edit notebook titles, share notebooks with others, and export your work.`,
-      },
-      {
-        fileName: "Tips and Tricks.pdf",
-        content: `Mastering DocChat: Pro Tips\n\nTo get the most out of DocChat, follow these best practices for document research. Use clear, specific questions instead of vague keywords. For example, ask "What are the three main findings of the study?" instead of just "findings". DocChat works best when it has high-quality, text-searchable PDFs. Avoid scanned documents that haven't been OCR'd, as they may appear blank to the AI.\n\nTake advantage of the different Studio tools for different learning styles. Use Mind Maps for structural understanding and Flashcards for memorization. When chatting, pay attention to the citations. Clicking a citation often shows you the exact snippet from the document, allowing you to verify the AI's accuracy instantly. This feature is particularly useful for legal or medical research where precision is paramount. Finally, remember to organize your research by creating separate notebooks for different projects or subjects.`,
+        fileName: "Wix Company Profile.pdf",
+        content: `## Wix - Company Overview\n\nWix.com Ltd. is a leading cloud-based web development platform serving over 250 million users in 190 countries. Founded in 2006 by Avishai Abrahami, Nadav Abrahami, and Giora Kaplan, the company is headquartered in Tel Aviv, Israel, and publicly traded on NASDAQ (WIX).\n\n## Products & Services\n\nWix offers an intuitive drag-and-drop website builder, Wix Studio for agencies and freelancers, Wix Editor X for advanced responsive design, and a comprehensive suite of business solutions including e-commerce, booking, restaurants, and events. The platform supports over 800 customizable templates and integrates with hundreds of third-party applications.\n\n## Technology & Engineering\n\nWix operates one of Israel's largest engineering organizations with over 3,000 engineers. The tech stack includes React, Node.js, Scala, and Kotlin. Wix heavily invests in AI, having launched Wix ADI (Artificial Design Intelligence) for automated website creation. The company contributes to open-source projects and runs an active engineering blog.\n\n## Market Position\n\nWix competes with Squarespace, Shopify, WordPress.com, and Webflow. With $1.7B+ in annual revenue, Wix leads in SMB website building with a freemium model converting to premium subscriptions. Their unique value lies in combining website building with comprehensive business management tools.\n\n## Culture & Careers\n\nWix is known for its vibrant startup culture despite being a large public company. Offices across Tel Aviv, Be'er Sheva, Kyiv, Vilnius, and other cities. They offer flexible work policies, professional development, and a strong internal mobility program. Engineering roles span full-stack, DevOps, data science, and AI/ML.`,
       },
     ],
     quiz: [
-      { question: "What technology does DocChat use to provide accurate answers?", options: ["Deep Learning Only", "Retrieval-Augmented Generation (RAG)", "Large Language Models without context", "Simple Keyword Search"], correctIndex: 1, explanation: "DocChat uses RAG to fetch relevant document chunks before generating an answer, ensuring grounding in your sources." },
-      { question: "What is the maximum file size for a PDF in DocChat?", options: ["2MB", "5MB", "10MB", "20MB"], correctIndex: 1, explanation: "PDF files up to 5MB are supported for upload and processing." },
-      { question: "How many files can a single notebook hold?", options: ["1", "5", "10", "Unlimited"], correctIndex: 1, explanation: "Each notebook currently supports up to 5 uploaded source files." },
-      { question: "What happens to your text after extraction during processing?", options: ["It is deleted", "It is stored as a single long string", "It is split into 2000-character chunks", "It is translated"], correctIndex: 2, explanation: "DocChat splits text into ~2000 character overlapping chunks to create effective embeddings for search." },
-      { question: "What does a green dot in the Sources panel signify?", options: ["Error", "Processing", "File Ready", "Selected"], correctIndex: 2, explanation: "A green dot indicates that the file has been successfully processed and is ready for chatting." },
-      { question: "Which provider is used for text embeddings in DocChat?", options: ["OpenAI", "Google", "Anthropic", "Meta"], correctIndex: 1, explanation: "DocChat uses Google's text-embedding models for high-quality semantic mapping." },
-      { question: "What is the primary function of the Studio panel?", options: ["File management", "Generating study and analysis tools", "User settings", "Billing"], correctIndex: 1, explanation: "The Studio generates tools like quizzes, flashcards, reports, and mindmaps from your document content." },
-      { question: "Does DocChat support image files?", options: ["No", "Only PNG", "Yes, using OCR for text extraction", "Only via external links"], correctIndex: 2, explanation: "DocChat identifies text in images (JPEG, PNG, WebP) using Optical Character Recognition (OCR)." },
-      { question: "Where are the vector embeddings stored?", options: ["S3 Bucket", "Local Storage", "PostgreSQL with pgvector", "Redis"], correctIndex: 2, explanation: "pgvector on PostgreSQL enables efficient vector similarity searches for the RAG pipeline." },
-      { question: "What is active recall practice in the context of DocChat?", options: ["Reading the document faster", "Using AI-generated flashcards", "Taking notes manually", "Asking the AI to summarize"], correctIndex: 1, explanation: "Flashcards in the Studio are designed for active recall, which is scientifically proven to improve long-term retention." },
+      { question: "When was Wix founded?", options: ["2004", "2006", "2008", "2010"], correctIndex: 1, explanation: "Wix was founded in 2006 by Avishai Abrahami, Nadav Abrahami, and Giora Kaplan." },
     ],
-    flashcards: [
-      { front: "RAG", back: "Retrieval-Augmented Generation: Retrieving relevant data to ground AI responses." },
-      { front: "pgvector", back: "An extension for PostgreSQL that allows storing and querying vector embeddings." },
-      { front: "Embedding", back: "A numerical representation of text that captures its semantic meaning." },
-      { front: "OCR", back: "Optical Character Recognition: Technology to extract text from images." },
-      { front: "Chunking", back: "The process of splitting documents into small, manageable pieces for indexing." },
-      { front: "Sources Panel", back: "The UI section for managing and viewing uploaded documents." },
-      { front: "Studio", back: "The toolkit for creating study aids like quizzes and mind maps." },
-      { front: "Notebook", back: "A collection of sources and chat history centered around a specific topic." },
-      { front: "Citations", back: "Numbered references [1] that link AI answers back to specific document parts." },
-      { front: "Markdown", back: "A lightweight markup language used for formatting chat messages." },
-    ],
-    report: [
-      { heading: "Project Overview", content: "DocChat is a cutting-edge AI research assistant designed to bridge the gap between static documents and actionable insights. By leveraging RAG (Retrieval-Augmented Generation), it ensures that users can interact with their documents in a natural, conversational manner without the risk of AI hallucination." },
-      { heading: "Technical Architecture", content: "The system utilizes a modern stack including Next.js for the frontend, Supabase for the backend and authentication, and PostgreSQL with pgvector for semantic search. Text is chunked, embedded using Google's models, and retrieved based on query similarity to provide context-aware responses." },
-      { heading: "User Experience", content: "The interface is divided into three functional zones: Sources for document management, Chat for direct interrogation of the data, and Studio for structured learning and synthesis. This tri-pane layout provides a comprehensive workspace for researchers and students alike." },
-      { heading: "Supported Ecosystem", content: "With support for PDF, DOCX, TXT, and even images via OCR, DocChat is versatile enough for legal, academic, and business use cases. The commitment to privacy ensures that user documents are never used for external model training." },
-    ],
-    mindmap: {
-      label: "DocChat Ecosystem",
-      children: [
-        { label: "Core Tech", children: [{ label: "RAG" }, { label: "pgvector" }, { label: "Embeddings" }] },
-        { label: "Features", children: [{ label: "Smart Chat" }, { label: "Doc Preview" }, { label: "OCR Support" }] },
-        { label: "Studio Tools", children: [{ label: "Quizzes" }, { label: "Flashcards" }, { label: "Reports" }, { label: "Slide Decks" }] },
-      ],
-    },
-    datatable: {
-      columns: ["Format", "Max Size", "Technology", "Status Color"],
-      rows: [
-        ["PDF", "5MB", "Standard Extraction", "Green (Ready)"],
-        ["DOCX", "10MB", "Structured Mapping", "Amber (Processing)"],
-        ["TXT", "500KB", "Plain Text", "Red (Error)"],
-        ["IMAGE", "5MB", "OCR", "Blue (New)"],
-      ],
-    },
-    infographic: [
-      { heading: "The 3-Step Process", content: "1. Upload: Drag and drop your files.\n2. Process: AI extracts and embeds text.\n3. Explore: Chat and use Studio tools." },
-      { heading: "Efficiency Gains", content: "Users report 60% faster research cycles and 2x better retention when using Studio's active recall tools." },
-      { heading: "Security First", content: "Full encryption at rest and in transit. Your data remains your own." },
-    ],
-    slidedeck: [
-      { heading: "Welcome to DocChat", content: "- Your AI Research Assistant\n- Chat with your documents\n- Evidence-based answers" },
-      { heading: "How It Works", content: "- Retrieval-Augmented Generation (RAG)\n- Semantic Search with pgvector\n- Accurate citations for every claim" },
-      { heading: "The Studio", content: "- Automated Study Guides\n- Quizzes and Flashcards\n- Interactive Mind Maps" },
-      { heading: "Get Started Now", content: "- Create your first notebook\n- Upload a PDF\n- Ask your first question!" },
-    ],
+    flashcards: [{ front: "Wix ADI", back: "Artificial Design Intelligence - Wix's AI-powered tool that automatically creates websites based on user preferences." }],
+    report: [{ heading: "Company Summary", content: "Wix is a $1.7B+ revenue cloud platform serving 250M+ users with website building and business management tools." }],
+    mindmap: { label: "Wix", children: [{ label: "Products", children: [{ label: "Website Builder" }, { label: "Wix Studio" }] }, { label: "Tech", children: [{ label: "React" }, { label: "Node.js" }] }] },
+    datatable: { columns: ["Metric", "Value"], rows: [["Users", "250M+"], ["Revenue", "$1.7B+"], ["Engineers", "3,000+"], ["Founded", "2006"]] },
+    infographic: [{ heading: "Wix at a Glance", content: "250M+ users across 190 countries, NASDAQ listed, 3,000+ engineers." }],
+    slidedeck: [{ heading: "Wix Overview", content: "- Leading website builder platform\n- 250M+ users, $1.7B+ revenue\n- Heavy AI investment (Wix ADI)\n- 3,000+ engineers in Tel Aviv and globally" }],
   },
-
-  "research-analysis": {
-    description: "Analyze academic papers by extracting findings, comparing methodologies, and tracking citations across studies.",
-    files: [
-      {
-        fileName: "Research Methodology.pdf",
-        content: `Quantitative vs. Qualitative Methods\n\nMethodology represents the core of academic research. Quantitative research focuses on numerical data, statistical analysis, and objective measurement. It often involves large sample sizes and aims for generalizability. Common techniques include RCTs (Randomized Controlled Trials), longitudinal surveys, and correlational studies.\n\nQualitative research, conversely, seeks to understand human behavior, motivation, and context through non-numerical data. Techniques include ethnography, grounded theory, and case studies. While sample sizes are smaller, the depth of insight into 'why' and 'how' is significantly greater.\n\nMixed Methods approach combines both, using triangulation to validate findings across different data types. This provides a more holistic view of the research problem.`,
-      },
-      {
-        fileName: "Comparative Studies.pdf",
-        content: `Analyzing Study Outcomes\n\nComparative study involves evaluating different research papers to find commonalities and discrepancies in their findings. This process requires a structured approach to data extraction and thematic coding. By comparing methodologies side-by-side, researchers can identify if results are robust across different contexts or if local variables significantly alter outcomes.\n\nA common challenge in meta-analysis is the "file drawer problem," where studies with non-significant results are less likely to be published, potentially biasing the overall synthesis. DocChat helps by allowing you to upload your own raw datasets and unpublished drafts to include in your comparative analysis, ensuring a more balanced and comprehensive review of the evidence.`,
-      },
-      {
-        fileName: "Case Study Analysis.pdf",
-        content: `Deep Dive into Specific Cases\n\nCase studies provide rich, contextual information that quantitative surveys often miss. This document outlines the primary steps for conducting a robust case study analysis. First, define the unit of analysis—be it an individual, a group, or an organization. Second, collect data from multiple sources including interviews, observations, and archival records.\n\nThe analysis phase involves pattern matching and explanation building. Researchers should look for cross-case patterns to build more generalizable theories. DocChat's Mind Map tool is particularly effective here for visualizing the connections between different case variables and outcomes. By organizing your cases into separate files within a notebook, you can use the chat interface to query specific differences and similarities between them effortlessly.`,
-      },
-    ],
-    quiz: [
-      { question: "What is 'triangulation' in research?", options: ["Measuring tree height", "Using multiple methods to validate findings", "A geometric survey", "A three-page summary"], correctIndex: 1, explanation: "Triangulation is the use of multiple data sources or methods to cross-verify the results of a study." },
-      { question: "Which method is best for understanding 'why' people feel a certain way?", options: ["Quantitative", "Qualitative", "Statistical", "Binary"], correctIndex: 1, explanation: "Qualitative research excels at uncovering motivations, feelings, and contextual nuances." },
-    ],
-    flashcards: [
-      { front: "RCT", back: "Randomized Controlled Trial: The gold standard for clinical and quantitative evidence." },
-      { front: "P-Value", back: "The probability that the observed results occurred by chance alone." },
-    ],
-    report: [{ heading: "Executive Summary", content: "This notebook provides tools for deep academic analysis, focusing on the distinction between quantitative and qualitative methodologies." }],
-    mindmap: { label: "Research Methods", children: [{ label: "Quantitative" }, { label: "Qualitative" }, { label: "Mixed" }] },
-    datatable: { columns: ["Metric", "Quant", "Qual"], rows: [["Sample Size", "Large", "Small"], ["Data Type", "Numbers", "Text/Video"]] },
-    infographic: [{ heading: "Study Design", content: "Visualizing the choice between objectivity and depth." }],
-    slidedeck: [{ heading: "Academic Research 101", content: "- Understanding Methods\n- Selecting Samples\n- Analyzing Results" }],
+  monday: {
+    description: "AI-generated analysis of monday.com, the work operating system for project and workflow management.",
+    files: [{ fileName: "monday.com Company Profile.pdf", content: `## monday.com - Company Overview\n\nmonday.com is a cloud-based Work OS that enables organizations to build custom work management tools and run projects, processes, and everyday work. Founded in 2012 by Roy Mann and Eran Zinman, the company is headquartered in Tel Aviv and trades on NASDAQ (MNDY).\n\n## Products & Services\n\nThe platform offers monday work management, monday sales CRM, monday dev for product development, and monday service for customer support. Features include customizable boards, automations, integrations with 200+ tools, dashboards, and Gantt charts.\n\n## Technology & Engineering\n\nThe engineering team uses React, Ruby on Rails, and a microservices architecture. monday.com has invested heavily in AI capabilities, introducing monday AI for automation suggestions, content generation, and formula building. The platform processes billions of data points daily.\n\n## Market & Culture\n\nWith $730M+ in annual revenue and 225,000+ customers, monday.com competes with Asana, Jira, ClickUp, and Notion. Known for its colorful branding and user-friendly approach, the company maintains a strong engineering culture with offices in Tel Aviv, New York, London, and other cities.` }],
+    quiz: [{ question: "Who founded monday.com?", options: ["Roy Mann & Eran Zinman", "Avishai Abrahami", "Amit Gilon", "Dedi Gilad"], correctIndex: 0, explanation: "monday.com was founded in 2012 by Roy Mann and Eran Zinman." }],
+    flashcards: [{ front: "Work OS", back: "monday.com's term for their flexible platform that allows organizations to shape workflows to fit their needs." }],
+    report: [{ heading: "Summary", content: "monday.com is a $730M+ revenue Work OS platform serving 225,000+ customers globally." }],
+    mindmap: { label: "monday.com", children: [{ label: "Products", children: [{ label: "Work Management" }, { label: "CRM" }, { label: "Dev" }] }] },
+    datatable: { columns: ["Metric", "Value"], rows: [["Revenue", "$730M+"], ["Customers", "225,000+"], ["Founded", "2012"]] },
+    infographic: [{ heading: "monday.com", content: "225,000+ customers, Work OS powering millions of workflows." }],
+    slidedeck: [{ heading: "monday.com", content: "- Work OS platform\n- $730M+ revenue\n- React + Ruby on Rails\n- AI-powered automations" }],
   },
-
-  "meeting-organizer": {
-    description: "Process meeting notes and transcripts to extract action items, track decisions, and generate follow-up reports.",
-    files: [
-      {
-        fileName: "Q1 Strategy Meeting.pdf",
-        content: `Q1 Strategy Meeting Minutes\n\nDate: Jan 5, 2026\nAttendees: Sarah, Mike, Jenny, Robert\n\nSummary:\nWe discussed the expansion into Asia-Pacific markets. Mike presented the market research showing 12% potential growth in the first year. Robert raised concerns about local regulations.\n\nAction Items:\n- Jenny: Finalize compliance report by next Friday.\n- Mike: Contact local hiring agencies.\n- Sarah: Draft the budget proposal by Monday.\n\nDecision:\nWe will proceed with the Singapore office launch first, followed by Tokyo in Q3.`,
-      },
-      {
-        fileName: "Project Timeline.pdf",
-        content: `Operational Roadmap 2026\n\nThe expansion project is divided into four main phases. Phase 1 focuses on market entry and legal setup in Singapore, scheduled for Q1 completion. Phase 2 involves talent acquisition and team building, overlapping with Q2. Phase 3 marks the launch of the Tokyo branch in Q3, focusing on local partnerships. Finally, Phase 4 is the year-end performance review and 2027 planning.\n\nEach phase has dedicated milestones and KPIs. For example, Phase 1 requires the successful registration of the business entity and the leasing of office space. Progress will be tracked bi-weekly through synchronized team syncs. DocChat allows the project manager to upload these roadmap documents and quickly query deadlines and responsibilities across the entire project lifecycle.`,
-      },
-      {
-        fileName: "Budget Review.pdf",
-        content: `Financial Allocation for APAC Expansion\n\nThe total budget allocated for the APAC expansion is $2.5M. Singapore operations are estimated to cost $1.2M, which includes office lease, initial salaries, and legal fees. The Tokyo launch is budgeted at $1M, with a $300k contingency fund reserved for unexpected regulatory hurdles. Marketing and brand awareness across both regions are allocated $200k.\n\nExpenditure must be tracked against these allocations. Any variance over 10% requires immediate board approval. By uploading this budget document to the Meeting Organizer notebook, Sarah (the CFO) can ensure that during strategy meetings, all financial decisions are grounded in the actual approved budget. The Data Table tool in DocChat can automatically extract these figures into a structured format for easy comparison and tracking.`,
-      },
-    ],
-    quiz: [
-      { question: "Who is responsible for the budget proposal?", options: ["Mike", "Jenny", "Sarah", "Robert"], correctIndex: 2, explanation: "The meeting minutes state that Sarah is tasked with drafting the budget proposal." },
-    ],
-    flashcards: [
-      { front: "Action Item", back: "A specific task assigned to an individual during a meeting." },
-    ],
-    report: [{ heading: "Strategic Decisions", content: "The primary decision made was the phased launch of offices in Singapore and Tokyo." }],
-    mindmap: { label: "Q1 Strategy", children: [{ label: "Market Growth", children: [{ label: "APAC (12%)" }] }, { label: "Operations", children: [{ label: "Singapore (Q1)" }, { label: "Tokyo (Q3)" }] }] },
-    datatable: { columns: ["Owner", "Task", "Deadline"], rows: [["Jenny", "Compliance Report", "Next Friday"], ["Sarah", "Budget Proposal", "Monday"]] },
-    infographic: [{ heading: "Meeting Vitals", content: "4 Attendees, 3 Action Items, 1 Major Decision." }],
-    slidedeck: [{ heading: "Q1 Strategy Update", content: "- APAC Expansion confirmed\n- Singapore launch prioritized\n- Budgeting in progress" }],
+  jfrog: {
+    description: "AI-generated analysis of JFrog, the universal software supply chain platform.",
+    files: [{ fileName: "JFrog Company Profile.pdf", content: `## JFrog - Company Overview\n\nJFrog Ltd. is a technology company providing a universal software supply chain platform. Founded in 2008 by Shlomi Ben Haim, Yoav Landman, and Fred Simon, JFrog is headquartered in Netanya, Israel, and trades on NASDAQ (FROG). The company has pioneered the concept of liquid software, enabling software updates to flow seamlessly and securely from developers to devices.\n\n## Products & Services\n\nJFrog Artifactory is the world's most widely used binary repository manager. The JFrog Platform also includes Xray (security scanning), Pipelines (CI/CD), Distribution (release management), and Connect (IoT). Their DevOps, Security, and MLOps solutions serve over 7,000 customers.\n\n## Technology & Engineering\n\nJFrog's platform is built on Java, Go, and React. The company supports every major package format (Docker, Maven, npm, PyPI, etc.) and integrates with all major CI/CD tools. Their ML Model Management capabilities extend DevOps practices to machine learning workflows.` }],
+    quiz: [{ question: "What is JFrog Artifactory?", options: ["A CI/CD tool", "A binary repository manager", "A cloud provider", "A database"], correctIndex: 1, explanation: "JFrog Artifactory is the world's most widely used binary repository manager." }],
+    flashcards: [{ front: "Liquid Software", back: "JFrog's vision of software updates flowing seamlessly and securely from developers to production." }],
+    report: [{ heading: "Summary", content: "JFrog provides the universal software supply chain platform serving 7,000+ enterprise customers." }],
+    mindmap: { label: "JFrog", children: [{ label: "Artifactory" }, { label: "Xray" }, { label: "Pipelines" }] },
+    datatable: { columns: ["Product", "Function"], rows: [["Artifactory", "Binary repo"], ["Xray", "Security"], ["Pipelines", "CI/CD"]] },
+    infographic: [{ heading: "JFrog", content: "7,000+ customers, universal DevOps platform." }],
+    slidedeck: [{ heading: "JFrog", content: "- Universal software supply chain\n- Artifactory + Xray + Pipelines\n- Java, Go, React stack\n- 7,000+ customers" }],
   },
-
-  "study-guide": {
-    description: "Transform textbook chapters and lecture notes into flashcards, quizzes, and structured study guides.",
-    files: [
-      {
-        fileName: "Cognitive Psychology.pdf",
-        content: `Human Memory Systems\n\nMemory is divided into sensory, short-term, and long-term stores. Working memory, a concept developed by Baddeley, includes the phonological loop and the visuospatial sketchpad. Long-term memory is split into explicit (declarative) and implicit (non-declarative). Declarative memory includes episodic (events) and semantic (facts). Implicit memory includes procedural skills and priming.`,
-      },
-      {
-        fileName: "Exam Prep.pdf",
-        content: `Psychology 101: Midterm Review\n\nThe upcoming midterm covers Chapters 1 through 5. Key focus areas include the history of behaviorism, cognitive development theories by Piaget and Vygotsky, and the neurobiology of memory. Students should be able to differentiate between classical and operant conditioning. Understanding the Atkinson-Shiffrin model of memory is essential for the short-answer section.\n\nTo prepare effectively, use the Studio tools to generate a 50-question practice quiz based on your textbook chunks. Active recall is the most efficient way to commit these complex theories to long-term memory. Don't just re-read the chapters; instead, test yourself on the difference between semantic and episodic memory stores until you can explain them in your own words without referring back to the text.`,
-      },
-      {
-        fileName: "Lecture Notes.pdf",
-        content: `Week 4 Lecture: The Cognitive Revolution\n\nThe cognitive revolution shifted psychology's focus from observable behavior to internal mental processes. This lecture covers the influence of computer science on early cognitive models—the "information processing" metaphor. We discussed how input, coding, storage, and retrieval in human memory mirror computer operations, though with significant biological nuance.\n\nMiller's "Magic Number Seven" was a key highlight, explaining the limited capacity of short-term memory (7±2 chunks). This explains why we break complex information into smaller, manageable pieces to remember it better. In DocChat, the "Chunking" process for document processing actually parallels this cognitive reality, making it easier for AI to retrieve relevant snippets for your queries. Ensure you understand the impact of sensory interference on encoding processes.`,
-      },
-    ],
-    quiz: [
-      { question: "Who developed the multi-component model of working memory?", options: ["Freud", "Skinner", "Baddeley", "Piaget"], correctIndex: 2, explanation: "Alan Baddeley is famous for his model of working memory involving specialized slave systems." },
-    ],
-    flashcards: [
-      { front: "Episodic Memory", back: "Long-term memory for specific events and personal experiences." },
-      { front: "Semantic Memory", back: "Long-term memory for general facts and knowledge about the world." },
-    ],
-    report: [{ heading: "Memory Systems", content: "This guide covers the fundamental structure of human memory, from short-term working processes to complex long-term storage." }],
-    mindmap: { label: "Memory", children: [{ label: "Short Term" }, { label: "Long Term", children: [{ label: "Explicit" }, { label: "Implicit" }] }] },
-    datatable: { columns: ["System", "Duration", "Capacity"], rows: [["Sensory", "2 sec", "Large"], ["Short-term", "30 sec", "7±2 items"], ["Long-term", "Indefinite", "Huge"]] },
-    infographic: [{ heading: "The Memory Funnel", content: "How external stimuli become long-term knowledge." }],
-    slidedeck: [{ heading: "Introduction to Memory", content: "- Multi-store model\n- Working memory components\n- Long-term distinctions" }],
+  gong: {
+    description: "AI-generated analysis of Gong, the revenue intelligence platform.",
+    files: [{ fileName: "Gong Company Profile.pdf", content: `## Gong - Company Overview\n\nGong.io is a revenue intelligence platform that uses AI to capture and analyze customer interactions across calls, emails, and meetings. Founded in 2015 by Amit Bendov and Eilon Reshef, Gong is headquartered in Tel Aviv with US offices in San Francisco. Valued at $7.25 billion, Gong serves over 4,000 customers.\n\n## Products & Services\n\nGong's platform automatically records, transcribes, and analyzes customer-facing interactions. It provides deal intelligence, people intelligence, and market intelligence. Features include conversation analytics, coaching insights, deal forecasting, and pipeline management. The platform integrates with major CRMs like Salesforce and HubSpot.\n\n## Technology & Engineering\n\nGong's AI processes millions of customer interactions using NLP, speech recognition, and machine learning. The engineering team works with Python, TypeScript, React, and cloud-native architectures. Gong's proprietary AI models are trained on billions of data points from real business conversations.` }],
+    quiz: [{ question: "What does Gong analyze?", options: ["Code", "Customer interactions", "Financial data", "HR records"], correctIndex: 1, explanation: "Gong analyzes customer-facing interactions across calls, emails, and meetings." }],
+    flashcards: [{ front: "Revenue Intelligence", back: "AI-driven analysis of customer interactions to provide insights for sales teams." }],
+    report: [{ heading: "Summary", content: "Gong is a $7.25B valued revenue intelligence platform serving 4,000+ customers." }],
+    mindmap: { label: "Gong", children: [{ label: "Deal Intelligence" }, { label: "People Intelligence" }, { label: "Market Intelligence" }] },
+    datatable: { columns: ["Metric", "Value"], rows: [["Valuation", "$7.25B"], ["Customers", "4,000+"], ["Founded", "2015"]] },
+    infographic: [{ heading: "Gong", content: "$7.25B valuation, AI-powered revenue intelligence for 4,000+ customers." }],
+    slidedeck: [{ heading: "Gong", content: "- Revenue intelligence platform\n- $7.25B valuation\n- Python + TypeScript + React\n- NLP + speech recognition" }],
   },
-
-  "data-analysis": {
-    description: "Understand statistical reports, extract data tables, and generate visual summaries of analytical findings.",
-    files: [
-      {
-        fileName: "Financial Trends 2025.pdf",
-        content: `Annual Financial Review\n\nRevenue grew by 8% to $145M. COGS increased 3% due to supply chain inflation. Net profit margin improved to 22%. R&D spend was $12M, focusing on AI automation. Customer acquisition cost (CAC) dropped to $45 while Lifetime Value (LTV) rose to $310, giving an LTV/CAC ratio of 6.8.`,
-      },
-      {
-        fileName: "Market Analysis.pdf",
-        content: `Global Fintech Landscape 2025\n\nThe fintech sector saw a horizontal expansion into embedded finance. Mobile payment adoption surged in emerging markets by 35% year-over-year. Institutional investment in blockchain-based settlements reached $4.2B. Key players are increasingly moving away from high-fee models towards subscription-based wealth management for the mass affluent segment.\n\nThis shift requires companies to optimize their unit economics. Organizations with an LTV/CAC ratio above 5 are considered exceptionally healthy. The move toward AI-driven risk assessment has reduced loan default rates by an average of 14% across the top ten digital banks. Use DocChat's Data Table tool to track these percentage shifts and currency values across different market reports to build a comparative investment thesis.`,
-      },
-      {
-        fileName: "Regional Statistics.pdf",
-        content: `North America vs. EM Regional Data\n\nIn North America, revenue per user (ARPU) stands at $85, with a mature market environment showing 5% growth. Emerging Markets (EM), however, show an ARPU of $12 but explosive growth at 45% CAGR. Operational costs in EM are 60% lower than in NA, resulting in comparable contribution margins despite the lower revenue per transaction.\n\nThe regulatory environment in NA is becoming more stringent regarding data privacy, increasing compliance costs by $2.5M annually for large firms. In contrast, several EM regions are introducing sandbox environments to foster innovation. This geographical divergence in policy and economics is crucial for global strategy. By uploading these regional stats, analysts can use the Slidedeck tool to create a "Geographic Opportunity Matrix" presentation for executive review.`,
-      },
-    ],
-    quiz: [
-      { question: "What was the Net Profit Margin?", options: ["8%", "12%", "22%", "145%"], correctIndex: 2, explanation: "The report explicitly states a net profit margin improvement to 22%." },
-    ],
-    flashcards: [
-      { front: "LTV/CAC", back: "Lifetime Value divided by Customer Acquisition Cost. A key metric for business health." },
-    ],
-    report: [{ heading: "Financial Performance", content: "The fiscal year 2025 showed strong growth with exceptional LTV/CAC ratios and improved margins." }],
-    mindmap: { label: "Financials", children: [{ label: "Revenue ($145M)" }, { label: "Costs", children: [{ label: "COGS (+3%)" }, { label: "R&D ($12M)" }] }] },
-    datatable: { columns: ["Metric", "Value", "Trend"], rows: [["Revenue", "$145M", "+8%"], ["Profit Margin", "22%", "Improving"]] },
-    infographic: [{ heading: "2025 at a Glance", content: "$145M Revenue, 6.8x LTV/CAC." }],
-    slidedeck: [{ heading: "2025 Financial Summary", content: "- Solid revenue growth\n- Margin expansion\n- High capital efficiency" }],
+  "check-point": {
+    description: "AI-generated analysis of Check Point Software Technologies, a cybersecurity leader.",
+    files: [{ fileName: "Check Point Company Profile.pdf", content: `## Check Point - Company Overview\n\nCheck Point Software Technologies Ltd. is a leading provider of cybersecurity solutions. Founded in 1993 by Gil Shwed, Marius Nacht, and Shlomo Kramer, the company is headquartered in Tel Aviv and Ramat Gan. Traded on NASDAQ (CHKP), Check Point pioneered the firewall industry and now provides comprehensive cyber threat prevention solutions.\n\n## Products & Services\n\nCheck Point offers Infinity architecture for consolidated security across networks, cloud, mobile, and IoT. Products include CloudGuard (cloud security), Harmony (workspace security), Quantum (network security), and ThreatCloud AI (the brain behind all Check Point products, powered by AI).\n\n## Technology & Engineering\n\nCheck Point's engineering spans C/C++, Python, Java, and React. The R&D center in Tel Aviv is one of Israel's largest, with thousands of engineers. ThreatCloud AI processes billions of cyber events daily using machine learning models to identify and prevent zero-day attacks.` }],
+    quiz: [{ question: "What did Check Point pioneer?", options: ["Cloud computing", "The firewall industry", "Social media", "E-commerce"], correctIndex: 1, explanation: "Check Point pioneered the firewall industry, founded in 1993." }],
+    flashcards: [{ front: "ThreatCloud AI", back: "Check Point's AI-powered threat intelligence engine that processes billions of cyber events daily." }],
+    report: [{ heading: "Summary", content: "Check Point is a NASDAQ-listed cybersecurity pioneer protecting enterprises worldwide since 1993." }],
+    mindmap: { label: "Check Point", children: [{ label: "CloudGuard" }, { label: "Harmony" }, { label: "Quantum" }, { label: "ThreatCloud AI" }] },
+    datatable: { columns: ["Product", "Focus"], rows: [["CloudGuard", "Cloud"], ["Harmony", "Workspace"], ["Quantum", "Network"]] },
+    infographic: [{ heading: "Check Point", content: "30+ years in cybersecurity, protecting millions of organizations worldwide." }],
+    slidedeck: [{ heading: "Check Point", content: "- Cybersecurity pioneer (1993)\n- Infinity consolidated architecture\n- ThreatCloud AI\n- C/C++, Python, Java, React" }],
   },
-
-  "legal-review": {
-    description: "Analyze contracts and legal documents to identify key clauses, obligations, risks, and termination provisions.",
-    files: [
-      {
-        fileName: "Master Service Agreement.pdf",
-        content: `Standard MSA Terms\n\n1. Obligations: Vendor shall provide services as defined in Exhibit A. 2. Liability: Limited to 12 months of fees. 3. Termination: 30 days written notice. 4. IP: Work product belongs to Client upon payment. 5. Governing Law: State of Delaware.`,
-      },
-      {
-        fileName: "Non-Disclosure Agreement.pdf",
-        content: `Confidentiality Obligations\n\nThis NDA establishes the protection of proprietary information exchanged during the project. "Confidential Information" includes all technical, financial, and business data marked as such. The "Receiving Party" agrees to use the information solely for the "Purpose" defined in Section 1. Term of protection is 5 years from the date of disclosure.\n\nExceptions include information that becomes public knowledge through no fault of the Receiving Party or was already in their possession. Remediation for breach includes injunctive relief. For a rapid legal review, use DocChat to identify these survival periods and exception clauses across multiple NDAs. The Report tool can generate a "Compliance Checklist" ensuring that third-party consultants are properly onboarded under identical confidentiality terms.`,
-      },
-      {
-        fileName: "Equity Terms.pdf",
-        content: `Employee Stock Option Summary\n\nEquity is granted subject to a 4-year vesting schedule with a 1-year cliff. Acceleration of vesting occurs upon a Change of Control (Double Trigger). Exercise price is set at the Fair Market Value (FMV) on the date of the grant. Options expire 10 years after grant or 90 days after departure from the company.\n\nUnderstanding the "Strike Price" and "Cliff" is vital for employee compensation planning. This document outlines the tax implications of Incentive Stock Options (ISOs) versus Non-Qualified Stock Options (NSOs). By uploading your equity agreements, you can use the Infographic tool to visualize your vesting schedule and potential payout scenarios based on different exit valuations, making complex legal terms easier to digest.`,
-      },
-    ],
-    quiz: [
-      { question: "What is the liability cap in this MSA?", options: ["Unlimited", "12 months of fees", "$1 million", "6 months of fees"], correctIndex: 1, explanation: "Section 2 limits liability to the fees paid in the preceding 12 months." },
-    ],
-    flashcards: [
-      { front: "Governing Law", back: "The jurisdiction whose laws will be used to interpret the contract (Delaware in this case)." },
-    ],
-    report: [{ heading: "Contract Risk Profile", content: "The agreement is standard, with favorable IP terms and a reasonable liability cap." }],
-    mindmap: { label: "MSA Review", children: [{ label: "Finance", children: [{ label: "Liability Cap" }] }, { label: "Ops", children: [{ label: "Termination (30d)" }, { label: "Delaware Law" }] }] },
-    datatable: { columns: ["Clause", "Summary", "Risk Level"], rows: [["Liability", "12mo Fees", "Low"], ["Termination", "30d Notice", "Medium"]] },
-    infographic: [{ heading: "Legal Snapshot", content: "IP Transfers on Payment. Delaware Jurisdiction." }],
-    slidedeck: [{ heading: "Contract Summary", content: "- Standard liability caps\n- IP protection included\n- 30-day exit clause" }],
+  tabnine: {
+    description: "AI-generated analysis of Tabnine, the AI code assistant platform.",
+    files: [{ fileName: "Tabnine Company Profile.pdf", content: `## Tabnine - Company Overview\n\nTabnine is an AI-powered code assistant that helps developers write code faster through intelligent code completions, chat, and code generation. Founded in 2013 (originally Codota) by Dror Weiss and Eran Yahav, Tabnine is headquartered in Tel Aviv. The company serves over 1 million developers and is known for its privacy-first approach to AI coding.\n\n## Products & Services\n\nTabnine offers code completions, AI chat, code generation, test generation, and code review. It supports 30+ programming languages and integrates with all major IDEs (VS Code, IntelliJ, Neovim, etc.). Tabnine Enterprise allows organizations to train models on their own codebase while keeping code private.\n\n## Technology & Engineering\n\nTabnine was one of the first companies to apply deep learning to code completion. They use transformer-based language models trained on permissively licensed open-source code. The platform runs models both locally (for privacy) and in the cloud. Their engineering team works with Python, TypeScript, and Rust.` }],
+    quiz: [{ question: "What makes Tabnine unique?", options: ["Free pricing", "Privacy-first AI coding", "Only supports Python", "Game development"], correctIndex: 1, explanation: "Tabnine is known for its privacy-first approach, allowing organizations to keep their code private." }],
+    flashcards: [{ front: "Tabnine Enterprise", back: "Tabnine's enterprise offering that trains AI models on an organization's own codebase while maintaining code privacy." }],
+    report: [{ heading: "Summary", content: "Tabnine serves 1M+ developers with privacy-first AI code assistance across 30+ languages." }],
+    mindmap: { label: "Tabnine", children: [{ label: "Completions" }, { label: "Chat" }, { label: "Code Gen" }, { label: "Enterprise" }] },
+    datatable: { columns: ["Metric", "Value"], rows: [["Developers", "1M+"], ["Languages", "30+"], ["Founded", "2013"]] },
+    infographic: [{ heading: "Tabnine", content: "1M+ developers, privacy-first AI coding assistant." }],
+    slidedeck: [{ heading: "Tabnine", content: "- AI code assistant (privacy-first)\n- 1M+ developers\n- Python, TypeScript, Rust\n- Local + cloud model execution" }],
   },
-
-  "product-specs": {
-    description: "Break down PRDs and feature specs to extract requirements, dependencies, and user stories for sprint planning.",
-    files: [
-      {
-        fileName: "V1.2 Dashboard Spec.pdf",
-        content: `V1.2 Dashboard Redesign PRD\n\nUser Goal: See all relevant data in one view. Requirements: 1. Sidebar navigation. 2. Real-time notifications. 3. Dark mode support. 4. Mobile responsiveness. Stakeholders: Design, Eng, Product. Timeline: 4 weeks.`,
-      },
-      {
-        fileName: "User Personas.pdf",
-        content: `Target User Personas 2026\n\nPrimary Persona: "Data-Driven Debbie," a Senior Product Manager who spends 40% of her day in reports. She needs rapid insights without digging through CSVs. Pain points include manual data compilation and lack of mobile access. Secondary Persona: "Junior Jake," an Associate Researcher focusing on academic summaries.\n\nThese personas drive our requirement prioritization. Debbie's need for mobile access directly leads to the "Mobile Responsiveness" requirement in the V1.2 spec. Jake's need for summaries validates the "Studio Report" tool. By uploading these persona documents alongside the technical specs, the engineering team can use the Mind Map tool to visualize how specific features map back to actual user needs, ensuring the product remains customer-centric during development.`,
-      },
-      {
-        fileName: "Metric Tracking.pdf",
-        content: `Succcess Metrics for V1.2 Release\n\nWe are tracking three primary KPIs for the dashboard redesign. 1. Engagement: Daily Active Users (DAU) engaging with more than 3 tools. 2. Speed: Average time-to-insight for a search query (Target: <2s). 3. Retention: 30-day retention for users who use the Studio tools at least once a week.\n\nTelemetry will be gathered via standard event tracking. Post-launch, a Cohort Analysis will be performed to see if the "Data-Driven Debbie" persona shows higher LTV as predicted. Analysts should use the Data Table tool to extract these target numbers and compare them against actual performance data periodically. This data-driven approach ensures that the "Product Specs" notebook isn't just a static record but a living tool for iterative development.`,
-      },
-    ],
-    quiz: [
-      { question: "How many main requirements were listed?", options: ["2", "4", "6", "1"], correctIndex: 1, explanation: "The spec lists 4 requirements: sidebar, notifications, dark mode, and mobile responsiveness." },
-    ],
-    flashcards: [
-      { front: "PRD", back: "Product Requirements Document. The source of truth for a feature's scope." },
-    ],
-    report: [{ heading: "Product Roadmap", content: "Focus for V1.2 is entirely on the dashboard UI and accessibility." }],
-    mindmap: { label: "V1.2 Dashboard", children: [{ label: "UI", children: [{ label: "Sidebar" }, { label: "Dark Mode" }] }, { label: "UX", children: [{ label: "Notifications" }, { label: "Mobile" }] }] },
-    datatable: { columns: ["Feature", "Status", "Priority"], rows: [["Dark Mode", "Ready", "High"], ["Sidebar", "In Dev", "High"]] },
-    infographic: [{ heading: "Feature Scope", content: "4 Core Requirements. 4-week Sprint." }],
-    slidedeck: [{ heading: "V1.2 Launch Plan", content: "- Revamped Navigation\n- Dark/Light Mode\n- Real-time alerts" }],
+  snyk: {
+    description: "AI-generated analysis of Snyk, the developer-first security platform.",
+    files: [{ fileName: "Snyk Company Profile.pdf", content: `## Snyk - Company Overview\n\nSnyk is a developer-first security platform that helps software development teams find and fix vulnerabilities in their code, dependencies, containers, and infrastructure as code. Founded in 2015 by Guy Podjarny, Assaf Hefetz, and Danny Grander, Snyk is headquartered in Boston with a major R&D center in Tel Aviv.\n\n## Products & Services\n\nSnyk offers Snyk Code (SAST), Snyk Open Source (SCA), Snyk Container (container security), Snyk IaC (infrastructure as code security), and Snyk Cloud. The platform integrates directly into developer workflows via IDE plugins, CI/CD pipelines, and SCM integrations.\n\n## Technology & Engineering\n\nSnyk's platform is built with TypeScript, Node.js, Go, and React. Their security intelligence is powered by a proprietary vulnerability database curated by Snyk's security research team. The company processes millions of projects and has fixed over 100 million vulnerabilities.` }],
+    quiz: [{ question: "What does SAST stand for?", options: ["Simple App Security Test", "Static Application Security Testing", "Snyk App Scanning Tool", "Software Analysis System"], correctIndex: 1, explanation: "SAST stands for Static Application Security Testing, which Snyk provides via Snyk Code." }],
+    flashcards: [{ front: "Snyk Code", back: "Snyk's Static Application Security Testing (SAST) tool that finds and fixes vulnerabilities in proprietary code." }],
+    report: [{ heading: "Summary", content: "Snyk is a developer-first security platform that has fixed 100M+ vulnerabilities across millions of projects." }],
+    mindmap: { label: "Snyk", children: [{ label: "Code (SAST)" }, { label: "Open Source (SCA)" }, { label: "Container" }, { label: "IaC" }] },
+    datatable: { columns: ["Product", "Type"], rows: [["Snyk Code", "SAST"], ["Snyk Open Source", "SCA"], ["Snyk Container", "Container"], ["Snyk IaC", "IaC"]] },
+    infographic: [{ heading: "Snyk", content: "100M+ vulnerabilities fixed, developer-first security." }],
+    slidedeck: [{ heading: "Snyk", content: "- Developer-first security\n- TypeScript, Node.js, Go, React\n- 100M+ vulnerabilities fixed\n- IDE + CI/CD + SCM integrations" }],
   },
-
-  "literature-review": {
-    description: "Synthesize findings across multiple academic papers to identify themes, gaps, and contradictions in the literature.",
-    files: [
-      {
-        fileName: "Climate Change Education.pdf",
-        content: `Literature Synthesis on CC Education\n\nRecent meta-analyses suggest that active learning methods significantly outperform traditional lectures in climate literacy (p < .01). However, Smith (2024) notes that curriculum integration remains fragmented. Gap identified: lack of longitudinal studies on behavioral change post-education.`,
-      },
-      {
-        fileName: "Research Gaps.pdf",
-        content: `Prioritizing Future Research Directions\n\nThe current literature heavily favors Western-centric samples, creating a massive gap in how climate education translates across culturally diverse contexts. Furthermore, while cognitive understanding of climate change is high, the "value-action gap" persists—where increased knowledge doesn't result in lifestyle changes.\n\nFuture research must prioritize interdisciplinary approaches that combine psychology, pedagogy, and environmental science. By using DocChat, researchers can upload hundreds of papers and use the "Literature Review Assistant" to find these contradictory findings. For instance, comparing Smith's focus on curriculum with Jones's focus on emotional resilience can highlight where one theory falls short. Use the Mind Map tool to visualize these theoretical disagreements and identify the "missing links" in current scholarly discourse.`,
-      },
-      {
-        fileName: "Future Directions.pdf",
-        content: `AI and the Future of Lit Reviews\n\nThe next decade will see a radical shift in how we perform literature reviews. AI-powered synthesis tools like DocChat are moving from simple keyword matching to deep semantic understanding. This allows for "dynamic literature reviews" that update as new research is published. The ability to ground AI responses in specific chunks ensures that citations remain accurate even in complex syntheses.\n\nWe anticipate that collaborative research environments will become the norm. Multiple researchers can share a single DocChat notebook, discussing findings in real-time with an AI that "knows" the entire corpus. This will dramatically reduce the time spent on manual coding and allow scholars to focus on higher-level theory building and practical application of their findings to solve global crises like climate change.`,
-      },
-    ],
-    quiz: [
-      { question: "What is the primary gap identified in the literature?", options: ["Expensive books", "Lack of longitudinal behavioral studies", "Too many lectures", "No online courses"], correctIndex: 1, explanation: "The text explicitly highlights a lack of longitudinal studies on actual behavioral changes." },
-    ],
-    flashcards: [
-      { front: "Meta-analysis", back: "A statistical technique that combines results from multiple studies to identify general trends." },
-    ],
-    report: [{ heading: "Current Landscape", content: "The field is moving towards active learning but lacks data on long-term impacts." }],
-    mindmap: { label: "CC Education", children: [{ label: "Themes", children: [{ label: "Active Learning" }] }, { label: "Gaps", children: [{ label: "Longitudinal Data" }] }] },
-    datatable: { columns: ["Author", "Theme", "Finding"], rows: [["Smith (2024)", "Integration", "Fragmented"], ["Meta-analysis", "Methods", "Active > Passive"]] },
-    infographic: [{ heading: "Research Synthesis", content: "The shift to active learning is proven but fragmented." }],
-    slidedeck: [{ heading: "Literature Summary", content: "- Active Learning is key\n- Implementation is messy\n- Long-term data needed" }],
+  appsflyer: {
+    description: "AI-generated analysis of AppsFlyer, the mobile attribution and marketing analytics platform.",
+    files: [{ fileName: "AppsFlyer Company Profile.pdf", content: `## AppsFlyer - Company Overview\n\nAppsFlyer is a mobile attribution and marketing analytics platform that helps brands measure and optimize their marketing campaigns. Founded in 2011 by Oren Kaniel and Reshef Mann, AppsFlyer is headquartered in Herzliya, Israel, with offices worldwide. The platform is trusted by 12,000+ brands and processes billions of mobile events daily.\n\n## Products & Services\n\nAppsFlyer provides mobile attribution, deep linking (OneLink), audience segmentation, ROI measurement, fraud protection (Protect360), and privacy-preserving analytics. The platform supports iOS, Android, CTV, PC, and console attribution with integrations across 10,000+ media partners.\n\n## Technology & Engineering\n\nAppsFlyer processes over 100 billion API calls daily using a scalable architecture built on Java, Scala, Python, and React. Their data pipeline handles massive volumes in real-time using Kafka, Druid, and custom-built solutions. The engineering team of 500+ focuses on big data, machine learning, and privacy technologies.` }],
+    quiz: [{ question: "How many API calls does AppsFlyer process daily?", options: ["1 billion", "10 billion", "100 billion", "1 trillion"], correctIndex: 2, explanation: "AppsFlyer processes over 100 billion API calls daily." }],
+    flashcards: [{ front: "Mobile Attribution", back: "The process of identifying which marketing campaign or channel led a user to install and engage with a mobile app." }],
+    report: [{ heading: "Summary", content: "AppsFlyer is the leading mobile attribution platform trusted by 12,000+ brands, processing 100B+ events daily." }],
+    mindmap: { label: "AppsFlyer", children: [{ label: "Attribution" }, { label: "Deep Linking" }, { label: "Fraud Protection" }, { label: "Analytics" }] },
+    datatable: { columns: ["Metric", "Value"], rows: [["Brands", "12,000+"], ["API calls/day", "100B+"], ["Engineers", "500+"], ["Founded", "2011"]] },
+    infographic: [{ heading: "AppsFlyer", content: "12,000+ brands, 100B+ daily API calls, 10,000+ media partner integrations." }],
+    slidedeck: [{ heading: "AppsFlyer", content: "- Mobile attribution leader\n- 12,000+ brands\n- Java, Scala, Python, React\n- 100B+ daily API calls" }],
   },
 };
 
