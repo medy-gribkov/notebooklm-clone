@@ -137,6 +137,7 @@
     "genericError": "Couldn't complete the request. Try again in a moment.",
     "unsupportedType": "Unsupported file type. Upload PDF, DOCX, TXT, or images.",
     "fileTooLarge": "File is too large. Maximum size is 5 MB.",
+    "messageTooLong": "Message is too long. Keep it under 2,000 characters.",
     "copyMessage": "Copy message",
     "starter1": "What are the key takeaways from these sources?",
     "starter2": "What are the main conclusions or findings?",

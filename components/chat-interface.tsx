@@ -79,9 +79,9 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
       onError: (error) => {
         const msg = error.message ?? "";
         if (msg.includes("429") || msg.toLowerCase().includes("too many")) {
-          setErrorMessage(
-            t("rateLimitError")
-          );
+          setErrorMessage(t("rateLimitError"));
+        } else if (msg.includes("2000") || msg.toLowerCase().includes("character limit")) {
+          setErrorMessage(t("messageTooLong"));
         } else {
           setErrorMessage(t("genericError"));
         }
@@ -427,7 +427,13 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
               className="min-h-[52px] max-h-32 resize-none pr-4 rounded-xl border-border/50 bg-muted/30 shadow-inner shadow-black/[0.03] focus:bg-background focus:border-primary/40 focus:shadow-none transition-all"
               disabled={isLoading || (!hasFiles && messages.length === 0)}
               rows={1}
+              maxLength={2000}
             />
+            {input.length > 1500 && (
+              <span className={`absolute bottom-1 right-1 text-[10px] tabular-nums ${input.length >= 2000 ? "text-destructive font-medium" : "text-muted-foreground/60"}`}>
+                {input.length}/2000
+              </span>
+            )}
           </div>
           <Button
             type="submit"

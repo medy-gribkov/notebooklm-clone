@@ -26,7 +26,9 @@ export async function GET(
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: "Internal error" }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json(data, {
+    headers: { "Cache-Control": "private, max-age=10, stale-while-revalidate=60" },
+  });
 }
 
 // POST /api/notebooks/[id]/generations - save a generation

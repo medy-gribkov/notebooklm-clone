@@ -12,13 +12,18 @@ export function sanitizeText(text: string): string {
   // Strip prompt injection delimiter markers
   cleaned = cleaned.replace(/===BEGIN DOCUMENT===/g, "").replace(/===END DOCUMENT===/g, "");
 
-  // Basic Prompt Injection Defense: strip high-risk instructional phrases
+  // Prompt Injection Defense: strip high-risk instructional phrases
+  // Uses flexible whitespace matching to catch evasion attempts
   const injectionPatterns = [
-    /ignore previous instructions/gi,
-    /system override/gi,
-    /you are now/gi,
-    /stop processing/gi,
-    /forget all rules/gi
+    /ignore\s+(?:all\s+)?previous\s+instructions?/gi,
+    /disregard\s+(?:all\s+)?(?:previous\s+)?instructions?/gi,
+    /system\s+override/gi,
+    /you\s+are\s+now/gi,
+    /stop\s+processing/gi,
+    /forget\s+(?:all\s+)?(?:previous\s+)?rules/gi,
+    /new\s+instructions?\s*:/gi,
+    /act\s+as\s+(?:a\s+)?(?:different|new)/gi,
+    /override\s+(?:your\s+)?(?:system\s+)?prompt/gi,
   ];
 
   for (const pattern of injectionPatterns) {

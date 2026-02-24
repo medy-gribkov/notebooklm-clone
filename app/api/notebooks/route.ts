@@ -83,10 +83,14 @@ export async function GET(request: Request) {
       filesByNotebook[nid].push(file);
     }
 
-    return NextResponse.json({ notebooks, sharedNotebooks, filesByNotebook });
+    return NextResponse.json({ notebooks, sharedNotebooks, filesByNotebook }, {
+      headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
+    });
   }
 
-  return NextResponse.json({ notebooks, sharedNotebooks });
+  return NextResponse.json({ notebooks, sharedNotebooks }, {
+    headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
+  });
 }
 
 // DELETE /api/notebooks - delete all notebooks for the user
