@@ -158,7 +158,7 @@ export default function SharedNotebookPage() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex items-center gap-3">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <span className="text-muted-foreground">Loading shared notebook...</span>
+          <span className="text-muted-foreground">Loading company profile...</span>
         </div>
       </div>
     );
@@ -171,7 +171,7 @@ export default function SharedNotebookPage() {
           <div className="flex justify-center">
             <Logo size="lg" />
           </div>
-          <h1 className="text-xl font-semibold">{error || "Notebook not found"}</h1>
+          <h1 className="text-xl font-semibold">{error || "Company profile not found"}</h1>
           <p className="text-muted-foreground text-sm">
             This share link may have expired or been revoked.
           </p>
@@ -304,7 +304,7 @@ export default function SharedNotebookPage() {
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask a question about this document..."
+                  placeholder="Ask about this company..."
                   disabled={chatLoading}
                   className="flex-1 h-12 rounded-lg border bg-background px-4 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
@@ -325,11 +325,11 @@ export default function SharedNotebookPage() {
             {data.permissions === "view" && chatMessages.length > 0 && (
               <div className="text-center pt-4 border-t">
                 <p className="text-sm text-muted-foreground">
-                  This notebook is shared as view-only.{" "}
+                  This profile is shared as view-only.{" "}
                   <a href="/login" className="text-primary hover:underline underline-offset-2">
                     Sign up
                   </a>{" "}
-                  to create your own notebooks and chat.
+                  to research companies and chat with the data.
                 </p>
               </div>
             )}

@@ -19,13 +19,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: { default: "DocChat", template: "%s | DocChat" },
   description:
-    "Upload documents. Ask questions in plain English. Get AI-powered answers with cited sources.",
-  keywords: ["PDF", "chat", "AI", "RAG", "document", "research", "study", "notes"],
+    "Research Israeli tech companies. Get AI-powered intelligence reports with cited sources.",
+  keywords: ["company intelligence", "tech companies", "Israel", "AI", "RAG", "research", "analysis"],
   authors: [{ name: "Medy Gribkov", url: "https://medygribkov.vercel.app" }],
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   openGraph: {
     title: "DocChat",
-    description: "Upload documents. Ask questions. Get AI-powered answers with cited sources.",
+    description: "Research Israeli tech companies. AI-powered intelligence reports with cited sources.",
     type: "website",
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "DocChat" }],
     siteName: "DocChat",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "DocChat",
-    description: "Upload documents. Ask questions. Get AI-powered answers with cited sources.",
+    description: "Research Israeli tech companies. AI-powered intelligence reports with cited sources.",
     images: ["/og-image.png"],
   },
   icons: {

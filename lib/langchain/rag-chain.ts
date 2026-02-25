@@ -36,7 +36,7 @@ export function createRAGChain(baseSystemPrompt: string) {
     const contextBlock =
       sources.length > 0
         ? `\n\n===BEGIN DOCUMENT===\n${context}\n===END DOCUMENT===`
-        : "\n\nThe user has not uploaded any sources yet, or no relevant passages matched their query. Politely tell them to upload sources or try a different question. Do not mention internal systems, formatting markers, or how retrieval works.";
+        : "\n\nNo company data has been loaded yet, or no relevant passages matched the query. Politely tell them to select a company profile or try a different question. Do not mention internal systems, formatting markers, or how retrieval works.";
 
     return {
       sources,

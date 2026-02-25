@@ -317,18 +317,17 @@ export function buildContextBlock(sources: Source[]): string {
 async function generateNotebookMeta(notebookId: string, sampleText: string): Promise<void> {
   const supabase = getServiceClient();
 
-  const systemPrompt = `You generate metadata for uploaded sources. Return ONLY valid JSON, no markdown.
+  const systemPrompt = `You generate metadata for company research documents. Return ONLY valid JSON, no markdown.
 Format: {"title": "...", "description": "...", "starterPrompts": ["...", "...", "...", "...", "...", "..."]}
 
 Rules:
-- title: A clear, descriptive title (max 60 chars). Not the filename.
-- description: Describe what these sources cover and their key topics (max 150 chars).
-- starterPrompts: 6 diverse questions a user might ask about these sources (max 80 chars each).
-  Adapt prompts to the content type (business, creative, academic, technical, legal, etc.).
-  Include a mix: overview, key details, comparisons, data points, takeaways, action items.
+- title: A clear, descriptive title (max 60 chars). Not the filename. e.g. "Wix - Company Intelligence Report"
+- description: Describe the company, its sector, and key topics covered (max 150 chars).
+- starterPrompts: 6 diverse questions a user might ask about this company (max 80 chars each).
+  Focus on: company overview, tech stack, engineering culture, products, market position, career opportunities.
 
-Example for a business report:
-{"title": "Q3 Revenue Analysis Report", "description": "Quarterly revenue breakdown by region with growth trends, cost analysis, and strategic recommendations.", "starterPrompts": ["What are the key takeaways from this report?", "Which region had the highest growth?", "What cost trends are highlighted?", "What strategic recommendations are made?", "How does Q3 compare to previous quarters?", "What risks or concerns are mentioned?"]}`;
+Example for a company profile:
+{"title": "Wix - Company Intelligence Report", "description": "Cloud-based web development platform. Tech stack, engineering culture, market position, and career opportunities.", "starterPrompts": ["What does this company do?", "What is their technology stack?", "What engineering roles are they hiring for?", "Who are their main competitors?", "What is their company culture like?", "What recent developments have they had?"]}`;
 
   async function attemptGenerate(excerpt: string): Promise<{ title?: string; description?: string; starterPrompts?: string[] } | null> {
     try {
