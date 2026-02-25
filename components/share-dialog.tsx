@@ -113,7 +113,7 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
       return;
     }
     const url = `${window.location.origin}/shared/${token}`;
-    const dataUrl = await QRCode.toDataURL(url, { width: 160, margin: 2 });
+    const dataUrl = await QRCode.toDataURL(url, { width: 200, margin: 2 });
     setQrToken(token);
     setQrDataUrl(dataUrl);
   }
@@ -128,7 +128,7 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
       />
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div
-          className="relative bg-background border rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden animate-slide-up"
+          className="relative bg-background border rounded-xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[85vh] overflow-hidden animate-slide-up"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -287,7 +287,7 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
                       <div className="absolute top-full left-0 right-0 mt-1 flex justify-center">
                         <div className="bg-white rounded-lg p-2 shadow-lg border">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={qrDataUrl} alt="QR Code" width={160} height={160} />
+                          <img src={qrDataUrl} alt="QR Code" width={200} height={200} />
                         </div>
                       </div>
                     )}

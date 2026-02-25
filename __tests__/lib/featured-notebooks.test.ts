@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { featuredNotebooks, getFeaturedBySlug } from "@/lib/featured-notebooks";
+import { featuredNotebooks, getFeaturedBySlug, CATEGORIES } from "@/lib/featured-notebooks";
 
 const VALID_PATTERNS = [
   "circles", "grid", "waves", "dots", "hexagons", "triangles", "lines", "diamond",
 ];
 
 describe("featuredNotebooks", () => {
-  it("contains 8 notebooks", () => {
-    expect(featuredNotebooks).toHaveLength(8);
+  it("contains 50 company notebooks", () => {
+    expect(featuredNotebooks).toHaveLength(50);
   });
 
   it("has no duplicate slugs", () => {
@@ -25,12 +25,13 @@ describe("featuredNotebooks", () => {
       expect(nb.author).toBeTruthy();
       expect(nb.date).toBeTruthy();
       expect(nb.sourceCount).toBeGreaterThan(0);
+      expect(nb.category).toBeTruthy();
     }
   });
 
-  it("all entries have sourceCount of 3 (each featured notebook has 3 synthetic files)", () => {
+  it("all entries have sourceCount of 1", () => {
     for (const nb of featuredNotebooks) {
-      expect(nb.sourceCount).toBe(3);
+      expect(nb.sourceCount).toBe(1);
     }
   });
 
@@ -39,13 +40,26 @@ describe("featuredNotebooks", () => {
       expect(VALID_PATTERNS).toContain(nb.pattern);
     }
   });
+
+  it("all categories are from the CATEGORIES list", () => {
+    const validCats = CATEGORIES.filter((c) => c !== "All");
+    for (const nb of featuredNotebooks) {
+      expect(validCats).toContain(nb.category);
+    }
+  });
+
+  it("all entries have a website domain", () => {
+    for (const nb of featuredNotebooks) {
+      expect(nb.website).toBeTruthy();
+    }
+  });
 });
 
 describe("getFeaturedBySlug", () => {
   it("finds a known slug", () => {
-    const nb = getFeaturedBySlug("getting-started");
+    const nb = getFeaturedBySlug("wix");
     expect(nb).toBeDefined();
-    expect(nb!.slug).toBe("getting-started");
+    expect(nb!.slug).toBe("wix");
   });
 
   it("returns undefined for unknown slug", () => {

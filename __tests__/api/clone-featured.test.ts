@@ -72,7 +72,7 @@ describe("POST /api/notebooks/clone-featured", () => {
 
         const req = new Request("http://test/api/notebooks/clone-featured", {
             method: "POST",
-            body: JSON.stringify({ slug: "getting-started" }),
+            body: JSON.stringify({ slug: "wix" }),
         });
 
         const res = await POST(req);

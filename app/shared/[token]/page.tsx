@@ -249,7 +249,7 @@ export default function SharedNotebookPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key
+              className={`px-4 py-3 min-h-[44px] text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key
                 ? "border-primary text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
@@ -306,14 +306,18 @@ export default function SharedNotebookPage() {
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Ask a question about this document..."
                   disabled={chatLoading}
-                  className="flex-1 h-10 rounded-lg border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="flex-1 h-12 rounded-lg border bg-background px-4 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <button
                   type="submit"
                   disabled={chatLoading || !chatInput.trim()}
-                  className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+                  className="h-12 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 min-w-[60px]"
                 >
-                  Send
+                  {chatLoading ? (
+                    <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin mx-auto" />
+                  ) : (
+                    "Send"
+                  )}
                 </button>
               </form>
             )}

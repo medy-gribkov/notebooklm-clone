@@ -3,12 +3,88 @@ import { getServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getFeaturedBySlug } from "@/lib/featured-notebooks";
 import { getFeaturedContent } from "@/lib/featured-content";
+import type { FeaturedStudioContent } from "@/lib/featured-content";
 import { embedText } from "@/lib/rag";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { getNotebookHash } from "@/lib/hash";
 import { NextResponse } from "next/server";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
+
+/** Generate a company profile on-demand via Gemini when no hardcoded content exists. */
+async function generateCompanyContent(
+  name: string,
+  website: string,
+  category: string,
+): Promise<FeaturedStudioContent | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("[clone-featured] GEMINI_API_KEY not set, cannot generate on-demand content");
+    return null;
+  }
+
+  const model = "gemini-2.0-flash";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+  const prompt = `Write a comprehensive company profile for ${name} (${website}).
+Category: ${category}
+
+Write 1500-2500 words covering:
+1. Company Overview - what they do, when founded, headquarters
+2. Products & Services - main offerings, key features
+3. Technology Stack & Engineering - known technologies, engineering culture, open source contributions
+4. Market Position - competitors, market share, unique value proposition
+5. Company Culture - work environment, values, employee reviews highlights
+6. Recent Developments - latest funding, product launches, partnerships
+7. Career Opportunities - typical engineering roles, what they look for in candidates
+
+Write in a professional but engaging tone. Use headers (##) for each section.
+Be factual. If you are unsure about something, say "reportedly" or omit it.`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`[clone-featured] Gemini generation error ${res.status}: ${body}`);
+      return null;
+    }
+
+    const data = await res.json();
+    const profileText: string = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    if (profileText.length < 200) {
+      console.error("[clone-featured] Generated profile too short");
+      return null;
+    }
+
+    const fileName = `${name} Company Profile.pdf`;
+    return {
+      description: `AI-generated analysis of ${name}, a ${category} company.`,
+      files: [{ fileName, content: profileText }],
+      quiz: [
+        { question: `What category does ${name} belong to?`, options: [category, "E-commerce", "HealthTech", "Gaming"], correctIndex: 0, explanation: `${name} is a ${category} company based in Israel.` },
+      ],
+      flashcards: [{ front: name, back: `${category} company. Website: ${website}` }],
+      report: [{ heading: "Company Summary", content: `${name} is an Israeli tech company in the ${category} space. Visit ${website} for more information.` }],
+      mindmap: { label: name, children: [{ label: "Products" }, { label: "Engineering" }, { label: "Culture" }] },
+      datatable: { columns: ["Attribute", "Details"], rows: [["Name", name], ["Website", website], ["Category", category], ["HQ", "Israel"]] },
+      infographic: [{ heading: "Overview", content: `${name} operates in ${category}.` }],
+      slidedeck: [{ heading: name, content: `A ${category} company from Israel.` }],
+    };
+  } catch (e) {
+    console.error("[clone-featured] On-demand generation failed:", e);
+    return null;
+  }
+}
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -36,24 +112,27 @@ export async function POST(request: Request) {
   }
 
   const featured = getFeaturedBySlug(slug);
-  const content = getFeaturedContent(slug);
 
-  if (!featured || !content) {
+  if (!featured) {
     return NextResponse.json({ error: "Featured notebook not found" }, { status: 404 });
   }
 
-  const titleMap: Record<string, string> = {
-    gettingStarted: "Getting Started with DocChat",
-    researchAnalysis: "Research Paper Analysis",
-    meetingOrganizer: "Meeting Notes Organizer",
-    studyGuide: "Study Guide Builder",
-    dataAnalysis: "Data Analysis Workspace",
-    legalReview: "Legal Document Review",
-    productSpecs: "Product Specs Analyzer",
-    literatureReview: "Literature Review Assistant",
-  };
+  // Try hardcoded content first, fall back to on-demand Gemini generation
+  let content = getFeaturedContent(slug);
+  if (!content && featured.website) {
+    console.log(`[clone-featured] No hardcoded content for "${slug}", generating on-demand...`);
+    content = await generateCompanyContent(
+      featured.titleKey,
+      featured.website,
+      featured.category,
+    );
+  }
 
-  const title = titleMap[featured.titleKey] ?? featured.titleKey;
+  if (!content) {
+    return NextResponse.json({ error: "Failed to generate content for this company" }, { status: 500 });
+  }
+
+  const title = `${slug.split("-").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")} — AI Analysis`;
   const serviceClient = getServiceClient();
 
   // Calculate source_hash anchor early for caching (matches studio API logic)

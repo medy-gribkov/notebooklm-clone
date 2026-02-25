@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserDropdown } from "@/components/user-dropdown";
-import { featuredNotebooks } from "@/lib/featured-notebooks";
+import { featuredNotebooks, CATEGORIES } from "@/lib/featured-notebooks";
 import type { FeaturedNotebook } from "@/lib/featured-notebooks";
 import { useToast } from "@/components/toast";
 import { Logo } from "@/components/logo";
@@ -26,10 +26,12 @@ import {
   Package,
   BookText,
   FileText,
+  Building2,
 } from "lucide-react";
 
 const PROCESSING_TIMEOUT_MS = 5 * 60 * 1000;
 const POLL_DELAYS = [5000, 10000, 20000, 30000];
+const INITIAL_VISIBLE = 12;
 
 type SortKey = "newest" | "oldest" | "az" | "za";
 type TabKey = "all" | "mine" | "featured";
@@ -55,6 +57,8 @@ export default function DashboardPage() {
   const [sortBy, setSortBy] = useState<SortKey>("newest");
   const [activeTab, setActiveTab] = useState<TabKey>("all");
   const [gridDensity, setGridDensity] = useState<GridDensity>("default");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [showAllFeatured, setShowAllFeatured] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("grid-density") as GridDensity;
@@ -204,6 +208,21 @@ export default function DashboardPage() {
       });
   }, [notebooks, searchQuery, sortBy]);
 
+  // Filtered featured notebooks
+  const filteredFeatured = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return featuredNotebooks.filter((fn) => {
+      const matchesCategory = selectedCategory === "All" || fn.category === selectedCategory;
+      if (!matchesCategory) return false;
+      if (!query) return true;
+      const title = tf(fn.titleKey).toLowerCase();
+      const desc = tf(fn.descriptionKey).toLowerCase();
+      return title.includes(query) || desc.includes(query) || fn.category.toLowerCase().includes(query);
+    });
+  }, [searchQuery, selectedCategory, tf]);
+
+  const visibleFeatured = showAllFeatured ? filteredFeatured : filteredFeatured.slice(0, INITIAL_VISIBLE);
+
   const sortOptions: { key: SortKey; label: string }[] = [
     { key: "newest", label: t("sortNewest") },
     { key: "oldest", label: t("sortOldest") },
@@ -232,6 +251,11 @@ export default function DashboardPage() {
     localStorage.setItem("grid-density", d);
   }
 
+  // Search handler (direct, no debounce needed for in-memory filtering)
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -247,6 +271,19 @@ export default function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+        {/* Search bar - prominent, full width */}
+        <div className="relative animate-slide-up">
+          <svg className="absolute left-4 rtl:left-auto rtl:right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <Input
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder={t("search")}
+            className="h-12 ps-12 text-base sm:text-sm rounded-xl"
+          />
+        </div>
+
         {/* Tab bar + Toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 pb-0 animate-slide-up [animation-delay:50ms]">
           {/* Tabs */}
@@ -255,7 +292,7 @@ export default function DashboardPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2.5 text-sm font-medium transition-all duration-200 relative ${activeTab === tab.key
+                className={`px-4 py-3 min-h-[44px] text-sm font-medium transition-all duration-200 relative ${activeTab === tab.key
                   ? "text-foreground after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2px] after:bg-primary after:rounded-full"
                   : "text-muted-foreground hover:text-foreground"
                   }`}
@@ -267,13 +304,13 @@ export default function DashboardPage() {
 
           {/* Toolbar */}
           <div className="flex items-center gap-2">
-            {/* Grid density toggle */}
-            <div className="flex items-center rounded-lg border bg-background">
+            {/* Grid density toggle - hidden on mobile */}
+            <div className="hidden sm:flex items-center rounded-lg border bg-background">
               {(["compact", "default", "spacious"] as GridDensity[]).map((d) => (
                 <button
                   key={d}
                   onClick={() => handleDensityChange(d)}
-                  className={`h-9 w-9 flex items-center justify-center transition-all duration-300 ease-out ${gridDensity === d ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  className={`h-10 w-10 flex items-center justify-center transition-all duration-300 ease-out ${gridDensity === d ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     } ${d === "compact" ? "rounded-s-lg" : d === "spacious" ? "rounded-e-lg" : ""}`}
                   title={d.charAt(0).toUpperCase() + d.slice(1)}
                   aria-label={`${d} grid layout`}
@@ -306,7 +343,7 @@ export default function DashboardPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortKey)}
-              className="h-9 rounded-lg border bg-background px-3 text-sm text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="h-10 rounded-lg border bg-background px-3 text-sm text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               {sortOptions.map((opt) => (
                 <option key={opt.key} value={opt.key}>{opt.label}</option>
@@ -322,18 +359,24 @@ export default function DashboardPage() {
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
               </svg>
-              {creatingNotebook ? t("creating") : t("createNew")}
+              <span className="hidden sm:inline">{creatingNotebook ? t("creating") : t("createNew")}</span>
+              <span className="sm:hidden">+</span>
             </Button>
           </div>
         </div>
 
         {/* Featured notebooks section */}
         {showFeatured && (
-          <FeaturedCarousel
-            notebooks={featuredNotebooks}
-            activeTab={activeTab}
+          <FeaturedSection
+            notebooks={filteredFeatured}
+            visibleNotebooks={visibleFeatured}
+            showAll={showAllFeatured}
+            onToggleShowAll={() => setShowAllFeatured(!showAllFeatured)}
+            totalCount={filteredFeatured.length}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
             onOpenFeatured={handleOpenFeatured}
-            onSeeAll={() => setActiveTab("featured")}
+            cloningSlug={cloningSlug}
             t={t}
             tf={tf}
           />
@@ -342,22 +385,8 @@ export default function DashboardPage() {
         {/* Recent notebooks section */}
         {showRecent && (
           <section className="animate-slide-up [animation-delay:150ms]">
-            {/* Section header with search */}
             <div className="flex items-center gap-3 mb-4">
               <h2 className="text-title flex-1">{t("recentNotebooks")}</h2>
-              {!loading && notebooks.length > 0 && (
-                <div className="relative w-48 lg:w-64">
-                  <svg className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t("search")}
-                    className="h-9 ps-9 text-sm"
-                  />
-                </div>
-              )}
             </div>
 
             {/* Grid */}
@@ -447,219 +476,165 @@ export default function DashboardPage() {
   );
 }
 
-function FeaturedCarousel({
+function FeaturedSection({
   notebooks,
-  activeTab,
+  visibleNotebooks,
+  showAll,
+  onToggleShowAll,
+  totalCount,
+  selectedCategory,
+  onSelectCategory,
   onOpenFeatured,
-  onSeeAll,
+  cloningSlug,
   t,
   tf,
 }: {
   notebooks: FeaturedNotebook[];
-  activeTab: string;
+  visibleNotebooks: FeaturedNotebook[];
+  showAll: boolean;
+  onToggleShowAll: () => void;
+  totalCount: number;
+  selectedCategory: string;
+  onSelectCategory: (cat: string) => void;
   onOpenFeatured: (slug: string) => void;
-  onSeeAll: () => void;
+  cloningSlug: string | null;
   t: (key: string) => string;
   tf: (key: string) => string;
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const locale = useLocale();
-  const isRTL = locale === "he";
-
-  const CARD_WIDTH = 320;
-  const GAP = 16;
-
-  const updateScrollState = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    // In modern browsers, scrollLeft is 0 at the right edge in RTL and becomes negative as we scroll left.
-    // Some older/edge browsers might report positive values scrolling down to 0.
-    // We normalize this to a positive scroll position representing "distance from logical start".
-    const scrollPos = Math.abs(el.scrollLeft);
-    const maxScroll = el.scrollWidth - el.clientWidth;
-
-    // canScrollLeft: Can we scroll visually left? (Back in LTR, Next in RTL)
-    // canScrollRight: Can we scroll visually right? (Next in LTR, Back in RTL)
-    if (isRTL) {
-      // In RTL:
-      // Visual Left (Next) -> scrollLeft becomes MORE negative (abs increases)
-      // Visual Right (Back) -> scrollLeft becomes LESS negative (abs decreases toward 0)
-      setCanScrollLeft(scrollPos < maxScroll - 10);
-      setCanScrollRight(scrollPos > 10);
-    } else {
-      setCanScrollLeft(scrollPos > 10);
-      setCanScrollRight(scrollPos < maxScroll - 10);
-    }
-
-    const idx = Math.round(scrollPos / (CARD_WIDTH + GAP));
-    setActiveIndex(Math.min(idx, notebooks.length - 1));
-  }, [isRTL, notebooks.length]);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    updateScrollState();
-    el.addEventListener("scroll", updateScrollState, { passive: true });
-    return () => el.removeEventListener("scroll", updateScrollState);
-  }, [updateScrollState]);
-
-  function scroll(direction: "left" | "right") {
-    const el = scrollRef.current;
-    if (!el) return;
-    const amount = el.clientWidth - GAP;
-    // Visually scroll left or right regardless of mode
-    el.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
-  }
-
-  function scrollToIndex(idx: number) {
-    const el = scrollRef.current;
-    if (!el) return;
-    const target = idx * (CARD_WIDTH + GAP);
-    el.scrollTo({ left: isRTL ? -target : target, behavior: "smooth" });
-  }
-
-  const isGridMode = activeTab === "featured";
-
-  function renderCard(fn: FeaturedNotebook, i: number, fullWidth?: boolean) {
-    return (
-      <button
-        key={fn.slug}
-        onClick={() => onOpenFeatured(fn.slug)}
-        className={`relative shrink-0 rounded-2xl overflow-hidden group hover:scale-[1.02] hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 featured-shadow cursor-pointer border-0 ${fn.bgClass}`}
-        style={{
-          width: fullWidth ? "100%" : CARD_WIDTH,
-          height: 240,
-          scrollSnapAlign: fullWidth ? undefined : "start",
-          animationDelay: `${i * 60}ms`,
-        }}
-      >
-        {/* Decorative pattern */}
-        <div className="absolute inset-0 opacity-[0.04]">
-          <CardPattern pattern={fn.pattern} />
-        </div>
-        {/* Mesh overlay */}
-        <div className="absolute inset-0 featured-mesh opacity-50 mix-blend-overlay" />
-
-        {/* Large decorative icon */}
-        <div className="absolute -top-4 -right-4 rtl:right-auto rtl:-left-4 text-8xl opacity-10 z-10 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
-          <FeaturedIcon type={fn.icon} />
-        </div>
-
-        {/* Author badge (top-start) */}
-        <div className="absolute top-5 left-5 rtl:left-auto rtl:right-5 flex items-center gap-2 z-10">
-          <div className="h-7 w-7 rounded-full bg-black/5 dark:bg-white/10 backdrop-blur-md flex items-center justify-center text-xs">
-            <FeaturedIcon type={fn.icon} />
-          </div>
-          <span className="text-xs font-semibold tracking-wide drop-shadow-sm opacity-90 uppercase">
-            {fn.author}
-          </span>
-        </div>
-
-        {/* Content (bottom) */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 z-10 text-start">
-          <h3 className="font-bold text-2xl tracking-tight leading-none mb-2 drop-shadow-sm opacity-100">
-            {tf(fn.titleKey)}
-          </h3>
-          <p className="text-sm font-medium leading-snug opacity-80 mb-4 line-clamp-2">
-            {tf(fn.descriptionKey)}
-          </p>
-          <div className="flex items-center gap-3 text-xs font-semibold opacity-60">
-            <span className="bg-black/10 dark:bg-white/10 px-2 py-1 rounded-md">{fn.date}</span>
-            <span className="flex items-center gap-1">
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              {fn.sourceCount} {fn.sourceCount === 1 ? "source" : "sources"}
-            </span>
-          </div>
-        </div>
-      </button>
-    );
-  }
-
   return (
-    <section className="animate-slide-up [animation-delay:100ms] mb-8">
-      <div className="flex items-center justify-between mb-6">
+    <section className="animate-slide-up [animation-delay:100ms]">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold tracking-tight text-foreground">{t("featuredNotebooks")}</h2>
-        <div className="flex items-center gap-2">
-          {activeTab === "all" && (
-            <button
-              onClick={onSeeAll}
-              className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-            >
-              {t("seeAll")}
-              <svg className="h-4 w-4 rtl:-scale-x-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          )}
-        </div>
+        <span className="text-sm text-muted-foreground">
+          {totalCount} {totalCount === 1 ? "company" : "companies"}
+        </span>
       </div>
 
-      {isGridMode ? (
-        /* Grid layout for "Featured notebooks" tab */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {notebooks.map((fn, i) => renderCard(fn, i, true))}
+      {/* Category filter chips */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-none pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => onSelectCategory(cat)}
+            className={`shrink-0 min-h-[44px] px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+              selectedCategory === cat
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Grid of featured cards */}
+      {visibleNotebooks.length === 0 ? (
+        <div className="flex flex-col items-center py-12 text-center animate-fade-in">
+          <p className="text-sm text-muted-foreground">{t("noResults")}</p>
         </div>
       ) : (
-        /* Carousel layout for "All" tab */
-        <div className="relative group/carousel overflow-x-hidden overflow-y-visible">
-          {/* Visual Left arrow (Prev in LTR, Next in RTL) */}
-          {canScrollLeft && (
-            <button
-              onClick={() => scroll("left")}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-background/90 border shadow-lg hidden sm:flex items-center justify-center text-foreground hover:bg-background"
-              aria-label={isRTL ? t("next") : t("back")}
-            >
-              <svg className="h-5 w-5 rtl:scale-x-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          )}
-
-          {/* Visual Right arrow (Next in LTR, Prev in RTL) */}
-          {canScrollRight && (
-            <button
-              onClick={() => scroll("right")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-background/90 border shadow-lg hidden sm:flex items-center justify-center text-foreground hover:bg-background"
-              aria-label={isRTL ? t("back") : t("next")}
-            >
-              <svg className="h-5 w-5 rtl:scale-x-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          )}
-
-          {/* Cards container */}
-          <div
-            ref={scrollRef}
-            className="flex gap-4 overflow-x-auto pt-2 pb-3 scrollbar-none carousel-fade-edges"
-            style={{ scrollSnapType: "x mandatory" }}
-          >
-            {notebooks.map((fn, i) => renderCard(fn, i))}
-          </div>
-
-          {/* Dot indicators */}
-          <div className="flex justify-center gap-1.5 mt-3">
-            {notebooks.map((fn, i) => (
-              <button
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {visibleNotebooks.map((fn, i) => (
+              <FeaturedCard
                 key={fn.slug}
-                onClick={() => scrollToIndex(i)}
-                className={`h-2 rounded-full transition-all ${i === activeIndex
-                  ? "w-6 bg-primary"
-                  : "w-2 bg-muted-foreground/20 hover:bg-muted-foreground/40"
-                  }`}
-                aria-label={`Go to ${tf(fn.titleKey)}`}
+                notebook={fn}
+                index={i}
+                isCloning={cloningSlug === fn.slug}
+                onOpen={() => onOpenFeatured(fn.slug)}
+                tf={tf}
               />
             ))}
           </div>
-        </div>
+
+          {/* Show more / Show less */}
+          {totalCount > INITIAL_VISIBLE && (
+            <div className="flex justify-center mt-6">
+              <Button
+                variant="outline"
+                onClick={onToggleShowAll}
+                className="min-h-[44px]"
+              >
+                {showAll
+                  ? t("showLess")
+                  : `${t("showMore")} (${totalCount - INITIAL_VISIBLE})`}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </section>
+  );
+}
+
+function FeaturedCard({
+  notebook: fn,
+  index,
+  isCloning,
+  onOpen,
+  tf,
+}: {
+  notebook: FeaturedNotebook;
+  index: number;
+  isCloning: boolean;
+  onOpen: () => void;
+  tf: (key: string) => string;
+}) {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <button
+      onClick={onOpen}
+      disabled={isCloning}
+      className={`relative shrink-0 rounded-2xl overflow-hidden group hover:scale-[1.02] hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 featured-shadow cursor-pointer border-0 text-start w-full disabled:opacity-70 ${fn.bgClass}`}
+      style={{
+        height: 200,
+        animationDelay: `${index * 40}ms`,
+      }}
+    >
+      {/* Decorative pattern */}
+      <div className="absolute inset-0 opacity-[0.04]">
+        <CardPattern pattern={fn.pattern} />
+      </div>
+      <div className="absolute inset-0 featured-mesh opacity-50 mix-blend-overlay" />
+
+      {/* Company logo (Clearbit) - top right */}
+      {fn.website && !imgError && (
+        <div className="absolute top-4 right-4 rtl:right-auto rtl:left-4 z-10">
+          <img
+            src={`https://logo.clearbit.com/${fn.website}`}
+            alt=""
+            className="h-8 w-8 rounded-lg bg-white/90 p-0.5 shadow-sm"
+            loading="lazy"
+            onError={() => setImgError(true)}
+          />
+        </div>
+      )}
+
+      {/* Category badge */}
+      <div className="absolute top-4 left-4 rtl:left-auto rtl:right-4 z-10">
+        <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded-md bg-black/10 dark:bg-white/10 backdrop-blur-sm">
+          {fn.category}
+        </span>
+      </div>
+
+      {/* Loading indicator */}
+      {isCloning && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-2xl">
+          <div className="h-6 w-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Content (bottom) */}
+      <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+        <h3 className="font-bold text-lg sm:text-xl tracking-tight leading-tight mb-1.5 drop-shadow-sm">
+          {tf(fn.titleKey)}
+        </h3>
+        <p className="text-xs sm:text-sm font-medium leading-snug opacity-75 line-clamp-2">
+          {tf(fn.descriptionKey)}
+        </p>
+      </div>
+    </button>
   );
 }
 
@@ -674,6 +649,7 @@ function FeaturedIcon({ type }: { type: string }) {
     case "legal": return <Scale {...props} />;
     case "product": return <Package {...props} />;
     case "literature": return <BookText {...props} />;
+    case "building": return <Building2 {...props} />;
     default: return <FileText {...props} />;
   }
 }

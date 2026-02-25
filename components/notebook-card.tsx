@@ -161,11 +161,11 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete,
       </Link>
 
       {/* Kebab menu */}
-      <div className="absolute right-3 rtl:right-auto rtl:left-3 top-4 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute right-3 rtl:right-auto rtl:left-3 top-4 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="h-9 w-9 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label={`Options for ${notebook.title}`}
               onClick={(e) => e.preventDefault()}
             >
