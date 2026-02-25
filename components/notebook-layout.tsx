@@ -272,7 +272,7 @@ export function NotebookLayout({ notebookId, notebookTitle, notebookFiles, initi
                 <h2 className="text-sm font-semibold">{t("sources")}</h2>
                 <button
                   onClick={closeMobilePanel}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -298,7 +298,7 @@ export function NotebookLayout({ notebookId, notebookTitle, notebookFiles, initi
                 <h2 className="text-sm font-semibold">{t("studio")}</h2>
                 <button
                   onClick={closeMobilePanel}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

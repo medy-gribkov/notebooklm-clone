@@ -165,7 +165,7 @@ export function NotebookCard({ notebook, files = [], timedOut = false, onDelete,
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="h-9 w-9 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="h-11 w-11 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label={`Options for ${notebook.title}`}
               onClick={(e) => e.preventDefault()}
             >
