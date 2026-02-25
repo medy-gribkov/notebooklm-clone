@@ -51,43 +51,42 @@ export async function GET(
     return NextResponse.json({ error: "Notebook not available" }, { status: 404 });
   }
 
-  // Fetch messages (last 100)
-  const { data: messages } = await supabase
-    .from("messages")
-    .select("id, role, content, sources, created_at")
-    .eq("notebook_id", notebookId)
-    .eq("is_public", true)
-    .order("created_at", { ascending: true })
-    .limit(100);
-
-  // Fetch notes
-  const { data: notes } = await supabase
-    .from("notes")
-    .select("id, title, content, created_at")
-    .eq("notebook_id", notebookId)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  // Fetch studio generations
-  const { data: generations } = await supabase
-    .from("studio_generations")
-    .select("id, action, result, created_at")
-    .eq("notebook_id", notebookId)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  // Fetch company info if linked
-  let company: { name: string; website: string | null; category: string | null } | null = null;
-  try {
-    const { data: companyData } = await supabase
+  // Fetch all related data in parallel
+  const [
+    { data: messages },
+    { data: notes },
+    { data: generations },
+    company,
+  ] = await Promise.all([
+    supabase
+      .from("messages")
+      .select("id, role, content, sources, created_at")
+      .eq("notebook_id", notebookId)
+      .eq("is_public", true)
+      .order("created_at", { ascending: true })
+      .limit(100),
+    supabase
+      .from("notes")
+      .select("id, title, content, created_at")
+      .eq("notebook_id", notebookId)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("studio_generations")
+      .select("id, action, result, created_at")
+      .eq("notebook_id", notebookId)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
       .from("companies")
       .select("name, website, category")
       .eq("notebook_id", notebookId)
-      .single();
-    if (companyData) company = companyData;
-  } catch {
-    // companies table may not exist yet (migration pending)
-  }
+      .single()
+      .then(
+        ({ data }) => data as { name: string; website: string | null; category: string | null } | null,
+        () => null,
+      ),
+  ]);
 
   return NextResponse.json({
     notebook,

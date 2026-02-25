@@ -598,16 +598,22 @@ const FeaturedCard = React.memo(function FeaturedCard({
       </div>
       <div className="absolute inset-0 featured-mesh opacity-50 mix-blend-overlay" />
 
-      {/* Company logo (Clearbit) - top right */}
-      {fn.website && !imgError && (
+      {/* Company logo (Clearbit) with initial fallback - top right */}
+      {fn.website && (
         <div className="absolute top-4 right-4 rtl:right-auto rtl:left-4 z-10">
-          <img
-            src={`https://logo.clearbit.com/${fn.website}`}
-            alt=""
-            className="h-8 w-8 rounded-lg bg-white/90 p-0.5 shadow-sm"
-            loading="lazy"
-            onError={() => setImgError(true)}
-          />
+          {!imgError ? (
+            <img
+              src={`https://logo.clearbit.com/${fn.website}`}
+              alt={tf(fn.titleKey)}
+              className="h-8 w-8 rounded-lg bg-white/90 p-0.5 shadow-sm"
+              loading="lazy"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="h-8 w-8 rounded-lg bg-primary/90 shadow-sm flex items-center justify-center text-primary-foreground text-xs font-bold">
+              {tf(fn.titleKey).charAt(0).toUpperCase()}
+            </div>
+          )}
         </div>
       )}
 

@@ -211,7 +211,7 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
         <div className="px-4 py-6">
           <div className="space-y-5 max-w-2xl lg:max-w-3xl mx-auto">
             {messages.length === 0 && !hasFiles && !isProcessing && (
-              <div className="flex flex-col items-center py-20 text-center animate-fade-in">
+              <div className="flex flex-col items-center py-10 sm:py-20 text-center animate-fade-in">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -248,7 +248,7 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
             )}
 
             {messages.length === 0 && (hasFiles || isProcessing) && (
-              <div className="flex flex-col items-center py-16 text-center animate-fade-in">
+              <div className="flex flex-col items-center py-8 sm:py-16 text-center animate-fade-in">
                 {isProcessing && (
                   <div className="flex items-center gap-2.5 mb-6 px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20">
                     <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" />
@@ -259,7 +259,7 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
                   <Mascot size="lg" mood={isProcessing ? "thinking" : "neutral"} />
                 </div>
                 {description && (
-                  <div className="rounded-xl border bg-card/60 p-4 mb-6 text-center max-w-md mx-auto">
+                  <div className="rounded-xl border bg-card/60 p-4 mb-6 text-center max-w-sm sm:max-w-md mx-auto">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
                       {t("notebookSummary")}
                     </p>
@@ -272,7 +272,7 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
                 <p className="text-sm text-muted-foreground mb-8">
                   {t("allAnswers")}
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                   {starterPrompts.map((prompt) => (
                     <button
                       key={prompt.text}
@@ -413,7 +413,7 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
       </div>
 
       {/* Input area */}
-      <div className="border-t bg-background/80 backdrop-blur-sm p-4 shrink-0">
+      <div className="border-t bg-background/80 backdrop-blur-sm p-3 sm:p-4 shrink-0">
         <form
           onSubmit={handleFormSubmit}
           className="max-w-2xl lg:max-w-3xl mx-auto flex gap-2.5 items-end"
@@ -458,7 +458,7 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
             </svg>
           </Button>
         </form>
-        <p className="mt-2 text-center text-[11px] text-muted-foreground/50 max-w-2xl lg:max-w-3xl mx-auto">
+        <p className="hidden sm:block mt-2 text-center text-[11px] text-muted-foreground/50 max-w-2xl lg:max-w-3xl mx-auto">
           {t("sendHint")}
         </p>
       </div>

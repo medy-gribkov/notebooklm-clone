@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SourcePanel } from "@/components/source-panel";
 import { useTranslations } from "next-intl";
-import type { Message, Note, StudioGeneration } from "@/types";
+import type { Message, Note, StudioGeneration, Source } from "@/types";
 
 interface Flashcard {
   front: string;
@@ -49,7 +50,7 @@ export default function SharedNotebookPage() {
   const t = useTranslations("featured");
   const common = useTranslations("common"); // For generic UI labels if needed
   const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string }>>([]);
+  const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string; sources?: Source[] }>>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -85,11 +86,9 @@ export default function SharedNotebookPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  async function handleSendMessage(e: React.FormEvent) {
-    e.preventDefault();
-    if (!chatInput.trim() || chatLoading) return;
+  const sendMessage = useCallback(async (userMsg: string) => {
+    if (!userMsg.trim() || chatLoading) return;
 
-    const userMsg = chatInput.trim();
     setChatInput("");
     setChatError(null);
     setChatMessages((prev) => [...prev, { role: "user", content: userMsg }]);
@@ -111,7 +110,6 @@ export default function SharedNotebookPage() {
         return;
       }
 
-      // Read streaming response
       const reader = res.body?.getReader();
       if (!reader) {
         setChatError("No response stream");
@@ -120,6 +118,7 @@ export default function SharedNotebookPage() {
       }
 
       let assistantContent = "";
+      let parsedSources: Source[] = [];
       setChatMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
       const decoder = new TextDecoder();
@@ -127,30 +126,49 @@ export default function SharedNotebookPage() {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        // Extract text from SSE data stream
-        const lines = chunk.split("\n");
-        for (const line of lines) {
+        for (const line of chunk.split("\n")) {
           if (line.startsWith("0:")) {
-            // ai SDK data stream text chunk
+            // Text chunk
             try {
-              const text = JSON.parse(line.slice(2));
-              assistantContent += text;
+              assistantContent += JSON.parse(line.slice(2));
               setChatMessages((prev) => {
                 const updated = [...prev];
-                updated[updated.length - 1] = { role: "assistant", content: assistantContent };
+                updated[updated.length - 1] = { role: "assistant", content: assistantContent, sources: parsedSources.length > 0 ? parsedSources : undefined };
                 return updated;
               });
-            } catch {
-              // Malformed stream chunk, skip
-            }
+            } catch { /* skip malformed */ }
+          } else if (line.startsWith("2:")) {
+            // StreamData (sources)
+            try {
+              const dataArr = JSON.parse(line.slice(2));
+              for (const item of Array.isArray(dataArr) ? dataArr : [dataArr]) {
+                if (item && Array.isArray(item.sources)) {
+                  parsedSources = item.sources;
+                }
+              }
+            } catch { /* skip malformed */ }
           }
         }
+      }
+
+      // Final update with sources attached
+      if (parsedSources.length > 0) {
+        setChatMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { ...updated[updated.length - 1], sources: parsedSources };
+          return updated;
+        });
       }
     } catch {
       setChatError("Failed to send message. Please try again.");
     } finally {
       setChatLoading(false);
     }
+  }, [chatLoading, chatMessages, token]);
+
+  function handleSendMessage(e: React.FormEvent) {
+    e.preventDefault();
+    sendMessage(chatInput.trim());
   }
 
   if (loading) {
@@ -205,7 +223,13 @@ export default function SharedNotebookPage() {
                   src={`https://logo.clearbit.com/${new URL(data.company.website.startsWith("http") ? data.company.website : `https://${data.company.website}`).hostname}`}
                   alt={data.company.name}
                   className="h-7 w-7 rounded"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    const fallback = document.createElement("div");
+                    fallback.className = "h-7 w-7 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold";
+                    fallback.textContent = (data.company?.name ?? "?").charAt(0).toUpperCase();
+                    img.replaceWith(fallback);
+                  }}
                 />
                 <span className="text-sm font-semibold">{data.company.name}</span>
               </>
@@ -267,29 +291,75 @@ export default function SharedNotebookPage() {
       <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
         {activeTab === "chat" && (
           <div className="space-y-4">
-            {chatMessages.length === 0 && (
-              <p className="text-muted-foreground text-center py-12">
-                No chat messages yet.
-              </p>
+            {data.permissions === "view" && (
+              <div className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                This profile is shared as view-only.{" "}
+                <a href="/login" className="text-primary hover:underline underline-offset-2">
+                  Sign up
+                </a>{" "}
+                to create your own company research notebooks.
+              </div>
             )}
-            {chatMessages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${msg.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
-                    }`}
-                >
-                  {msg.content || (
-                    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                      <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
-                      Thinking...
-                    </span>
-                  )}
+
+            {chatMessages.length === 0 && (
+              <div className="py-8 sm:py-12 text-center space-y-6">
+                <div>
+                  <p className="text-base font-semibold mb-1">
+                    Ask anything about {data.company?.name || "this company"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    All answers are grounded in company data with cited sources.
+                  </p>
                 </div>
+                {data.permissions === "chat" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
+                    {[
+                      `What does ${data.company?.name || "this company"} do?`,
+                      `What's their technology stack?`,
+                      `What makes them stand out?`,
+                      `What engineering roles are they hiring for?`,
+                    ].map((prompt) => (
+                      <button
+                        key={prompt}
+                        onClick={() => sendMessage(prompt)}
+                        disabled={chatLoading}
+                        className="flex items-start gap-3 rounded-xl border border-border/60 bg-card p-3.5 text-left text-xs text-muted-foreground hover:bg-accent/60 hover:text-foreground hover:border-primary/30 transition-all disabled:opacity-50"
+                      >
+                        <svg className="h-4 w-4 shrink-0 mt-0.5 text-primary/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                        </svg>
+                        <span className="leading-relaxed">{prompt}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {chatMessages.map((msg, i) => (
+              <div key={i} className="space-y-2">
+                <div
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${msg.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted prose dark:prose-invert prose-sm max-w-none"
+                      }`}
+                  >
+                    {msg.content || (
+                      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                        <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+                        Thinking...
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
+                  <div className="max-w-[80%]">
+                    <SourcePanel sources={msg.sources} />
+                  </div>
+                )}
               </div>
             ))}
             <div ref={chatEndRef} />
@@ -298,13 +368,13 @@ export default function SharedNotebookPage() {
               <p className="text-sm text-destructive text-center">{chatError}</p>
             )}
 
-            {data.permissions === "chat" && (
+            {data.permissions === "chat" && chatMessages.length > 0 && (
               <form onSubmit={handleSendMessage} className="flex gap-2 pt-4 border-t">
                 <input
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask about this company..."
+                  placeholder={`Ask about ${data.company?.name || "this company"}'s tech, culture, products...`}
                   disabled={chatLoading}
                   autoComplete="off"
                   className="flex-1 h-12 rounded-lg border bg-background px-4 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -321,18 +391,6 @@ export default function SharedNotebookPage() {
                   )}
                 </button>
               </form>
-            )}
-
-            {data.permissions === "view" && chatMessages.length > 0 && (
-              <div className="text-center pt-4 border-t">
-                <p className="text-sm text-muted-foreground">
-                  This profile is shared as view-only.{" "}
-                  <a href="/login" className="text-primary hover:underline underline-offset-2">
-                    Sign up
-                  </a>{" "}
-                  to research companies and chat with the data.
-                </p>
-              </div>
             )}
           </div>
         )}

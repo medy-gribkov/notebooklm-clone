@@ -35,7 +35,10 @@ const nextConfig: NextConfig = {
   compress: true,
   serverExternalPackages: ["pdf-parse"],
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "*.supabase.co" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "*.supabase.co" },
+      { protocol: "https", hostname: "logo.clearbit.com" },
+    ],
   },
   async headers() {
     return [

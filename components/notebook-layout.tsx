@@ -312,42 +312,43 @@ export function NotebookLayout({ notebookId, notebookTitle, notebookFiles, initi
           </div>
         )}
 
-        {/* Mobile / Narrow Desktop Bottom Navigation */}
-        <div className="lg:hidden border-t bg-background/80 backdrop-blur-md px-6 py-2 shrink-0">
-          <div className="flex items-center justify-around gap-4 max-w-md mx-auto">
-            <button
-              onClick={openMobileSources}
-              className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all min-h-[44px] ${mobilePanel === "sources" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              <span className="text-[10px] font-medium uppercase tracking-tight">{t("sources")}</span>
-            </button>
+      </div>
 
-            <button
-              onClick={closeMobilePanel}
-              className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all min-h-[44px] ${mobilePanel === null ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-              </svg>
-              <span className="text-[10px] font-medium uppercase tracking-tight">{t("chat")}</span>
-            </button>
+      {/* Mobile / Narrow Desktop Bottom Navigation */}
+      <div className="lg:hidden border-t bg-background/80 backdrop-blur-md px-3 sm:px-6 py-2 shrink-0 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-center justify-around gap-4 max-w-md mx-auto">
+          <button
+            onClick={openMobileSources}
+            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all min-h-[44px] ${mobilePanel === "sources" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
+              }`}
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <span className="text-[10px] font-medium uppercase tracking-tight">{t("sources")}</span>
+          </button>
 
-            <button
-              onClick={openMobileStudio}
-              className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all min-h-[44px] ${mobilePanel === "studio" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47 2.47a2.25 2.25 0 00-.659 1.59v1.69m-11.742 0A2.923 2.923 0 005 19.748V21" />
-              </svg>
-              <span className="text-[10px] font-medium uppercase tracking-tight">{t("studio")}</span>
-            </button>
-          </div>
+          <button
+            onClick={closeMobilePanel}
+            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all min-h-[44px] ${mobilePanel === null ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
+              }`}
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span className="text-[10px] font-medium uppercase tracking-tight">{t("chat")}</span>
+          </button>
+
+          <button
+            onClick={openMobileStudio}
+            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all min-h-[44px] ${mobilePanel === "studio" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
+              }`}
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47 2.47a2.25 2.25 0 00-.659 1.59v1.69m-11.742 0A2.923 2.923 0 005 19.748V21" />
+            </svg>
+            <span className="text-[10px] font-medium uppercase tracking-tight">{t("studio")}</span>
+          </button>
         </div>
       </div>
     </div>

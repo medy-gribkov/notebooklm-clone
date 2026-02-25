@@ -28,26 +28,27 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429, headers: { "Retry-After": "60" } });
   }
 
-  // Fetch user's own notebooks
-  const { data, error } = await supabase
-    .from("notebooks")
-    .select(NOTEBOOK_COLUMNS)
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  // Fetch user's own notebooks and shared memberships in parallel
+  const serviceClient = getServiceClient();
+  const [notebooksResult, membershipsResult] = await Promise.all([
+    supabase
+      .from("notebooks")
+      .select(NOTEBOOK_COLUMNS)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    serviceClient
+      .from("notebook_members")
+      .select("notebook_id, role")
+      .eq("user_id", user.id),
+  ]);
 
-  if (error) {
-    console.error("[notebooks] Failed to fetch notebooks:", error);
+  if (notebooksResult.error) {
+    console.error("[notebooks] Failed to fetch notebooks:", notebooksResult.error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 
-  const notebooks = data ?? [];
-
-  // Fetch shared notebooks (where user is a member)
-  const serviceClient = getServiceClient();
-  const { data: memberships } = await serviceClient
-    .from("notebook_members")
-    .select("notebook_id, role")
-    .eq("user_id", user.id);
+  const notebooks = notebooksResult.data ?? [];
+  const memberships = membershipsResult.data;
 
   let sharedNotebooks: Array<Record<string, unknown>> = [];
   if (memberships && memberships.length > 0) {
