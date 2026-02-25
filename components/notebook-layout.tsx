@@ -140,7 +140,7 @@ export function NotebookLayout({ notebookId, notebookTitle, notebookFiles, initi
       <header className="border-b bg-background/80 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2 px-3 sm:px-5 py-2.5">
           <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground h-8 px-2">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px] px-2">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>

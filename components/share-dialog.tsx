@@ -128,7 +128,7 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
       />
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div
-          className="relative bg-background border rounded-xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[85vh] overflow-hidden animate-slide-up"
+          className="relative bg-background border rounded-xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden animate-slide-up"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -136,7 +136,7 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
             <h2 className="text-sm font-semibold">{t("title")}</h2>
             <button
               onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -185,7 +185,7 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
                 <button
                   key={String(opt.value)}
                   onClick={() => setExpiry(opt.value)}
-                  className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${expiry === opt.value
+                  className={`rounded-md px-3 py-2 text-[11px] font-medium transition-all min-h-[44px] flex items-center ${expiry === opt.value
                       ? "bg-muted text-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     }`}
@@ -217,7 +217,7 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
           </div>
 
           {/* Active links list */}
-          <div className="px-5 py-3 overflow-y-auto max-h-[300px] scrollbar-thin">
+          <div className="px-5 py-3 overflow-y-auto flex-1 min-h-0 scrollbar-thin">
             <h3 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
               {t("activeLinks")}
             </h3>
@@ -231,63 +231,62 @@ export function ShareDialog({ notebookId, open, onClose }: ShareDialogProps) {
             ) : (
               <div className="space-y-2">
                 {links.map((link) => (
-                  <div
-                    key={link.id}
-                    className="relative flex items-center gap-2 rounded-lg border p-2.5"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${link.permissions === "chat"
-                            ? "bg-primary/10 text-primary"
-                            : "bg-muted text-muted-foreground"
-                          }`}>
-                          {link.permissions === "chat" ? t("viewAndChat") : t("viewOnly")}
-                        </span>
+                  <div key={link.id} className="rounded-lg border p-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${link.permissions === "chat"
+                              ? "bg-primary/10 text-primary"
+                              : "bg-muted text-muted-foreground"
+                            }`}>
+                            {link.permissions === "chat" ? t("viewAndChat") : t("viewOnly")}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-1" suppressHydrationWarning>
+                          {link.expires_at
+                            ? t("expires", { date: new Date(link.expires_at).toLocaleDateString() })
+                            : t("noExpiry")}
+                        </p>
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1" suppressHydrationWarning>
-                        {link.expires_at
-                          ? t("expires", { date: new Date(link.expires_at).toLocaleDateString() })
-                          : t("noExpiry")}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => toggleQR(link.token)}
-                      className={`shrink-0 flex h-7 w-7 items-center justify-center rounded-md transition-colors ${qrToken === link.token ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}
-                      aria-label="QR Code"
-                    >
-                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm14 3h.01M17 14h.01M14 17h.01M14 14h3v3h-3v-3zm3 3h3v3h-3v-3z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => copyLink(link.token)}
-                      className="shrink-0 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                      aria-label={t("copyLink")}
-                    >
-                      {copiedToken === link.token ? (
-                        <svg className="h-3.5 w-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
+                      <button
+                        onClick={() => toggleQR(link.token)}
+                        className={`shrink-0 flex h-11 w-11 items-center justify-center rounded-md transition-colors ${qrToken === link.token ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}
+                        aria-label="QR Code"
+                      >
                         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm14 3h.01M17 14h.01M14 17h.01M14 14h3v3h-3v-3zm3 3h3v3h-3v-3z" />
                         </svg>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => revokeLink(link.token)}
-                      className="shrink-0 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      aria-label={t("revoke")}
-                    >
-                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                      </button>
+                      <button
+                        onClick={() => copyLink(link.token)}
+                        className="shrink-0 flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        aria-label={t("copyLink")}
+                      >
+                        {copiedToken === link.token ? (
+                          <svg className="h-3.5 w-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                          </svg>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => revokeLink(link.token)}
+                        className="shrink-0 flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        aria-label={t("revoke")}
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
                     {qrToken === link.token && qrDataUrl && (
-                      <div className="absolute top-full left-0 right-0 mt-1 flex justify-center">
+                      <div className="flex justify-center pt-3">
                         <div className="bg-white rounded-lg p-2 shadow-lg border">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={qrDataUrl} alt="QR Code" width={200} height={200} />
+                          <img src={qrDataUrl} alt="QR Code" className="w-full max-w-[200px] h-auto" />
                         </div>
                       </div>
                     )}
