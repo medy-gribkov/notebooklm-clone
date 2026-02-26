@@ -23,7 +23,7 @@
     "@ai-sdk/google": "^1.2.22",
     "@ai-sdk/groq": "^1.2.9",
     "@google/generative-ai": "^0.24.1",
-    "@langchain/community": "^1.1.17",
+    "@langchain/community": "^1.1.18",
     "@langchain/core": "^1.1.26",
     "@langchain/google-genai": "^2.1.20",
     "@langchain/textsplitters": "^1.0.1",
