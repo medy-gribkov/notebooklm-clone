@@ -209,10 +209,10 @@ export async function POST(
             },
           ]);
           if (insertError) {
-            // Message save failed, not critical for user experience
+            console.error("[shared-chat] Message save failed:", insertError);
           }
-        } catch {
-          // Message persistence error, non-critical
+        } catch (err) {
+          console.error("[shared-chat] Message persistence error:", err);
         }
         data.close();
       },

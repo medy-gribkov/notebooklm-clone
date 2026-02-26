@@ -85,12 +85,12 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ notebooks, sharedNotebooks, filesByNotebook }, {
-      headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
+      headers: { "Cache-Control": "private, max-age=15, stale-while-revalidate=60" },
     });
   }
 
   return NextResponse.json({ notebooks, sharedNotebooks }, {
-    headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
+    headers: { "Cache-Control": "private, max-age=15, stale-while-revalidate=60" },
   });
 }
 

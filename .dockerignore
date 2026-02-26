@@ -13,4 +13,5 @@ Dockerfile
 __tests__
 vitest.config.ts
 coverage
+scripts
 .vscode

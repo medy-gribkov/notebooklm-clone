@@ -84,6 +84,24 @@ export async function POST(request: Request) {
     );
   }
 
+  // Check cache BEFORE fetching all chunks (avoids expensive DB read on cache hit)
+  if (notebook.source_hash) {
+    try {
+      const { data: cached } = await supabase
+        .from("studio_generations")
+        .select("result")
+        .eq("notebook_id", notebookId)
+        .eq("action", validAction)
+        .eq("source_hash", notebook.source_hash)
+        .single();
+      if (cached) {
+        return NextResponse.json(cached.result);
+      }
+    } catch {
+      // Cache lookup may fail if migration is pending
+    }
+  }
+
   let documentText: string;
   try {
     documentText = await getAllChunks(notebookId, user.id);
@@ -104,25 +122,6 @@ export async function POST(request: Request) {
 
   // Calculate content hash for caching (fallback to calculation if not in notebook metadata)
   const sourceHash = notebook.source_hash || getNotebookHash(documentText);
-
-  // Check for existing generation with the same hash
-  let existingGen = null;
-  try {
-    const { data } = await supabase
-      .from("studio_generations")
-      .select("result")
-      .eq("notebook_id", notebookId)
-      .eq("action", validAction)
-      .eq("source_hash", sourceHash)
-      .single();
-    existingGen = data;
-  } catch {
-    // Cache lookup may fail if migration is pending
-  }
-
-  if (existingGen) {
-    return NextResponse.json(existingGen.result);
-  }
 
   // Inject LangChain format instructions into the prompt for type-safe output
   const parser = studioParsers[validAction];

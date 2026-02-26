@@ -60,7 +60,7 @@ describe("POST /api/studio (Caching)", () => {
                 return {
                     select: vi.fn().mockReturnThis(),
                     eq: vi.fn().mockReturnThis(),
-                    single: vi.fn().mockResolvedValue({ data: { id: validUUID, status: "ready" }, error: null }),
+                    single: vi.fn().mockResolvedValue({ data: { id: validUUID, status: "ready", source_hash: "test-hash" }, error: null }),
                 };
             }
             if (table === "studio_generations") {
@@ -83,6 +83,7 @@ describe("POST /api/studio (Caching)", () => {
         const body = await res.json();
         expect(body).toEqual(cachedResult);
         expect(mockedStreamText).not.toHaveBeenCalled();
+        expect(mockedChunks).not.toHaveBeenCalled();
     });
 
     it.each(VALID_ACTIONS)("calls AI for %s if no cached result is found", async (action) => {

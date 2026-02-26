@@ -53,12 +53,13 @@ describe("checkRateLimit", () => {
     expect(checkRateLimit("key-b", 1, 60_000)).toBe(true);
   });
 
-  it("cleans up expired entries", async () => {
+  it("cleans up expired entries during periodic sweep", async () => {
     const checkRateLimit = await getCheckRateLimit();
     checkRateLimit("old-key", 1, 1_000);
-    vi.advanceTimersByTime(2_000);
+    // Advance past the entry window AND past the 60s cleanup interval
+    vi.advanceTimersByTime(61_000);
 
-    // This call should clean up "old-key"
+    // This call triggers the periodic sweep, cleaning up "old-key"
     checkRateLimit("new-key", 1, 60_000);
     // Old key should be gone, so this should be allowed
     expect(checkRateLimit("old-key", 1, 1_000)).toBe(true);
@@ -80,14 +81,17 @@ describe("checkRateLimit", () => {
     expect(checkRateLimit("boundary", 1, 10_000)).toBe(true);
   });
 
-  it("clears store when exceeding MAX_ENTRIES (10,000)", async () => {
+  it("evicts oldest entries when exceeding MAX_ENTRIES (10,000)", async () => {
     const checkRateLimit = await getCheckRateLimit();
     // Fill store with 10,001 unique keys (window far in the future so they don't expire)
     for (let i = 0; i <= 10_000; i++) {
       checkRateLimit(`flood-${i}`, 100, 999_999_999);
     }
-    // After exceeding MAX_ENTRIES, oldest 1000 entries are evicted on next call.
-    // The next call for an evicted key should succeed (creates fresh entry)
+    // Advance past cleanup interval to trigger sweep + eviction
+    vi.advanceTimersByTime(61_000);
+    // The next call triggers eviction of oldest 1000 entries
+    checkRateLimit("trigger-cleanup", 1, 60_000);
+    // The earliest keys (flood-0 etc.) should have been evicted
     expect(checkRateLimit("flood-0", 1, 60_000)).toBe(true);
   });
 });

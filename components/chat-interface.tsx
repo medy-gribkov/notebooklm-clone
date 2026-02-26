@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useChat } from "ai/react";
 import type { Message as AIMessage } from "ai";
-import ReactMarkdown from "react-markdown";
+import dynamic from "next/dynamic";
 import rehypeSanitize from "rehype-sanitize";
+
+const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false });
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SourcePanel } from "@/components/source-panel";

@@ -307,7 +307,7 @@ export default function SharedNotebookPage() {
 
       {activeTab === "chat" ? (
         <>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto" aria-live="polite" aria-busy={chatLoading}>
             <div className="mx-auto w-full max-w-5xl px-4 py-6 space-y-4">
               {data.permissions === "view" && (
                 <div className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
@@ -343,7 +343,7 @@ export default function SharedNotebookPage() {
                           disabled={chatLoading}
                           className="flex items-start gap-3 rounded-xl border border-border/60 bg-card p-3.5 text-left text-xs text-muted-foreground hover:bg-accent/60 hover:text-foreground hover:border-primary/30 transition-all disabled:opacity-50"
                         >
-                          <svg className="h-4 w-4 shrink-0 mt-0.5 text-primary/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="h-4 w-4 shrink-0 mt-0.5 text-primary/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
                           </svg>
                           <span className="leading-relaxed">{prompt}</span>
@@ -360,7 +360,7 @@ export default function SharedNotebookPage() {
                     className={`flex ${msg.role === "user" ? "justify-end" : "justify-start items-start gap-2"}`}
                   >
                     {msg.role === "assistant" && (
-                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0 mt-1">
+                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0 mt-1" aria-hidden="true">
                         DC
                       </div>
                     )}
@@ -428,6 +428,7 @@ export default function SharedNotebookPage() {
                   placeholder={`Ask about ${data.company?.name || "this company"}'s tech, culture, products...`}
                   disabled={chatLoading}
                   autoComplete="off"
+                  aria-label={`Ask about ${data.company?.name || "this company"}`}
                   className="flex-1 h-12 rounded-lg border bg-background px-4 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <button
@@ -453,7 +454,7 @@ export default function SharedNotebookPage() {
               <div className="space-y-4">
                 {data.notes.length === 0 && (
                   <div className="flex flex-col items-center py-16 text-center">
-                    <svg className="h-10 w-10 text-muted-foreground/40 dark:text-muted-foreground/50 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-10 w-10 text-muted-foreground/40 dark:text-muted-foreground/50 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     <p className="text-sm font-medium text-muted-foreground">No notes yet</p>
@@ -475,7 +476,7 @@ export default function SharedNotebookPage() {
               <div className="space-y-4">
                 {data.generations.length === 0 && (
                   <div className="flex flex-col items-center py-16 text-center">
-                    <svg className="h-10 w-10 text-muted-foreground/40 dark:text-muted-foreground/50 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-10 w-10 text-muted-foreground/40 dark:text-muted-foreground/50 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5.002 5.002 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                     <p className="text-sm font-medium text-muted-foreground">No studio outputs yet</p>

@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!checkRateLimit(user.id + ":notebook-create", 5, 3_600_000)) {
+  if (!checkRateLimit(`notebook-create:${user.id}`, 5, 3_600_000)) {
     return NextResponse.json(
       { error: "Too many requests" },
       { status: 429, headers: { "Retry-After": "60" } }

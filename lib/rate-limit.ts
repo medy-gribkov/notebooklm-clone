@@ -4,7 +4,9 @@ interface Entry {
 }
 
 const MAX_ENTRIES = 10_000;
+const CLEANUP_INTERVAL = 60_000;
 const store = new Map<string, Entry>();
+let lastCleanup = Date.now();
 
 export function checkRateLimit(
   key: string,
@@ -13,19 +15,21 @@ export function checkRateLimit(
 ): boolean {
   const now = Date.now();
 
-  // Clean up expired entries on each call
-  for (const [k, v] of store) {
-    if (v.resetAt <= now) store.delete(k);
-  }
-
-  // Prevent unbounded growth: evict oldest 1000 entries instead of clearing all
-  if (store.size > MAX_ENTRIES) {
-    const toDelete = Array.from(store.keys()).slice(0, 1000);
-    for (const k of toDelete) store.delete(k);
+  // Periodic sweep (once per minute, not per call)
+  if (now - lastCleanup > CLEANUP_INTERVAL) {
+    lastCleanup = now;
+    for (const [k, v] of store) {
+      if (v.resetAt <= now) store.delete(k);
+    }
+    if (store.size > MAX_ENTRIES) {
+      const toDelete = Array.from(store.keys()).slice(0, 1000);
+      for (const k of toDelete) store.delete(k);
+    }
   }
 
   const entry = store.get(key);
   if (!entry || entry.resetAt <= now) {
+    if (entry) store.delete(key);
     store.set(key, { count: 1, resetAt: now + windowMs });
     return true;
   }

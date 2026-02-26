@@ -220,12 +220,21 @@ export function SourcesPanel({ notebookId, initialFiles, isUploading: externalUp
       </div>
 
       <div
+        role="button"
+        tabIndex={0}
+        aria-label={t("dropOrClick")}
         className={`mx-3 mt-3 rounded-xl border-2 border-dashed px-3 py-4 text-center cursor-pointer transition-all shrink-0 ${
           dragging
             ? "border-primary bg-primary/8 scale-[1.02] shadow-sm shadow-primary/10"
             : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/[0.03]"
         } ${uploading ? "pointer-events-none opacity-60" : ""}`}
         onClick={() => !uploading && files.length < MAX_FILES && inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if ((e.key === "Enter" || e.key === " ") && !uploading && files.length < MAX_FILES) {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
       >
         <div className="flex flex-col items-center justify-center gap-1.5">
           <svg className={`h-5 w-5 transition-colors ${dragging ? "text-primary" : "text-muted-foreground/50"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">

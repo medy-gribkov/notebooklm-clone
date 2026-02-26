@@ -55,7 +55,9 @@ export async function GET(
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 
-  return NextResponse.json(files ?? []);
+  return NextResponse.json(files ?? [], {
+    headers: { "Cache-Control": "private, max-age=10, stale-while-revalidate=60" },
+  });
 }
 
 export async function POST(
@@ -119,6 +121,22 @@ export async function POST(
 
   if (!file) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  }
+
+  // Prevent duplicate uploads (same name + size in same notebook)
+  const { data: existing } = await supabase
+    .from("notebook_files")
+    .select("id")
+    .eq("notebook_id", notebookId)
+    .eq("file_name", file.name)
+    .neq("status", "error")
+    .limit(1);
+
+  if (existing && existing.length > 0) {
+    return NextResponse.json(
+      { error: "This file has already been uploaded to this notebook." },
+      { status: 409 }
+    );
   }
 
   // Determine file type and validate

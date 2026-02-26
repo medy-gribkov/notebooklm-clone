@@ -9,11 +9,13 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -65,6 +67,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://logo.clearbit.com" />
         <script
           dangerouslySetInnerHTML={{
             __html: `try{if(localStorage.getItem('theme')!=='light')document.documentElement.classList.add('dark');var h=localStorage.getItem('accent-hue');if(h){var d=document.documentElement,isDark=d.classList.contains('dark');d.style.setProperty('--primary','oklch('+(isDark?'0.72 0.16':'0.45 0.18')+' '+h+')');d.style.setProperty('--ring','oklch('+(isDark?'0.72 0.16':'0.45 0.18')+' '+h+')')}}catch(e){}`,

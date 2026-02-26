@@ -16,18 +16,7 @@ import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import type { Notebook, NotebookFile } from "@/types";
 import { useTranslations, useLocale } from "next-intl";
-import {
-  Rocket,
-  Microscope,
-  ClipboardList,
-  BookOpen,
-  BarChart3,
-  Scale,
-  Package,
-  BookText,
-  FileText,
-  Building2,
-} from "lucide-react";
+
 
 const PROCESSING_TIMEOUT_MS = 5 * 60 * 1000;
 const POLL_DELAYS = [5000, 10000, 20000, 30000];
@@ -643,22 +632,6 @@ const FeaturedCard = React.memo(function FeaturedCard({
     </button>
   );
 });
-
-function FeaturedIcon({ type }: { type: string }) {
-  const props = { size: 28, className: "text-white/80" };
-  switch (type) {
-    case "rocket": return <Rocket {...props} />;
-    case "research": return <Microscope {...props} />;
-    case "meeting": return <ClipboardList {...props} />;
-    case "study": return <BookOpen {...props} />;
-    case "data": return <BarChart3 {...props} />;
-    case "legal": return <Scale {...props} />;
-    case "product": return <Package {...props} />;
-    case "literature": return <BookText {...props} />;
-    case "building": return <Building2 {...props} />;
-    default: return <FileText {...props} />;
-  }
-}
 
 function CardPattern({ pattern }: { pattern: string }) {
   switch (pattern) {

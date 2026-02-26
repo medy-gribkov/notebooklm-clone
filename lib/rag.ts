@@ -126,6 +126,7 @@ export async function processNotebook(
       : {};
 
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+      const batchStart = Date.now();
       const batch = chunks.slice(i, i + BATCH_SIZE);
       const embeddings = await Promise.all(batch.map((chunk) => embedText(chunk)));
 
@@ -145,7 +146,9 @@ export async function processNotebook(
       }
 
       if (i + BATCH_SIZE < chunks.length) {
-        await sleep(INTER_BATCH_DELAY);
+        const elapsed = Date.now() - batchStart;
+        const remaining = INTER_BATCH_DELAY - elapsed;
+        if (remaining > 0) await sleep(remaining);
       }
     }
 
@@ -211,7 +214,8 @@ export async function getAllChunks(
     throw new Error("Failed to load document");
   }
 
-  return (data ?? []).map((row: { content: string }) => row.content).join("\n\n");
+  const text = (data ?? []).map((row: { content: string }) => row.content).join("\n\n");
+  return text.slice(0, 30_000);
 }
 
 export async function retrieveChunks(

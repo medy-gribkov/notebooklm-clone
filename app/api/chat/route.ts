@@ -197,8 +197,8 @@ export async function POST(request: Request) {
             sources: sources.length > 0 ? sources : null,
             is_public: false,
           });
-        } catch {
-          // Message save failed, not critical for user experience
+        } catch (err) {
+          console.error("[chat] Message save failed:", err);
         }
       },
     });

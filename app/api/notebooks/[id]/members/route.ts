@@ -70,7 +70,9 @@ export async function GET(
   // Fetch user emails for display (parallel lookups)
   const memberList = await Promise.all(
     (members ?? []).map(async (member) => {
-      const { data: userData } = await serviceClient.auth.admin.getUserById(member.user_id);
+      const { data: userData } = await serviceClient.auth.admin
+        .getUserById(member.user_id)
+        .catch(() => ({ data: null as null }));
       return {
         ...member,
         email: userData?.user?.email ?? "Unknown",
