@@ -264,14 +264,11 @@
     "uploadInProgress": "העלאה בתהליך מפאנל אחר..."
   },
   "sourcePanel": {
-    "sourcesCited": "מקורות מצוטטים",
-    "matches": "{count} {count, plural, one {התאמה} other {התאמות}}",
+    "references": "הפניות",
     "source": "מקור {number}",
-    "from": "מתוך {fileName}",
-    "highRelevance": "רלוונטיות גבוהה",
-    "goodRelevance": "רלוונטיות טובה",
-    "partialRelevance": "רלוונטיות חלקית",
-    "copySource": "העתק טקסט מקור"
+    "strongMatch": "התאמה חזקה",
+    "goodMatch": "התאמה טובה",
+    "partialMatch": "התאמה חלקית"
   },
   "studio": {
     "title": "סטודיו",

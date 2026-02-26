@@ -219,7 +219,7 @@ export async function POST(
         } catch (e) {
           console.error("[shared-chat] Message persistence error:", e);
         }
-        console.error(`[shared-chat] ip=${hashIP(ip)} notebook=${notebookId}`);
+        console.info(`[shared-chat] ip=${hashIP(ip)} notebook=${notebookId}`);
         data.close();
       },
     });

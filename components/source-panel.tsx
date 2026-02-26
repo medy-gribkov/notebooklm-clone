@@ -52,6 +52,15 @@ export function SourcePanel({ sources }: SourcePanelProps) {
             key={source.chunkId}
             className="group/src rounded-lg border border-s-2 border-s-primary/40 bg-background p-2.5 cursor-pointer select-none transition-colors hover:bg-accent/30"
             onClick={() => setExpanded(expanded === i ? null : i)}
+            role="button"
+            tabIndex={0}
+            aria-expanded={expanded === i}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setExpanded(expanded === i ? null : i);
+              }
+            }}
           >
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <span className="text-xs font-medium flex items-center gap-1.5">

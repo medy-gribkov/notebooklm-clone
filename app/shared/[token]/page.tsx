@@ -2,29 +2,24 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
-import ReactMarkdown from "react-markdown";
-import rehypeSanitize from "rehype-sanitize";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SourcePanel } from "@/components/source-panel";
 import { useTranslations } from "next-intl";
+import dynamic from "next/dynamic";
 import type { Message, Note, StudioGeneration, Source } from "@/types";
 
-interface Flashcard {
-  front: string;
-  back: string;
-}
-
-interface QuizQuestion {
-  question: string;
-  options: string[];
-  answer: string;
-}
-
-interface Quiz {
-  questions: QuizQuestion[];
-}
-
+const MarkdownRenderer = dynamic(() => import("@/components/markdown-renderer"), {
+  ssr: false,
+  loading: () => <span className="inline-block h-4 w-4 animate-pulse rounded bg-muted" />,
+});
+const FlashcardsView = dynamic(() => import("@/components/studio/flashcards").then(m => ({ default: m.FlashcardsView })));
+const QuizView = dynamic(() => import("@/components/studio/quiz").then(m => ({ default: m.QuizView })));
+const ReportView = dynamic(() => import("@/components/studio/report").then(m => ({ default: m.ReportView })));
+const MindMapView = dynamic(() => import("@/components/studio/mindmap").then(m => ({ default: m.MindMapView })));
+const DataTableView = dynamic(() => import("@/components/studio/datatable").then(m => ({ default: m.DataTableView })));
+const InfographicView = dynamic(() => import("@/components/studio/infographic").then(m => ({ default: m.InfographicView })));
+const SlideDeckView = dynamic(() => import("@/components/studio/slidedeck").then(m => ({ default: m.SlideDeckView })));
 
 interface Company {
   name: string;
@@ -56,6 +51,8 @@ export default function SharedNotebookPage() {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
+  const [copiedMsgIdx, setCopiedMsgIdx] = useState<number | null>(null);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatMessagesRef = useRef(chatMessages);
 
@@ -127,7 +124,17 @@ export default function SharedNotebookPage() {
 
       let assistantContent = "";
       let parsedSources: Source[] = [];
+      let pendingFlush = false;
       setChatMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+      const flushContent = () => {
+        pendingFlush = false;
+        setChatMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: assistantContent, sources: parsedSources.length > 0 ? parsedSources : undefined };
+          return updated;
+        });
+      };
 
       const decoder = new TextDecoder();
       while (true) {
@@ -136,17 +143,14 @@ export default function SharedNotebookPage() {
         const chunk = decoder.decode(value, { stream: true });
         for (const line of chunk.split("\n")) {
           if (line.startsWith("0:")) {
-            // Text chunk
             try {
               assistantContent += JSON.parse(line.slice(2));
-              setChatMessages((prev) => {
-                const updated = [...prev];
-                updated[updated.length - 1] = { role: "assistant", content: assistantContent, sources: parsedSources.length > 0 ? parsedSources : undefined };
-                return updated;
-              });
+              if (!pendingFlush) {
+                pendingFlush = true;
+                requestAnimationFrame(flushContent);
+              }
             } catch { /* skip malformed */ }
           } else if (line.startsWith("2:")) {
-            // StreamData (sources)
             try {
               const dataArr = JSON.parse(line.slice(2));
               for (const item of Array.isArray(dataArr) ? dataArr : [dataArr]) {
@@ -159,20 +163,22 @@ export default function SharedNotebookPage() {
         }
       }
 
-      // Final update with sources attached
-      if (parsedSources.length > 0) {
-        setChatMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { ...updated[updated.length - 1], sources: parsedSources };
-          return updated;
-        });
-      }
+      // Final flush to ensure all content is rendered
+      flushContent();
     } catch {
       setChatError("Failed to send message. Please try again.");
     } finally {
       setChatLoading(false);
     }
   }, [chatLoading, token]);
+
+  const copyMessage = useCallback(async (idx: number, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMsgIdx(idx);
+      setTimeout(() => setCopiedMsgIdx(null), 2000);
+    } catch { /* clipboard not available */ }
+  }, []);
 
   function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
@@ -233,14 +239,14 @@ export default function SharedNotebookPage() {
                   className="h-7 w-7 rounded"
                   onError={() => setLogoError(true)}
                 />
-                <span className="text-sm font-semibold">{data.company.name}</span>
+                <span className="text-sm font-semibold truncate max-w-[200px]">{data.company.name}</span>
               </>
             ) : data.company?.name ? (
               <>
                 <div className="h-7 w-7 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
                   {data.company.name.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-sm font-semibold">{data.company.name}</span>
+                <span className="text-sm font-semibold truncate max-w-[200px]">{data.company.name}</span>
               </>
             ) : (
               <Logo size="sm" />
@@ -319,16 +325,16 @@ export default function SharedNotebookPage() {
                       Ask anything about {data.company?.name || "this company"}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      All answers are grounded in company data with cited sources.
+                      Ask about their tech, culture, or how Medy&apos;s experience fits.
                     </p>
                   </div>
                   {data.permissions === "chat" && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
                       {[
                         `What does ${data.company?.name || "this company"} do?`,
-                        `What's their technology stack?`,
-                        `What makes them stand out?`,
-                        `What engineering roles are they hiring for?`,
+                        `What's their engineering culture like?`,
+                        `Is Medy a good fit for ${data.company?.name || "this company"}?`,
+                        `What are Medy's key projects?`,
                       ].map((prompt) => (
                         <button
                           key={prompt}
@@ -350,21 +356,43 @@ export default function SharedNotebookPage() {
               {chatMessages.map((msg, i) => (
                 <div key={i} className="space-y-2">
                   <div
-                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start items-start gap-2"}`}
                   >
+                    {msg.role === "assistant" && (
+                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0 mt-1">
+                        DC
+                      </div>
+                    )}
                     <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${msg.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted prose dark:prose-invert prose-sm max-w-none prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5"
+                      className={`group/msg relative rounded-2xl px-4 py-2.5 text-sm ${msg.role === "user"
+                        ? "max-w-[85%] lg:max-w-2xl xl:max-w-3xl bg-primary text-primary-foreground"
+                        : "max-w-[85%] lg:max-w-2xl xl:max-w-3xl bg-[#FAF9F7] dark:bg-muted/20 border border-border/40 border-l-2 border-l-primary/30 prose dark:prose-invert prose-sm max-w-none prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5"
                         }`}
                     >
+                      {msg.role === "assistant" && msg.content && (
+                        <div className="absolute top-2 end-2 flex items-center gap-0.5 opacity-0 group-hover/msg:opacity-100 transition-opacity z-10">
+                          <button
+                            onClick={() => copyMessage(i, msg.content)}
+                            className="p-1.5 rounded-md hover:bg-background/80 text-muted-foreground/50 hover:text-foreground transition-colors"
+                            aria-label="Copy message"
+                          >
+                            {copiedMsgIdx === i ? (
+                              <svg className="h-3.5 w-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      )}
                       {msg.content ? (
                         msg.role === "user" ? (
                           <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                         ) : (
-                          <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
-                            {msg.content}
-                          </ReactMarkdown>
+                          <MarkdownRenderer content={msg.content} />
                         )
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -375,7 +403,7 @@ export default function SharedNotebookPage() {
                     </div>
                   </div>
                   {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
-                    <div className="max-w-[80%]">
+                    <div className="max-w-[85%] lg:max-w-2xl xl:max-w-3xl ms-8">
                       <SourcePanel sources={msg.sources} />
                     </div>
                   )}
@@ -405,6 +433,7 @@ export default function SharedNotebookPage() {
                 <button
                   type="submit"
                   disabled={chatLoading || !chatInput.trim()}
+                  aria-label="Send message"
                   className="h-12 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 min-w-[60px]"
                 >
                   {chatLoading ? (
@@ -424,7 +453,7 @@ export default function SharedNotebookPage() {
               <div className="space-y-4">
                 {data.notes.length === 0 && (
                   <div className="flex flex-col items-center py-16 text-center">
-                    <svg className="h-10 w-10 text-muted-foreground/30 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-10 w-10 text-muted-foreground/40 dark:text-muted-foreground/50 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     <p className="text-sm font-medium text-muted-foreground">No notes yet</p>
@@ -446,7 +475,7 @@ export default function SharedNotebookPage() {
               <div className="space-y-4">
                 {data.generations.length === 0 && (
                   <div className="flex flex-col items-center py-16 text-center">
-                    <svg className="h-10 w-10 text-muted-foreground/30 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-10 w-10 text-muted-foreground/40 dark:text-muted-foreground/50 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5.002 5.002 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                     <p className="text-sm font-medium text-muted-foreground">No studio outputs yet</p>
@@ -464,38 +493,31 @@ export default function SharedNotebookPage() {
                       </span>
                     </div>
 
-                    <div className="text-sm prose dark:prose-invert max-w-none">
-                      {typeof gen.result === 'string' ? (
-                        <div className="whitespace-pre-wrap">{gen.result}</div>
-                      ) : gen.action === 'flashcards' && Array.isArray(gen.result) ? (
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          {(gen.result as unknown as Flashcard[]).map((card, idx) => (
-                            <div key={idx} className="p-4 rounded-lg bg-muted/50 border border-border/50">
-                              <div className="font-semibold text-primary mb-2">Q: {card.front}</div>
-                              <div className="text-muted-foreground italic">A: {card.back}</div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : gen.action === 'quiz' && typeof gen.result === 'object' ? (
-                        <div className="space-y-6">
-                          {(gen.result as unknown as Quiz).questions?.map((q, idx) => (
-                            <div key={idx} className="space-y-2">
-                              <div className="font-semibold">{idx + 1}. {q.question}</div>
-                              <div className="grid gap-2 ps-4">
-                                {q.options?.map((opt: string, oi: number) => (
-                                  <div key={oi} className="text-xs p-2 rounded border bg-background/50">
-                                    {opt}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <pre className="text-xs overflow-auto max-h-64 bg-muted rounded-lg p-3 scrollbar-thin">
-                          {JSON.stringify(gen.result, null, 2)}
-                        </pre>
-                      )}
+                    <div className="text-sm">
+                      {(() => {
+                        switch (gen.action) {
+                          case "flashcards":
+                            return <FlashcardsView data={gen.result as never} />;
+                          case "quiz":
+                            return <QuizView data={gen.result as never} />;
+                          case "report":
+                            return <ReportView data={gen.result as never} />;
+                          case "mindmap":
+                            return <MindMapView data={gen.result as never} />;
+                          case "datatable":
+                            return <DataTableView data={gen.result as never} />;
+                          case "infographic":
+                            return <InfographicView data={gen.result as never} />;
+                          case "slidedeck":
+                            return <SlideDeckView data={gen.result as never} />;
+                          default:
+                            return typeof gen.result === "string"
+                              ? <div className="whitespace-pre-wrap">{gen.result}</div>
+                              : <pre className="text-xs overflow-auto max-h-64 bg-muted text-foreground rounded-lg p-3 scrollbar-thin">
+                                  {JSON.stringify(gen.result, null, 2)}
+                                </pre>;
+                        }
+                      })()}
                     </div>
                   </div>
                 ))}
@@ -508,7 +530,7 @@ export default function SharedNotebookPage() {
 
       {/* Footer - shown on all tabs */}
       <footer className="border-t bg-card/50 py-4 shrink-0">
-        <div className="mx-auto max-w-5xl px-4 flex items-center justify-between">
+        <div className="mx-auto max-w-5xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 text-center sm:text-left">
           <p className="text-xs text-muted-foreground">
             Built by{" "}
             <a
