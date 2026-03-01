@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const { addToast } = useToast();
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [notebookFiles, setNotebookFiles] = useState<Record<string, NotebookFile[]>>({});
+  const [companyByNotebook, setCompanyByNotebook] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -67,6 +68,7 @@ export default function DashboardPage() {
           if (data.notebooks) {
             setNotebooks(data.notebooks);
             setNotebookFiles(data.filesByNotebook ?? {});
+            setCompanyByNotebook(data.companyByNotebook ?? {});
           } else {
             setNotebooks(data);
           }
@@ -298,6 +300,7 @@ export default function DashboardPage() {
             notebooks={notebooks}
             filteredNotebooks={filteredNotebooks}
             notebookFiles={notebookFiles}
+            companyByNotebook={companyByNotebook}
             loading={loading}
             gridColsClass={gridColsClass}
             onCreateNotebook={handleCreateNotebook}

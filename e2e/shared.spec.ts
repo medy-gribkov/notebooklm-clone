@@ -19,7 +19,7 @@ test.describe("Shared notebook", () => {
 
     // Should show some error indication (expired, not found, etc.)
     await expect(
-      page.getByText(/not found|expired|invalid|error/i)
+      page.getByText(/not found|expired|invalid|error/i).first()
     ).toBeVisible({ timeout: 10_000 });
   });
 });

@@ -14,6 +14,7 @@ export async function mockNotebooksApi(page: Page) {
           notebooks,
           sharedNotebooks: [],
           filesByNotebook: {},
+          companyByNotebook: {},
         }),
       });
     }
@@ -42,11 +43,7 @@ export async function mockSharedApi(page: Page, token: string) {
     return route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({
-        notebook: sharedData.notebook,
-        messages: sharedData.messages,
-        permission: "view",
-      }),
+      body: JSON.stringify(sharedData),
     });
   });
 }

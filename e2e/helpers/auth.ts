@@ -18,8 +18,7 @@ export async function loginAsTestUser(page: Page) {
           email: "test@example.com",
         },
       }),
-      domain: "localhost",
-      path: "/",
+      url: "http://localhost:3000/"
     },
   ]);
 

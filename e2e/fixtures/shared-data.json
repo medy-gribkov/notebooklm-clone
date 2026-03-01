@@ -2,18 +2,27 @@
   "notebook": {
     "id": "nb-shared-1",
     "title": "Shared Notebook",
-    "description": "A shared research notebook"
+    "description": "A shared research notebook",
+    "created_at": "2025-01-01T00:00:00Z"
   },
+  "permissions": "view",
   "messages": [
     {
       "id": "m-shared-1",
       "role": "user",
-      "content": "Tell me about this topic"
+      "content": "Tell me about this topic",
+      "sources": [],
+      "created_at": "2025-01-01T00:01:00Z"
     },
     {
       "id": "m-shared-2",
       "role": "assistant",
-      "content": "Here is what I found in the documents."
+      "content": "Here is what I found in the documents.",
+      "sources": [],
+      "created_at": "2025-01-01T00:02:00Z"
     }
-  ]
+  ],
+  "notes": [],
+  "generations": [],
+  "company": null
 }

@@ -59,6 +59,13 @@ describe("GET /api/notebooks", () => {
           }),
         };
       }
+      if (table === "companies") {
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({ data: [] }),
+          }),
+        };
+      }
       // notebook_members
       return {
         select: vi.fn().mockReturnValue({
@@ -71,7 +78,7 @@ describe("GET /api/notebooks", () => {
     const res = await GET(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ notebooks, sharedNotebooks: [] });
+    expect(body).toEqual({ notebooks, sharedNotebooks: [], companyByNotebook: {} });
   });
 
   it("returns 401 when no supabase user", async () => {

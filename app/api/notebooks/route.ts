@@ -50,6 +50,19 @@ export async function GET(request: Request) {
   const notebooks = notebooksResult.data ?? [];
   const memberships = membershipsResult.data;
 
+  // Fetch company logos for dashboard cards
+  const allNotebookIds = notebooks.map((n) => n.id);
+  const companyByNotebook: Record<string, string> = {};
+  if (allNotebookIds.length > 0) {
+    const { data: companies } = await serviceClient
+      .from("companies")
+      .select("notebook_id, website")
+      .in("notebook_id", allNotebookIds);
+    for (const c of (companies ?? []) as Array<{ notebook_id: string; website: string }>) {
+      if (c.website) companyByNotebook[c.notebook_id] = c.website;
+    }
+  }
+
   let sharedNotebooks: Array<Record<string, unknown>> = [];
   if (memberships && memberships.length > 0) {
     const sharedIds = memberships.map((m: { notebook_id: string }) => m.notebook_id);
@@ -84,12 +97,12 @@ export async function GET(request: Request) {
       filesByNotebook[nid].push(file);
     }
 
-    return NextResponse.json({ notebooks, sharedNotebooks, filesByNotebook }, {
+    return NextResponse.json({ notebooks, sharedNotebooks, filesByNotebook, companyByNotebook }, {
       headers: { "Cache-Control": "private, max-age=15, stale-while-revalidate=60" },
     });
   }
 
-  return NextResponse.json({ notebooks, sharedNotebooks }, {
+  return NextResponse.json({ notebooks, sharedNotebooks, companyByNotebook }, {
     headers: { "Cache-Control": "private, max-age=15, stale-while-revalidate=60" },
   });
 }

@@ -9,6 +9,7 @@ interface RecentNotebooksProps {
   notebooks: Notebook[];
   filteredNotebooks: Notebook[];
   notebookFiles: Record<string, NotebookFile[]>;
+  companyByNotebook: Record<string, string>;
   loading: boolean;
   gridColsClass: string;
   onCreateNotebook: () => void;
@@ -22,6 +23,7 @@ export function RecentNotebooks({
   notebooks,
   filteredNotebooks,
   notebookFiles,
+  companyByNotebook,
   loading,
   gridColsClass,
   onCreateNotebook,
@@ -100,6 +102,7 @@ export function RecentNotebooks({
                 files={notebookFiles[notebook.id] ?? []}
                 timedOut={isTimedOut(notebook)}
                 onDelete={onDelete}
+                companyDomain={companyByNotebook[notebook.id]}
               />
             </div>
           ))}
