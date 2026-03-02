@@ -220,7 +220,7 @@ export function ChatInterface({ notebookId, initialMessages, isProcessing = fals
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,.txt,.docx,.jpg,.jpeg,.png,.webp"
+                  accept=".pdf,.txt,.docx"
                   className="hidden"
                   onChange={handleCenterFileChange}
                 />

@@ -2,9 +2,6 @@ export const ALLOWED_UPLOAD_TYPES = [
   "application/pdf",
   "text/plain",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
 ];
 
 export interface FileValidationResult {

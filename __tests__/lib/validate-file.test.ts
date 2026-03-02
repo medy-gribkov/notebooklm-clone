@@ -8,8 +8,8 @@ function mockFile(name: string, type: string, size: number): File {
 }
 
 describe("ALLOWED_UPLOAD_TYPES", () => {
-  it("contains 6 MIME types", () => {
-    expect(ALLOWED_UPLOAD_TYPES).toHaveLength(6);
+  it("contains 3 MIME types", () => {
+    expect(ALLOWED_UPLOAD_TYPES).toHaveLength(3);
   });
 });
 
@@ -27,16 +27,10 @@ describe("validateUploadFile", () => {
     expect(validateUploadFile(mockFile("a.docx", mime, 1000))).toEqual({ valid: true });
   });
 
-  it("accepts image/jpeg", () => {
-    expect(validateUploadFile(mockFile("a.jpg", "image/jpeg", 1000))).toEqual({ valid: true });
-  });
-
-  it("accepts image/png", () => {
-    expect(validateUploadFile(mockFile("a.png", "image/png", 1000))).toEqual({ valid: true });
-  });
-
-  it("accepts image/webp", () => {
-    expect(validateUploadFile(mockFile("a.webp", "image/webp", 1000))).toEqual({ valid: true });
+  it("rejects image MIME types", () => {
+    expect(validateUploadFile(mockFile("a.jpg", "image/jpeg", 1000))).toEqual({ valid: false, error: "unsupportedType" });
+    expect(validateUploadFile(mockFile("a.png", "image/png", 1000))).toEqual({ valid: false, error: "unsupportedType" });
+    expect(validateUploadFile(mockFile("a.webp", "image/webp", 1000))).toEqual({ valid: false, error: "unsupportedType" });
   });
 
   it("rejects unsupported MIME type", () => {
@@ -82,11 +76,10 @@ describe("validateUploadFile", () => {
     });
   });
 
-  it("rejects image over 5MB", () => {
-    const size = 5 * 1024 * 1024 + 1;
-    expect(validateUploadFile(mockFile("a.jpg", "image/jpeg", size))).toEqual({
+  it("rejects image types regardless of size", () => {
+    expect(validateUploadFile(mockFile("a.jpg", "image/jpeg", 1000))).toEqual({
       valid: false,
-      error: "fileTooLarge",
+      error: "unsupportedType",
     });
   });
 });

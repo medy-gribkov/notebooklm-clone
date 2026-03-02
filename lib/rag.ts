@@ -4,7 +4,6 @@ import { getChatModel } from "@/lib/langchain/chat-model";
 import { extractText, type PdfResult } from "@/lib/pdf";
 import { extractTextFromTxt } from "@/lib/extractors/txt";
 import { extractTextFromDocx } from "@/lib/extractors/docx";
-import { extractTextFromImage } from "@/lib/extractors/image";
 import { isValidUUID, sanitizeText } from "@/lib/validate";
 import type { Source } from "@/types";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
@@ -40,7 +39,7 @@ export interface ProcessResult {
   sampleText: string;
 }
 
-export type FileType = "pdf" | "txt" | "docx" | "image";
+export type FileType = "pdf" | "txt" | "docx";
 
 export async function processNotebook(
   notebookId: string,
@@ -67,10 +66,6 @@ export async function processNotebook(
         break;
       case "docx":
         rawText = await extractTextFromDocx(fileBuffer);
-        pageCount = 1;
-        break;
-      case "image":
-        rawText = await extractTextFromImage(fileBuffer, mimeType ?? "image/jpeg");
         pageCount = 1;
         break;
       case "pdf":

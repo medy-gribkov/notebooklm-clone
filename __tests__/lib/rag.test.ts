@@ -23,10 +23,6 @@ vi.mock("@/lib/extractors/docx", () => ({
   extractTextFromDocx: vi.fn().mockResolvedValue("Docx content here"),
 }));
 
-vi.mock("@/lib/extractors/image", () => ({
-  extractTextFromImage: vi.fn().mockResolvedValue("OCR extracted text"),
-}));
-
 vi.mock("@/lib/supabase/service", () => ({
   getServiceClient: vi.fn(),
 }));
@@ -193,18 +189,6 @@ describe("processNotebook", () => {
 
   it("processes docx fileType", async () => {
     const result = await processNotebook(validUUID, validUserUUID, Buffer.from("docx"), undefined, undefined, "docx");
-    expect(result.pageCount).toBe(1);
-    expect(result.chunkCount).toBe(2);
-  });
-
-  it("processes image fileType", async () => {
-    const result = await processNotebook(validUUID, validUserUUID, Buffer.from("img"), undefined, undefined, "image", "image/png");
-    expect(result.pageCount).toBe(1);
-    expect(result.chunkCount).toBe(2);
-  });
-
-  it("processes image fileType with default mimeType", async () => {
-    const result = await processNotebook(validUUID, validUserUUID, Buffer.from("img"), undefined, undefined, "image");
     expect(result.pageCount).toBe(1);
     expect(result.chunkCount).toBe(2);
   });

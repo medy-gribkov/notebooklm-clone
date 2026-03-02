@@ -226,7 +226,7 @@ export function SourcesPanel({ notebookId, initialFiles, isUploading: externalUp
           <input
             ref={inputRef}
             type="file"
-            accept=".pdf,.txt,.docx,.jpg,.jpeg,.png,.webp"
+            accept=".pdf,.txt,.docx"
             multiple
             className="hidden"
             onChange={handleFileChange}

@@ -144,15 +144,12 @@ export async function POST(
     "application/pdf": { fileType: "pdf", maxSize: 5 * 1024 * 1024 },
     "text/plain": { fileType: "txt", maxSize: 500 * 1024 },
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": { fileType: "docx", maxSize: 10 * 1024 * 1024 },
-    "image/jpeg": { fileType: "image", maxSize: 5 * 1024 * 1024 },
-    "image/png": { fileType: "image", maxSize: 5 * 1024 * 1024 },
-    "image/webp": { fileType: "image", maxSize: 5 * 1024 * 1024 },
   };
 
   const typeInfo = ALLOWED_TYPES[file.type];
   if (!typeInfo) {
     return NextResponse.json(
-      { error: "Unsupported file type. Upload PDF, DOCX, TXT, or images (JPEG, PNG, WebP)." },
+      { error: "Unsupported file type. Upload PDF, DOCX, or TXT." },
       { status: 400 }
     );
   }
@@ -174,15 +171,6 @@ export async function POST(
   if (typeInfo.fileType === "docx" && (buffer.length < 4 || buffer[0] !== 0x50 || buffer[1] !== 0x4b || buffer[2] !== 0x03 || buffer[3] !== 0x04)) {
     return NextResponse.json({ error: "Invalid DOCX file" }, { status: 400 });
   }
-  if (typeInfo.fileType === "image") {
-    const isJpeg = buffer[0] === 0xff && buffer[1] === 0xd8;
-    const isPng = buffer[0] === 0x89 && buffer[1] === 0x50;
-    const isWebp = buffer[0] === 0x52 && buffer[1] === 0x49;
-    if (!isJpeg && !isPng && !isWebp) {
-      return NextResponse.json({ error: "Invalid image file" }, { status: 400 });
-    }
-  }
-
   const serviceClient = getServiceClient();
 
   const storagePath = `${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
