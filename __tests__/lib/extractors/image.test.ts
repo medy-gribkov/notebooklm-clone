@@ -79,7 +79,7 @@ describe("extractTextFromImage", () => {
   it("throws when GEMINI_API_KEY is missing", async () => {
     vi.stubEnv("GEMINI_API_KEY", "");
     await expect(extractTextFromImage(JPEG_HEADER, "image/jpeg")).rejects.toThrow(
-      "GEMINI_API_KEY not configured"
+      "Image text extraction is not available"
     );
   });
 

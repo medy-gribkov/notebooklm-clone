@@ -23,7 +23,7 @@ export async function extractTextFromImage(buffer: Buffer, mimeType: string): Pr
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY not configured");
+    throw new Error("Image text extraction is not available. The server is missing the GEMINI_API_KEY configuration. Please upload this content as a PDF or text file instead.");
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);

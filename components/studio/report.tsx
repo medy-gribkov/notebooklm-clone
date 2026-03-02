@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, memo } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 interface ReportSection {
@@ -22,6 +23,7 @@ const SECTION_BORDERS = [
 ];
 
 export const ReportView = memo(function ReportView({ data }: ReportViewProps) {
+  const t = useTranslations("studio");
   const [copied, setCopied] = useState(false);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -59,15 +61,15 @@ export const ReportView = memo(function ReportView({ data }: ReportViewProps) {
         <div className="flex items-center gap-3">
           <div className="h-8 w-1 rounded-full bg-primary" />
           <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Document Report
+            {t("documentReport")}
           </h3>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={downloadAsText}>
-            Download
+            {t("download")}
           </Button>
           <Button variant="outline" size="sm" onClick={copyToClipboard}>
-            {copied ? "Copied!" : "Copy"}
+            {copied ? t("copied") : t("copy")}
           </Button>
         </div>
       </div>
@@ -76,7 +78,7 @@ export const ReportView = memo(function ReportView({ data }: ReportViewProps) {
       {data.length > 2 && (
         <div className="rounded-lg border bg-muted/20 p-3">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-2">
-            Contents
+            {t("contents")}
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {data.map((section, i) => (

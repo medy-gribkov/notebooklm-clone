@@ -6,6 +6,8 @@ import { PdfViewerModal } from "@/components/pdf-viewer-modal";
 import { validateUploadFile } from "@/lib/validate-file";
 import type { NotebookFile } from "@/types";
 
+const POLL_DELAYS = [2000, 4000, 8000, 15000, 30000];
+
 interface SourcesPanelProps {
   notebookId: string;
   initialFiles: NotebookFile[];
@@ -30,6 +32,30 @@ export function SourcesPanel({ notebookId, initialFiles, isUploading: externalUp
   const dragCounterRef = useRef(0);
   const filesRef = useRef(files);
   filesRef.current = files;
+
+  // Poll for file status updates when any file is "processing"
+  const pollIndexRef = useRef(0);
+  useEffect(() => {
+    const hasProcessing = files.some((f) => f.status === "processing");
+    if (!hasProcessing) {
+      pollIndexRef.current = 0;
+      return;
+    }
+    const delay = POLL_DELAYS[Math.min(pollIndexRef.current, POLL_DELAYS.length - 1)];
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/notebooks/${notebookId}/files`);
+        if (res.ok) {
+          const updated: NotebookFile[] = await res.json();
+          setFiles(updated);
+        }
+      } catch {
+        // Silently retry on next poll
+      }
+      pollIndexRef.current++;
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [files, notebookId]);
 
   // Auto-dismiss error after 5s
   useEffect(() => {

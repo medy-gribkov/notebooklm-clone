@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, memo } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 interface QuizQuestion {
@@ -15,6 +16,7 @@ interface QuizViewProps {
 }
 
 export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
+  const t = useTranslations("studio");
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
@@ -80,14 +82,14 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
             </div>
           </div>
           <div className="text-lg font-bold">
-            {score}/{data.length} correct
+            {t("correct", { score, total: data.length })}
           </div>
           <p className="text-sm text-muted-foreground">
             {isPerfect
-              ? "Perfect score! Outstanding!"
+              ? t("perfectScore")
               : score >= data.length * 0.7
-              ? "Great job! Almost there."
-              : "Keep studying, you'll get there!"}
+              ? t("greatJob")
+              : t("keepStudying")}
           </p>
         </div>
 
@@ -115,7 +117,7 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
                     <p className="font-medium mb-0.5">{question.question}</p>
                     {!isCorrect && (
                       <p className="text-xs text-muted-foreground">
-                        Correct: {question.options[question.correctIndex]}
+                        {t("correctAnswer", { answer: question.options[question.correctIndex] })}
                       </p>
                     )}
                   </div>
@@ -126,7 +128,7 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
         </div>
 
         <Button onClick={restart} className="w-full">
-          Try Again
+          {t("tryAgain")}
         </Button>
       </div>
     );
@@ -151,7 +153,7 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
           ))}
         </div>
         <span className="text-xs text-muted-foreground shrink-0 ml-auto">
-          Q{current + 1} of {data.length}
+          {t("questionOf", { current: current + 1, total: data.length })}
         </span>
       </div>
 
@@ -196,7 +198,7 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
       {/* Explanation */}
       {checked && q.explanation && (
         <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground animate-fade-in">
-          <span className="font-semibold text-foreground">Explanation: </span>
+          <span className="font-semibold text-foreground">{t("explanation")}: </span>
           {q.explanation}
         </div>
       )}
@@ -209,11 +211,11 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
             disabled={selected === null}
             className="flex-1"
           >
-            Check Answer
+            {t("checkAnswer")}
           </Button>
         ) : (
           <Button onClick={next} className="flex-1">
-            {current < data.length - 1 ? "Next Question" : "See Results"}
+            {current < data.length - 1 ? t("nextQuestion") : t("seeResults")}
           </Button>
         )}
       </div>

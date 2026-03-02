@@ -76,21 +76,6 @@ export function RecentNotebooks({
         </div>
       ) : (
         <div className={`grid gap-4 ${gridColsClass}`}>
-          <button
-            onClick={onCreateNotebook}
-            disabled={creatingNotebook}
-            className="group flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-primary/25 bg-gradient-to-br from-primary/[0.03] to-primary/[0.08] p-6 text-primary hover:border-primary/50 hover:from-primary/[0.05] hover:to-primary/[0.12] transition-all duration-300 ease-out min-h-[190px] h-full cursor-pointer disabled:opacity-50 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 hover:scale-[1.01]"
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 transition-transform group-hover:scale-110">
-              <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
-              </svg>
-            </div>
-            <span className="text-sm font-semibold">
-              {creatingNotebook ? t("creating") : t("createNewNotebook")}
-            </span>
-          </button>
-
           {filteredNotebooks.map((notebook, i) => (
             <div
               key={notebook.id}

@@ -35,7 +35,7 @@ DocChat is a full-stack document intelligence platform built with Next.js 16, La
 | Database | Supabase PostgreSQL with Row-Level Security |
 | Auth | Supabase Auth (email, magic link, GitHub OAuth, Google OAuth) |
 | Storage | Supabase Storage (private bucket, signed URLs) |
-| Testing | Vitest (298 tests, 34 files, 97%+ statement coverage) |
+| Testing | Vitest (361+ tests, 41 files, 97%+ statement coverage), Playwright E2E (6 tests) |
 | CI/CD | GitHub Actions (typecheck, lint, test, build, Docker push) |
 | Deploy | Docker (standalone Next.js, node:22-alpine) on Render |
 
@@ -78,6 +78,7 @@ Apply migrations in the Supabase SQL Editor, in order:
 6. `0006_add_source_hash.sql` -- Content deduplication hashing
 7. `0007_chat_privacy_and_hashing.sql` -- Chat privacy and IP hashing
 8. `0008_companies.sql` -- Company metadata table
+9. `0009_perf_indexes.sql` -- Additional performance indexes
 
 After migrations, create a private storage bucket named `pdf-uploads` with a 5 MB file size limit.
 
@@ -185,7 +186,7 @@ lib/
     chat-model.ts               ChatGoogleGenerativeAI for metadata generation
     output-parsers.ts           Zod schemas + StructuredOutputParser for 7 studio types
     trim-messages.ts            Message history trimming (12k char budget)
-supabase/migrations/            SQL migrations (8 files)
+supabase/migrations/            SQL migrations (9 files)
 messages/                       i18n translations (en.json, he.json)
 public/                         Static assets (favicon, OG image, manifest)
 nginx/                          nginx config for VPS deployments
@@ -224,13 +225,13 @@ nginx/                          nginx config for VPS deployments
 | Endpoint | Limit | Key |
 |---|---|---|
 | Chat | 10 req/min | user_id |
-| File upload | 3 req/hr | user_id |
+| File upload | 15 req/hr | user_id |
 | Studio generation | 30 req/hr | user_id |
 | Share link creation | 10 req/hr | user_id |
 | Member invitation | 20 req/hr | user_id |
 | Export | 5 req/hr | user_id |
 | Public notebook fetch | 30 req/min | IP (hashed) |
-| Anonymous chat | 3 req/hr | IP (hashed) |
+| Anonymous chat | 10 req/min | IP (hashed) |
 
 ## Security
 
@@ -252,7 +253,7 @@ npm run test:watch    # Watch mode
 npm run test:coverage # With coverage report
 ```
 
-34 test files, 298 tests. Coverage: 97%+ statements, 95%+ branches. `lib/langchain/` at 100%.
+41 test files, 361+ unit/component tests, 6 E2E tests. Coverage: 97%+ statements, 95%+ branches. `lib/langchain/` at 100%.
 
 ## CI/CD
 

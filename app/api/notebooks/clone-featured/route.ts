@@ -101,6 +101,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to create notebook" }, { status: 500 });
   }
 
+  // Insert companies row so dashboard shows the company logo
+  if (featured.website) {
+    try {
+      const { error: companyError } = await serviceClient
+        .from("companies")
+        .insert({
+          name: title,
+          website: featured.website,
+          category: featured.category,
+          notebook_id: notebook.id,
+          share_token: null,
+        });
+      if (companyError) {
+        console.error("[clone-featured] Companies insert failed:", companyError.message);
+      }
+    } catch (e) {
+      console.error("[clone-featured] Companies insert error:", e instanceof Error ? e.message : e);
+    }
+  }
+
   const fileEntries: { id: string; fileName: string; content: string }[] = [];
   let totalPages = 0;
 

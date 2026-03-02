@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, memo } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 interface Flashcard {
@@ -13,6 +14,7 @@ interface FlashcardsViewProps {
 }
 
 export const FlashcardsView = memo(function FlashcardsView({ data }: FlashcardsViewProps) {
+  const t = useTranslations("studio");
   const [cards, setCards] = useState(data);
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
 
@@ -46,13 +48,13 @@ export const FlashcardsView = memo(function FlashcardsView({ data }: FlashcardsV
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={shuffle}>
-          Shuffle
+          {t("shuffle")}
         </Button>
         <Button variant="outline" size="sm" onClick={reset}>
-          Reset
+          {t("reset")}
         </Button>
         <span className="text-xs text-muted-foreground ml-auto">
-          {flipped.size}/{cards.length} flipped
+          {t("flipped", { count: flipped.size, total: cards.length })}
         </span>
       </div>
 
@@ -83,7 +85,7 @@ export const FlashcardsView = memo(function FlashcardsView({ data }: FlashcardsV
                 }}
               >
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
-                  Question
+                  {t("question")}
                 </span>
                 <p className="text-sm font-medium leading-relaxed line-clamp-4">
                   {card.front}
@@ -97,14 +99,14 @@ export const FlashcardsView = memo(function FlashcardsView({ data }: FlashcardsV
                 }}
               >
                 <span className="text-[10px] font-medium uppercase tracking-wider text-primary mb-2">
-                  Answer
+                  {t("answer")}
                 </span>
                 <p className="text-sm leading-relaxed line-clamp-5 text-muted-foreground">
                   {card.back}
                 </p>
               </div>
               <span className="absolute bottom-2 right-3 text-[10px] text-muted-foreground/50">
-                Click to flip
+                {t("clickToFlip")}
               </span>
             </button>
           );

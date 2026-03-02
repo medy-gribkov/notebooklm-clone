@@ -239,7 +239,8 @@ export async function POST(
       .update({ status: "ready", page_count: result.pageCount })
       .eq("id", notebookFile.id);
   } catch (error) {
-    console.error("[notebooks/files] Processing failed:", error instanceof Error ? error.message : error);
+    const errorMessage = error instanceof Error ? error.message : "Processing failed";
+    console.error("[notebooks/files] Processing failed:", errorMessage);
 
     await serviceClient
       .from("notebook_files")
