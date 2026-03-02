@@ -26,22 +26,6 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
 
   const q = data[current];
 
-  // Keyboard shortcuts: 1-4 to select, Enter to check/next
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (finished) return;
-      const num = parseInt(e.key);
-      if (num >= 1 && num <= q.options.length && !checked) {
-        setSelected(num - 1);
-      } else if (e.key === "Enter") {
-        if (!checked && selected !== null) checkAnswer();
-        else if (checked) next();
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  });
-
   function checkAnswer() {
     if (selected === null) return;
     setChecked(true);
@@ -62,6 +46,22 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
       setFinished(true);
     }
   }
+
+  // Keyboard shortcuts: 1-4 to select, Enter to check/next
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (finished) return;
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= q.options.length && !checked) {
+        setSelected(num - 1);
+      } else if (e.key === "Enter") {
+        if (!checked && selected !== null) checkAnswer();
+        else if (checked) next();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
 
   function restart() {
     setCurrent(0);

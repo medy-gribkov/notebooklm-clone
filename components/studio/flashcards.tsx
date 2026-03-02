@@ -19,6 +19,15 @@ export const FlashcardsView = memo(function FlashcardsView({ data }: FlashcardsV
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
   const [focusedCard, setFocusedCard] = useState(0);
 
+  const toggleFlip = useCallback((index: number) => {
+    setFlipped((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }, []);
+
   // Keyboard: arrow keys to navigate, Space to flip
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -36,15 +45,6 @@ export const FlashcardsView = memo(function FlashcardsView({ data }: FlashcardsV
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   });
-
-  const toggleFlip = useCallback((index: number) => {
-    setFlipped((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
-    });
-  }, []);
 
   function shuffle() {
     setCards((prev) => {

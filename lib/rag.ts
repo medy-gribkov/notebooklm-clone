@@ -48,7 +48,7 @@ export async function processNotebook(
   fileId?: string,
   fileName?: string,
   fileType: FileType = "pdf",
-  mimeType?: string
+  _mimeType?: string
 ): Promise<ProcessResult> {
   if (!isValidUUID(notebookId)) throw new Error("Invalid notebookId");
   if (!isValidUUID(userId)) throw new Error("Invalid userId");
