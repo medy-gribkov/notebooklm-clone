@@ -322,6 +322,8 @@
     "perfectScore": "Perfect score! Outstanding!",
     "greatJob": "Great job! Almost there.",
     "keepStudying": "Keep studying, you'll get there!",
+    "correctBanner": "Correct!",
+    "incorrectBanner": "Incorrect. The answer is: {answer}",
     "correctAnswer": "Correct: {answer}",
     "tryAgain": "Try Again",
     "checkAnswer": "Check Answer",

@@ -322,6 +322,8 @@
     "perfectScore": "ציון מושלם! מצוין!",
     "greatJob": "כל הכבוד! כמעט שם.",
     "keepStudying": "המשך ללמוד, תגיע לשם!",
+    "correctBanner": "נכון!",
+    "incorrectBanner": "לא נכון. התשובה היא: {answer}",
     "correctAnswer": "תשובה נכונה: {answer}",
     "tryAgain": "נסה שוב",
     "checkAnswer": "בדוק תשובה",

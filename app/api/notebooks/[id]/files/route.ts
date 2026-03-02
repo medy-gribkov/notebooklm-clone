@@ -239,6 +239,20 @@ export async function POST(
       .from("pdf-uploads")
       .remove([storagePath])
       .then(null, () => {});
+
+    // Recompute notebook status and return error details
+    await updateNotebookStatus(notebookId);
+
+    const { data: errFile } = await serviceClient
+      .from("notebook_files")
+      .select("id, notebook_id, user_id, file_name, storage_path, status, page_count, created_at")
+      .eq("id", notebookFile.id)
+      .single();
+
+    return NextResponse.json(
+      { ...errFile, error: errorMessage },
+      { status: 201 }
+    );
   }
 
   // Recompute notebook status from all files

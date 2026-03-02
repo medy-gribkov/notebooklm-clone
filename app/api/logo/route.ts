@@ -47,28 +47,28 @@ export async function GET(request: NextRequest) {
   // Try Google Favicon API first
   try {
     const googleUrl = `https://www.google.com/s2/favicons?domain=${host}&sz=${sz}`;
-    const res = await fetchWithTimeout(googleUrl, 4000);
+    const res = await fetchWithTimeout(googleUrl, 2000);
     if (res.ok) {
       const contentType = res.headers.get("content-type") || "image/png";
       const buf = Buffer.from(await res.arrayBuffer());
-      // Google returns a default globe icon (small ~200 byte PNG) for unknown domains.
-      // Real favicons are typically >300 bytes.
-      if (buf.length > 300) {
+      // Google returns a default globe icon (~70 bytes) for unknown domains.
+      // Real favicons are typically >100 bytes.
+      if (buf.length > 100) {
         return new NextResponse(buf, {
           headers: { ...CACHE_HEADERS, "Content-Type": contentType },
         });
       }
     }
-  } catch {
-    // Google failed, try logo.dev
+  } catch (e) {
+    console.error(`[logo] Google failed for ${host}:`, e instanceof Error ? e.message : e);
   }
 
-  // Fallback: logo.dev
+  // Fallback: DuckDuckGo icon service (free, no auth, reliable)
   try {
-    const logodevUrl = `https://img.logo.dev/${host}?token=pk_anonymous&size=${sz}`;
-    const res = await fetchWithTimeout(logodevUrl, 4000);
+    const ddgUrl = `https://icons.duckduckgo.com/ip3/${host}.ico`;
+    const res = await fetchWithTimeout(ddgUrl, 2000);
     if (res.ok) {
-      const contentType = res.headers.get("content-type") || "image/png";
+      const contentType = res.headers.get("content-type") || "image/x-icon";
       const buf = Buffer.from(await res.arrayBuffer());
       if (buf.length > 100) {
         return new NextResponse(buf, {
@@ -76,8 +76,8 @@ export async function GET(request: NextRequest) {
         });
       }
     }
-  } catch {
-    // Both failed
+  } catch (e) {
+    console.error(`[logo] DuckDuckGo failed for ${host}:`, e instanceof Error ? e.message : e);
   }
 
   // Total failure: return transparent PNG so letter badge shows

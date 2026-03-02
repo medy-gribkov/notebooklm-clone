@@ -195,6 +195,25 @@ export const QuizView = memo(function QuizView({ data }: QuizViewProps) {
         })}
       </div>
 
+      {/* Result banner */}
+      {checked && (
+        <div className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium animate-fade-in ${
+          selected === q.correctIndex
+            ? "bg-primary/15 text-primary border border-primary/20"
+            : "bg-destructive/15 text-destructive border border-destructive/20"
+        }`}>
+          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
+            selected === q.correctIndex ? "bg-primary" : "bg-destructive"
+          }`}>
+            {selected === q.correctIndex ? "\u2713" : "\u2717"}
+          </span>
+          {selected === q.correctIndex
+            ? t("correctBanner")
+            : t("incorrectBanner", { answer: q.options[q.correctIndex] })
+          }
+        </div>
+      )}
+
       {/* Explanation */}
       {checked && q.explanation && (
         <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground animate-fade-in">
