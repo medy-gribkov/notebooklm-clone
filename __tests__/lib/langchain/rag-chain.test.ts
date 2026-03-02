@@ -25,6 +25,16 @@ vi.mock("@/lib/rag", () => ({
   buildContextBlock: vi.fn(() => "Context block here"),
 }));
 
+vi.mock("@/lib/supabase/service", () => ({
+  getServiceClient: vi.fn(() => ({
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn().mockResolvedValue({ count: 10, error: null }),
+      })),
+    })),
+  })),
+}));
+
 // Mock embeddings (required by retriever's transitive import)
 vi.mock("@/lib/langchain/embeddings", () => ({
   embedQuery: vi.fn(),
@@ -83,6 +93,56 @@ describe("createRAGChain", () => {
     expect(result.systemPrompt).toContain(BASE_PROMPT);
     expect(result.systemPrompt).toContain("No relevant source passages matched this query");
     expect(result.systemPrompt).not.toContain("===BEGIN DOCUMENT===");
+  });
+
+  it("returns early with no-content prompt when chunk count is 0", async () => {
+    // Override the service client mock for this test to return 0 chunks
+    const { getServiceClient } = await import("@/lib/supabase/service");
+    vi.mocked(getServiceClient).mockReturnValueOnce({
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
+        })),
+      })),
+    } as never);
+
+    const chain = createRAGChain(BASE_PROMPT);
+    const result = await chain.invoke({
+      query: "test query",
+      notebookId: "550e8400-e29b-41d4-a716-446655440000",
+      userId: "660e8400-e29b-41d4-a716-446655440000",
+    });
+
+    expect(result.sources).toEqual([]);
+    expect(result.systemPrompt).toContain("no processed document content yet");
+    // Should NOT have called the retriever since we short-circuited
+    expect(mockInvoke).not.toHaveBeenCalled();
+  });
+
+  it("logs error but continues when chunk count query fails", async () => {
+    const { getServiceClient } = await import("@/lib/supabase/service");
+    vi.mocked(getServiceClient).mockReturnValueOnce({
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ count: null, error: { message: "DB down" } }),
+        })),
+      })),
+    } as never);
+
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const chain = createRAGChain(BASE_PROMPT);
+    const result = await chain.invoke({
+      query: "test query",
+      notebookId: "550e8400-e29b-41d4-a716-446655440000",
+      userId: "660e8400-e29b-41d4-a716-446655440000",
+    });
+
+    // count is null, so totalChunks defaults to 0 -> early return
+    expect(consoleSpy).toHaveBeenCalledWith("[RAG] Failed to count chunks:", "DB down");
+    expect(result.sources).toEqual([]);
+    expect(result.systemPrompt).toContain("no processed document content yet");
+    consoleSpy.mockRestore();
   });
 
   it("passes shared flag to retriever", async () => {

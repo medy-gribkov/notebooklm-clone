@@ -169,11 +169,13 @@ export async function POST(
         query: userMessage,
         notebookId,
         userId: ownerId,
+        shared: true,
       });
       sources = ragResult.sources;
       systemMessage = ragResult.systemPrompt;
     } catch (e) {
-      console.error("[shared-chat] RAG chain failed:", e);
+      console.error("[shared-chat] RAG chain failed:", e instanceof Error ? e.message : e);
+      systemMessage = `${SYSTEM_PROMPT}\n\nNote: Document retrieval encountered a temporary error. Inform the user there was an issue loading their documents and suggest they try again in a moment.`;
     }
 
     // Pre-save user message before streaming (resilient to stream failures)
@@ -240,7 +242,7 @@ export async function POST(
         content: assistantText,
         sources: null,
         is_public: true,
-      }).then(null, () => {});
+      }).then(null, (e: unknown) => { console.error("[shared-chat] Fallback save failed:", e); });
     }
     const msg = error instanceof Error ? error.message : String(error);
     console.error("[shared-chat] Error:", msg);

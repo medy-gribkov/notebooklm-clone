@@ -33,8 +33,8 @@ export class DocChatRetriever extends BaseRetriever {
     if (!isValidUUID(fields.userId)) throw new Error("Invalid userId");
     this.notebookId = fields.notebookId;
     this.userId = fields.userId;
-    this.topK = fields.topK ?? 8;
-    this.threshold = fields.threshold ?? 0.45;
+    this.topK = fields.topK ?? (process.env.RAG_TOP_K ? parseInt(process.env.RAG_TOP_K, 10) : 8);
+    this.threshold = fields.threshold ?? (process.env.RAG_THRESHOLD ? parseFloat(process.env.RAG_THRESHOLD) : 0.30);
     this.shared = fields.shared ?? false;
   }
 
@@ -65,7 +65,19 @@ export class DocChatRetriever extends BaseRetriever {
       throw new Error("Failed to retrieve document context");
     }
 
-    return (data ?? []).map(
+    const rows = data ?? [];
+    if (rows.length === 0) {
+      console.warn(
+        `[DocChatRetriever] 0 chunks returned | notebook=${this.notebookId} | rpc=${rpcName} | threshold=${this.threshold} | query="${query.slice(0, 80)}"`
+      );
+    } else {
+      const sims = rows.map((r: { similarity: number }) => r.similarity);
+      console.info(
+        `[DocChatRetriever] ${rows.length} chunks | notebook=${this.notebookId} | sim=[${Math.min(...sims).toFixed(3)}..${Math.max(...sims).toFixed(3)}]`
+      );
+    }
+
+    return rows.map(
       (row: { id: string; content: string; similarity: number; metadata?: { file_name?: string } }) =>
         new Document({
           pageContent: row.content,

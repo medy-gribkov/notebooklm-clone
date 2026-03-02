@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const mockUpdate = vi.fn().mockReturnValue({ eq: vi.fn() });
+const mockUpdateEq = vi.fn().mockResolvedValue({ error: null });
+const mockUpdate = vi.fn().mockReturnValue({ eq: mockUpdateEq });
 const mockSelect = vi.fn();
 const mockEq = vi.fn();
 
@@ -68,5 +69,49 @@ describe("updateNotebookStatus", () => {
     mockEq.mockResolvedValue({ data: null });
     await updateNotebookStatus("notebook-1");
     expect(mockUpdate).toHaveBeenCalledWith({ status: "ready", page_count: 0 });
+  });
+
+  it("returns early when fetch files fails", async () => {
+    mockEq.mockResolvedValue({ data: null, error: { message: "DB connection lost" } });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await updateNotebookStatus("notebook-1");
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to fetch files"),
+      "DB connection lost"
+    );
+    expect(mockUpdate).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  it("logs error when update for empty notebook fails", async () => {
+    mockEq.mockResolvedValue({ data: [] });
+    mockUpdateEq.mockResolvedValueOnce({ error: { message: "Update failed" } });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await updateNotebookStatus("notebook-1");
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to update empty notebook"),
+      "Update failed"
+    );
+    consoleSpy.mockRestore();
+  });
+
+  it("logs error when final status update fails", async () => {
+    mockEq.mockResolvedValue({
+      data: [{ status: "ready", page_count: 5 }],
+    });
+    mockUpdateEq.mockResolvedValueOnce({ error: { message: "Write conflict" } });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await updateNotebookStatus("notebook-1");
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to update"),
+      "Write conflict"
+    );
+    consoleSpy.mockRestore();
   });
 });

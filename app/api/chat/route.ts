@@ -156,7 +156,8 @@ export async function POST(request: Request) {
     sources = ragResult.sources;
     systemWithContext = ragResult.systemPrompt;
   } catch (e) {
-    console.error("[chat] RAG chain failed:", e);
+    console.error("[chat] RAG chain failed:", e instanceof Error ? e.message : e);
+    systemWithContext = `${SYSTEM_PROMPT}${styleInstruction}\n\nNote: Document retrieval encountered a temporary error. Inform the user there was an issue loading their documents and suggest they try again in a moment.`;
   }
 
 
@@ -201,6 +202,21 @@ export async function POST(request: Request) {
           });
         } catch (err) {
           console.error("[chat] Message save failed:", err);
+          // Retry once after brief delay
+          setTimeout(async () => {
+            try {
+              await serviceClient.from("messages").insert({
+                notebook_id: notebookId,
+                user_id: user.id,
+                role: "assistant",
+                content: text,
+                sources: sources.length > 0 ? sources : null,
+                is_public: false,
+              });
+            } catch (retryErr) {
+              console.error("[chat] Message save retry failed:", retryErr);
+            }
+          }, 500);
         }
       },
     });
@@ -215,7 +231,7 @@ export async function POST(request: Request) {
         content: assistantText,
         sources: sources.length > 0 ? sources : null,
         is_public: false,
-      }).then(null, () => {});
+      }).then(null, (e: unknown) => { console.error("[chat] Fallback save failed:", e); });
     }
     console.error("[chat] Stream failed:", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });

@@ -43,7 +43,10 @@ If you are unsure about something, say "reportedly" or omit it.`;
       signal: AbortSignal.timeout(30_000),
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error(`[generate-company] Gemini API error ${res.status} for ${name}`);
+      return null;
+    }
 
     const data = await res.json();
     const profileText: string = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
@@ -64,7 +67,8 @@ If you are unsure about something, say "reportedly" or omit it.`;
       infographic: [{ heading: "Overview", content: `${name} operates in ${category}.` }],
       slidedeck: [{ heading: name, content: `A ${category} company from Israel.` }],
     };
-  } catch {
+  } catch (e) {
+    console.error("[generate-company] Failed:", e instanceof Error ? e.message : e);
     return null;
   }
 }

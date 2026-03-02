@@ -127,7 +127,7 @@ export async function POST(request: Request) {
       .eq("id", notebookFile.id);
     console.error("[upload] Processing failed:", error instanceof Error ? error.message : error);
     await serviceClient.storage.from("pdf-uploads").remove([storagePath])
-      .then(null, () => {});
+      .then(null, (e: unknown) => { console.error("[upload] Storage cleanup failed:", e); });
 
     // Recompute notebook status from all files
     await updateNotebookStatus(notebook.id);

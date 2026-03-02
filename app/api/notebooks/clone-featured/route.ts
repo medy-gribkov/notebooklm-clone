@@ -155,7 +155,10 @@ export async function POST(request: Request) {
         .select("id")
         .single();
 
-      if (fileError) continue;
+      if (fileError) {
+        console.error("[clone-featured] File insert failed:", fileError.message);
+        continue;
+      }
 
       if (notebookFile) {
         fileEntries.push({
@@ -164,7 +167,8 @@ export async function POST(request: Request) {
           content: file.content,
         });
       }
-    } catch {
+    } catch (e) {
+      console.error("[clone-featured] File insert error:", e instanceof Error ? e.message : e);
       continue;
     }
   }
@@ -257,6 +261,19 @@ export async function POST(request: Request) {
       if (allChunkRows.length > 0) {
         const { error: chunkError } = await serviceClient.from("chunks").insert(allChunkRows);
         if (chunkError) throw new Error("Failed to store document chunks");
+
+        // Verify chunks were actually persisted
+        const { count: storedCount } = await serviceClient
+          .from("chunks")
+          .select("id", { count: "exact", head: true })
+          .eq("notebook_id", notebook.id);
+
+        if (!storedCount || storedCount === 0) {
+          console.error(`[clone-featured] Chunk verification failed: 0 stored for notebook=${notebook.id}, expected ${allChunkRows.length}`);
+          throw new Error("Chunks were not persisted");
+        }
+
+        console.info(`[clone-featured] Stored ${storedCount} chunks for notebook=${notebook.id}`);
       }
 
       await serviceClient

@@ -51,10 +51,18 @@ describe("POST /api/notebooks/clone-featured", () => {
             }),
         });
 
-        // Specific mock for studio_generations insert
-        mockSupabase.from.mockImplementation((table) => {
+        // Specific mock for studio_generations insert + chunks verification
+        mockSupabase.from.mockImplementation((table: string) => {
             if (table === "studio_generations") {
                 return { insert: insertMock };
+            }
+            if (table === "chunks") {
+                return {
+                    insert: vi.fn().mockResolvedValue({ error: null }),
+                    select: vi.fn().mockReturnValue({
+                        eq: vi.fn().mockResolvedValue({ count: 5, error: null }),
+                    }),
+                };
             }
             return {
                 insert: vi.fn().mockReturnValue({

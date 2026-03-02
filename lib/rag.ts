@@ -1,5 +1,4 @@
 import { embedQuery } from "@/lib/langchain/embeddings";
-import { DocChatRetriever, documentsToSources } from "@/lib/langchain/retriever";
 import { getChatModel } from "@/lib/langchain/chat-model";
 import { extractText, type PdfResult } from "@/lib/pdf";
 import { extractTextFromTxt } from "@/lib/extractors/txt";
@@ -177,6 +176,19 @@ export async function processNotebook(
       throw new Error("Failed to store document chunks");
     }
 
+    // Verify chunks were actually persisted
+    const { count: storedCount } = await supabase
+      .from("chunks")
+      .select("id", { count: "exact", head: true })
+      .eq("notebook_id", notebookId);
+
+    if (!storedCount || storedCount === 0) {
+      console.error(
+        `[processNotebook] Chunk verification failed: 0 stored for notebook=${notebookId}, expected ${allRows.length}`
+      );
+      throw new Error("Chunks were not persisted");
+    }
+
     // Don't block on metadata, but let it finish if it can
     void metaPromise;
 
@@ -232,34 +244,6 @@ export async function getAllChunks(
   return text.slice(0, 30_000);
 }
 
-export async function retrieveChunks(
-  query: string,
-  notebookId: string,
-  userId: string,
-): Promise<Source[]> {
-  const retriever = new DocChatRetriever({ notebookId, userId });
-  const docs = await retriever.invoke(query);
-  return documentsToSources(docs);
-}
-
-/**
- * Retrieve chunks for shared/group notebooks.
- * Uses match_chunks_shared which checks notebook_members table.
- */
-export async function retrieveChunksShared(
-  query: string,
-  notebookId: string,
-  requestingUserId: string,
-): Promise<Source[]> {
-  const retriever = new DocChatRetriever({
-    notebookId,
-    userId: requestingUserId,
-    shared: true,
-  });
-  const docs = await retriever.invoke(query);
-  return documentsToSources(docs);
-}
-
 // ---------- Deduplication & Context Builder ----------
 
 function contentOverlap(a: string, b: string): number {
@@ -288,6 +272,8 @@ export function deduplicateSources(sources: Source[]): Source[] {
   return result;
 }
 
+const MAX_CONTEXT_CHARS = 30_000; // Safety cap: ~7.5K tokens
+
 /** Build structured context block grouped by file name. */
 export function buildContextBlock(sources: Source[]): string {
   if (sources.length === 0) return "";
@@ -300,14 +286,27 @@ export function buildContextBlock(sources: Source[]): string {
   });
 
   const sections: string[] = [];
+  let totalChars = 0;
+
   for (const [fileName, chunks] of grouped) {
     const body = chunks
       .map((c) => `[Source ${c.index}]\n${c.content}`)
       .join("\n\n");
-    sections.push(`## File: ${fileName}\n${body}`);
+    const section = `## File: ${fileName}\n${body}`;
+
+    if (totalChars + section.length > MAX_CONTEXT_CHARS && sections.length > 0) {
+      break;
+    }
+
+    sections.push(section);
+    totalChars += section.length;
   }
 
-  return sections.join("\n\n---\n\n");
+  let result = sections.join("\n\n---\n\n");
+  if (result.length > MAX_CONTEXT_CHARS) {
+    result = result.slice(0, MAX_CONTEXT_CHARS);
+  }
+  return result;
 }
 
 async function generateNotebookMeta(notebookId: string, sampleText: string): Promise<void> {

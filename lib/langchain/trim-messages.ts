@@ -3,9 +3,10 @@ interface ChatMessage {
   content: string;
 }
 
-// Groq llama-3.3-70b = 8K context. Reserve space for response tokens.
-const MODEL_CONTEXT_CHARS = 32_000; // ~8K tokens * 4 chars/token
-const RESPONSE_RESERVE_CHARS = 4_000; // ~1K tokens for response
+// Groq llama-3.3-70b-versatile = 128K context. Gemini 2.0 Flash fallback = 1M.
+// Use conservative budget targeting Groq (the smaller model).
+const MODEL_CONTEXT_CHARS = 200_000; // ~50K tokens * 4 chars/token (well under 128K token limit)
+const RESPONSE_RESERVE_CHARS = 8_000; // ~2K tokens for response
 
 /**
  * Trim message history to fit within a character budget.

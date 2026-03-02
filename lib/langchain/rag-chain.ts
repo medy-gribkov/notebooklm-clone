@@ -1,6 +1,7 @@
 import { RunnableLambda } from "@langchain/core/runnables";
 import { DocChatRetriever, documentsToSources } from "./retriever";
 import { deduplicateSources, buildContextBlock } from "@/lib/rag";
+import { getServiceClient } from "@/lib/supabase/service";
 import type { Source } from "@/types";
 
 interface RAGInput {
@@ -23,6 +24,27 @@ interface RAGOutput {
  */
 export function createRAGChain(baseSystemPrompt: string) {
   return RunnableLambda.from(async (input: RAGInput): Promise<RAGOutput> => {
+    // Verify chunks exist before running expensive embedding query
+    const supabase = getServiceClient();
+    const { count: chunkCount, error: countError } = await supabase
+      .from("chunks")
+      .select("id", { count: "exact", head: true })
+      .eq("notebook_id", input.notebookId);
+
+    if (countError) {
+      console.error("[RAG] Failed to count chunks:", countError.message);
+    }
+
+    const totalChunks = chunkCount ?? 0;
+
+    if (totalChunks === 0) {
+      console.warn(`[RAG] No chunks in DB for notebook=${input.notebookId}. Documents may still be processing or embedding failed.`);
+      return {
+        sources: [],
+        systemPrompt: `${baseSystemPrompt}\n\nThis notebook has no processed document content yet. The documents may still be processing or the upload may have failed. Tell the user their documents are not ready yet and suggest they check the notebook status or try re-uploading.`,
+      };
+    }
+
     const retriever = new DocChatRetriever({
       notebookId: input.notebookId,
       userId: input.userId,
@@ -32,6 +54,8 @@ export function createRAGChain(baseSystemPrompt: string) {
     const docs = await retriever.invoke(input.query);
     const sources = deduplicateSources(documentsToSources(docs));
     const context = buildContextBlock(sources);
+
+    console.info(`[RAG] notebook=${input.notebookId} | chunks_in_db=${totalChunks} | retrieved=${docs.length} | after_dedup=${sources.length}`);
 
     const contextBlock =
       sources.length > 0

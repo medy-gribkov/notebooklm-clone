@@ -10,16 +10,24 @@ import { getServiceClient } from "@/lib/supabase/service";
 export async function updateNotebookStatus(notebookId: string): Promise<void> {
   const supabase = getServiceClient();
 
-  const { data: files } = await supabase
+  const { data: files, error: fetchError } = await supabase
     .from("notebook_files")
     .select("status, page_count")
     .eq("notebook_id", notebookId);
 
+  if (fetchError) {
+    console.error(`[notebook-status] Failed to fetch files for ${notebookId}:`, fetchError.message);
+    return;
+  }
+
   if (!files || files.length === 0) {
-    await supabase
+    const { error: updateErr } = await supabase
       .from("notebooks")
       .update({ status: "ready", page_count: 0 })
       .eq("id", notebookId);
+    if (updateErr) {
+      console.error(`[notebook-status] Failed to update empty notebook ${notebookId}:`, updateErr.message);
+    }
     return;
   }
 
@@ -38,8 +46,12 @@ export async function updateNotebookStatus(notebookId: string): Promise<void> {
     0
   );
 
-  await supabase
+  const { error: updateError } = await supabase
     .from("notebooks")
     .update({ status: notebookStatus, page_count: totalPageCount })
     .eq("id", notebookId);
+
+  if (updateError) {
+    console.error(`[notebook-status] Failed to update ${notebookId}:`, updateError.message);
+  }
 }

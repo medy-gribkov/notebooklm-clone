@@ -105,6 +105,13 @@ describe("generateCompanyContent", () => {
     expect(result).toBeNull();
   });
 
+  it("returns null on non-Error throw", async () => {
+    global.fetch = vi.fn().mockRejectedValue("string error");
+
+    const result = await generateCompanyContent("TestCo", "test.com", "SaaS");
+    expect(result).toBeNull();
+  });
+
   it("calls fetch with correct URL and headers", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,

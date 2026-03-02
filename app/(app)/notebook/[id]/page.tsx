@@ -5,6 +5,8 @@ import { NotebookLayout } from "@/components/notebook-layout";
 import type { Notebook, NotebookFile, Message } from "@/types";
 import { getTranslations } from "next-intl/server";
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }

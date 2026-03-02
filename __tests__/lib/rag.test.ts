@@ -48,7 +48,7 @@ vi.mock("@langchain/core/messages", () => {
   return { HumanMessage: MockHumanMessage, SystemMessage: MockSystemMessage };
 });
 
-import { embedText, processNotebook, getAllChunks, retrieveChunks, deduplicateSources, buildContextBlock } from "@/lib/rag";
+import { embedText, processNotebook, getAllChunks, deduplicateSources, buildContextBlock } from "@/lib/rag";
 import { embedQuery } from "@/lib/langchain/embeddings";
 import { getChatModel } from "@/lib/langchain/chat-model";
 import { extractText } from "@/lib/pdf";
@@ -123,16 +123,22 @@ describe("processNotebook", () => {
     const updateEq = vi.fn().mockResolvedValue({});
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      from: vi.fn((_table: string) => ({
-        delete: vi.fn().mockReturnValue({
-          eq: deleteEq,
-        }),
-        insert: insertResult,
-        update: vi.fn().mockReturnValue({
-          eq: updateEq,
-        }),
-      })),
+      from: vi.fn((table: string) => {
+        if (table === "chunks") {
+          return {
+            delete: vi.fn().mockReturnValue({ eq: deleteEq }),
+            insert: insertResult,
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ count: 2, error: null }),
+            }),
+          };
+        }
+        return {
+          delete: vi.fn().mockReturnValue({ eq: deleteEq }),
+          insert: insertResult,
+          update: vi.fn().mockReturnValue({ eq: updateEq }),
+        };
+      }),
     };
   }
 
@@ -271,6 +277,36 @@ describe("processNotebook", () => {
       processNotebook(validUUID, validUserUUID, Buffer.from("pdf"))
     ).rejects.toThrow("Failed to store document chunks");
   });
+
+  it("throws when chunk verification returns 0 stored", async () => {
+    const verifyFailSupabase = {
+      from: vi.fn((table: string) => {
+        if (table === "chunks") {
+          return {
+            delete: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({}) }),
+            }),
+            insert: vi.fn().mockResolvedValue({ error: null }),
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
+            }),
+          };
+        }
+        return {
+          delete: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({}) }),
+          }),
+          insert: vi.fn().mockResolvedValue({ error: null }),
+          update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({}) }),
+        };
+      }),
+    };
+    mockedGetServiceClient.mockReturnValue(verifyFailSupabase as never);
+
+    await expect(
+      processNotebook(validUUID, validUserUUID, Buffer.from("pdf"))
+    ).rejects.toThrow("Chunks were not persisted");
+  });
 });
 
 describe("getAllChunks", () => {
@@ -351,108 +387,6 @@ describe("getAllChunks", () => {
   });
 });
 
-describe("retrieveChunks", () => {
-  const validUUID = "550e8400-e29b-41d4-a716-446655440000";
-  const validUserUUID = "660e8400-e29b-41d4-a716-446655440000";
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockedEmbedQuery.mockResolvedValue(Array.from({ length: 768 }, () => 0.1));
-  });
-
-  it("throws for invalid UUID", async () => {
-    await expect(
-      retrieveChunks("query", "bad", validUserUUID)
-    ).rejects.toThrow("Invalid notebookId");
-  });
-
-  it("returns mapped Source array with similarity and fileName", async () => {
-    mockedGetServiceClient.mockReturnValue({
-      from: vi.fn(),
-      rpc: vi.fn().mockResolvedValue({
-        data: [
-          {
-            id: "chunk-1",
-            content: "Some content",
-            similarity: 0.85,
-            metadata: { file_name: "test.pdf" },
-          },
-        ],
-        error: null,
-      }),
-    } as never);
-
-    const result = await retrieveChunks("test query", validUUID, validUserUUID);
-    expect(result).toEqual([
-      {
-        chunkId: "chunk-1",
-        content: "Some content",
-        similarity: 0.85,
-        fileName: "test.pdf",
-      },
-    ]);
-  });
-});
-
-describe("retrieveChunksShared", () => {
-  const validUUID = "550e8400-e29b-41d4-a716-446655440000";
-  const validUserUUID = "660e8400-e29b-41d4-a716-446655440000";
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockedEmbedQuery.mockResolvedValue(Array.from({ length: 768 }, () => 0.1));
-  });
-
-  it("throws for invalid notebookId", async () => {
-    const { retrieveChunksShared } = await import("@/lib/rag");
-    await expect(retrieveChunksShared("query", "bad", validUserUUID)).rejects.toThrow("Invalid notebookId");
-  });
-
-  it("throws for invalid userId", async () => {
-    const { retrieveChunksShared } = await import("@/lib/rag");
-    await expect(retrieveChunksShared("query", validUUID, "bad")).rejects.toThrow("Invalid userId");
-  });
-
-  it("returns mapped Source array from shared RPC", async () => {
-    mockedGetServiceClient.mockReturnValue({
-      from: vi.fn(),
-      rpc: vi.fn().mockResolvedValue({
-        data: [
-          { id: "sc-1", content: "Shared content", similarity: 0.9, metadata: { file_name: "shared.pdf" } },
-        ],
-        error: null,
-      }),
-    } as never);
-
-    const { retrieveChunksShared } = await import("@/lib/rag");
-    const result = await retrieveChunksShared("test", validUUID, validUserUUID);
-    expect(result).toEqual([
-      { chunkId: "sc-1", content: "Shared content", similarity: 0.9, fileName: "shared.pdf" },
-    ]);
-  });
-
-  it("throws on RPC error", async () => {
-    mockedGetServiceClient.mockReturnValue({
-      from: vi.fn(),
-      rpc: vi.fn().mockResolvedValue({ data: null, error: { message: "RPC failed" } }),
-    } as never);
-
-    const { retrieveChunksShared } = await import("@/lib/rag");
-    await expect(retrieveChunksShared("query", validUUID, validUserUUID)).rejects.toThrow("Failed to retrieve");
-  });
-
-  it("returns empty array when no data", async () => {
-    mockedGetServiceClient.mockReturnValue({
-      from: vi.fn(),
-      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
-    } as never);
-
-    const { retrieveChunksShared } = await import("@/lib/rag");
-    const result = await retrieveChunksShared("query", validUUID, validUserUUID);
-    expect(result).toEqual([]);
-  });
-});
-
 describe("generateNotebookMeta (via processNotebook)", () => {
   const validUUID = "550e8400-e29b-41d4-a716-446655440000";
   const validUserUUID = "660e8400-e29b-41d4-a716-446655440000";
@@ -469,12 +403,22 @@ describe("generateNotebookMeta (via processNotebook)", () => {
     const insertResult = vi.fn().mockResolvedValue({ error: null });
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      from: vi.fn((_table: string) => ({
-        delete: vi.fn().mockReturnValue({ eq: deleteEq }),
-        insert: insertResult,
-        update: mockUpdate,
-      })),
+      from: vi.fn((table: string) => {
+        if (table === "chunks") {
+          return {
+            delete: vi.fn().mockReturnValue({ eq: deleteEq }),
+            insert: insertResult,
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ count: 2, error: null }),
+            }),
+          };
+        }
+        return {
+          delete: vi.fn().mockReturnValue({ eq: deleteEq }),
+          insert: insertResult,
+          update: mockUpdate,
+        };
+      }),
     };
   }
 
@@ -594,6 +538,17 @@ describe("generateNotebookMeta (via processNotebook)", () => {
             }),
           };
         }
+        if (table === "chunks") {
+          return {
+            delete: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({}) }),
+            }),
+            insert: vi.fn().mockResolvedValue({ error: null }),
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ count: 2, error: null }),
+            }),
+          };
+        }
         return {
           delete: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({}) }),
@@ -710,5 +665,28 @@ describe("buildContextBlock", () => {
     ];
     const result = buildContextBlock(sources);
     expect(result).toContain("---");
+  });
+
+  it("caps context block at 30000 characters via file-level break", () => {
+    const sources = Array.from({ length: 20 }, (_, i) => ({
+      chunkId: `${i}`,
+      content: "x".repeat(2000),
+      similarity: 0.9,
+      fileName: `file-${i}.pdf`,
+    }));
+    const result = buildContextBlock(sources);
+    expect(result.length).toBeLessThanOrEqual(30_000);
+  });
+
+  it("hard-truncates when a single file section exceeds 30000 chars", () => {
+    // One file with a single massive chunk that exceeds 30K on its own
+    const sources = [{
+      chunkId: "1",
+      content: "y".repeat(35_000),
+      similarity: 0.9,
+      fileName: "huge.pdf",
+    }];
+    const result = buildContextBlock(sources);
+    expect(result.length).toBe(30_000);
   });
 });

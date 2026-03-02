@@ -238,7 +238,7 @@ export async function POST(
     await serviceClient.storage
       .from("pdf-uploads")
       .remove([storagePath])
-      .then(null, () => {});
+      .then(null, (e: unknown) => { console.error("[files] Storage cleanup failed:", e); });
 
     // Recompute notebook status and return error details
     await updateNotebookStatus(notebookId);
