@@ -25,6 +25,7 @@ export const CATEGORIES = [
   "E-commerce",
   "Mobility",
   "HealthTech",
+  "Education",
 ] as const;
 
 export const featuredNotebooks: FeaturedNotebook[] = [
@@ -677,6 +678,55 @@ export const featuredNotebooks: FeaturedNotebook[] = [
     pattern: "grid",
     website: "similarweb.com",
     category: "SaaS",
+  },
+  // --- Education / Guide notebooks ---
+  {
+    slug: "intro-to-rag",
+    titleKey: "introToRag",
+    descriptionKey: "introToRagDesc",
+    bgClass: "bg-[#262626] text-[#FAFAF7]",
+    icon: "book",
+    author: "DocChat",
+    date: "Mar 2026",
+    sourceCount: 1,
+    pattern: "circles",
+    category: "Education",
+  },
+  {
+    slug: "startup-fundraising",
+    titleKey: "startupFundraising",
+    descriptionKey: "startupFundraisingDesc",
+    bgClass: "bg-[#D4A27F] text-[#191919]",
+    icon: "book",
+    author: "DocChat",
+    date: "Mar 2026",
+    sourceCount: 1,
+    pattern: "waves",
+    category: "Education",
+  },
+  {
+    slug: "system-design-interview",
+    titleKey: "systemDesignInterview",
+    descriptionKey: "systemDesignInterviewDesc",
+    bgClass: "bg-[#40403E] text-[#FAFAF7]",
+    icon: "book",
+    author: "DocChat",
+    date: "Mar 2026",
+    sourceCount: 1,
+    pattern: "hexagons",
+    category: "Education",
+  },
+  {
+    slug: "israel-tech-ecosystem",
+    titleKey: "israelTechEcosystem",
+    descriptionKey: "israelTechEcosystemDesc",
+    bgClass: "bg-[#FAFAF7] text-[#191919] border border-black/5 dark:bg-[#262626] dark:text-[#FAFAF7] dark:border-white/5",
+    icon: "book",
+    author: "DocChat",
+    date: "Mar 2026",
+    sourceCount: 1,
+    pattern: "grid",
+    category: "Education",
   },
 ];
 

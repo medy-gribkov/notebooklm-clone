@@ -13,9 +13,10 @@ interface SourcesPanelProps {
   initialFiles: NotebookFile[];
   isUploading?: boolean;
   setIsUploading?: (v: boolean) => void;
+  onFileUploaded?: (file: NotebookFile) => void;
 }
 
-export function SourcesPanel({ notebookId, initialFiles, isUploading: externalUploading, setIsUploading }: SourcesPanelProps) {
+export function SourcesPanel({ notebookId, initialFiles, isUploading: externalUploading, setIsUploading, onFileUploaded }: SourcesPanelProps) {
   const t = useTranslations("sources");
   const tc = useTranslations("common");
   const [files, setFiles] = useState<NotebookFile[]>(initialFiles);
@@ -123,6 +124,7 @@ export function SourcesPanel({ notebookId, initialFiles, isUploading: externalUp
 
       setUploadingFiles((prev) => new Map(prev).set(uploadKey, 100));
       setFiles((prev) => [result, ...prev]);
+      onFileUploaded?.(result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
     } finally {
@@ -135,7 +137,7 @@ export function SourcesPanel({ notebookId, initialFiles, isUploading: externalUp
         });
       }, 500);
     }
-  }, [notebookId, t, setIsUploading]);
+  }, [notebookId, t, setIsUploading, onFileUploaded]);
 
   async function handleDelete(fileId: string) {
     setConfirmDeleteId(null);

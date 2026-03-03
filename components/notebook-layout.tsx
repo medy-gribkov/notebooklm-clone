@@ -239,7 +239,7 @@ export function NotebookLayout({ notebookId, notebookTitle, notebookFiles, initi
             }`}
         >
           <div className="w-[260px] h-full min-w-[260px]">
-            <SourcesPanel notebookId={notebookId} initialFiles={files} isUploading={isUploading} setIsUploading={setIsUploading} />
+            <SourcesPanel notebookId={notebookId} initialFiles={files} isUploading={isUploading} setIsUploading={setIsUploading} onFileUploaded={handleFileUploaded} />
           </div>
         </div>
 
@@ -289,7 +289,7 @@ export function NotebookLayout({ notebookId, notebookTitle, notebookFiles, initi
                 </button>
               </div>
               <div className="h-[calc(100%-49px)] overflow-hidden">
-                <SourcesPanel notebookId={notebookId} initialFiles={files} isUploading={isUploading} setIsUploading={setIsUploading} />
+                <SourcesPanel notebookId={notebookId} initialFiles={files} isUploading={isUploading} setIsUploading={setIsUploading} onFileUploaded={handleFileUploaded} />
               </div>
             </div>
           </div>

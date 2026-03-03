@@ -2,8 +2,11 @@ import { describe, it, expect } from "vitest";
 import { getFeaturedContent } from "@/lib/featured-content";
 import { featuredNotebooks } from "@/lib/featured-notebooks";
 
-// Only 8 companies have hardcoded content; the rest use on-demand generation.
-const HARDCODED_SLUGS = ["wix", "monday-com", "jfrog", "gong", "check-point", "tabnine", "snyk", "appsflyer"];
+// 8 companies + 4 education notebooks have hardcoded content; the rest use on-demand generation.
+const HARDCODED_SLUGS = [
+  "wix", "monday-com", "jfrog", "gong", "check-point", "tabnine", "snyk", "appsflyer",
+  "intro-to-rag", "startup-fundraising", "system-design-interview", "israel-tech-ecosystem",
+];
 
 describe("getFeaturedContent", () => {
   it("returns content for 'wix' slug", () => {

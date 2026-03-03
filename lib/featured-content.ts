@@ -516,6 +516,363 @@ Engineering roles include backend developers (Java/Scala), data engineers, ML en
       { heading: "Platform", content: "- Attribution + Deep Linking + Fraud Protection\n- ROI, Audiences, Incrementality, Privacy Cloud\n- 10,000+ integrations\n- Java, Scala, Go, React stack" },
     ],
   },
+
+  // --- Education / Guide notebooks ---
+
+  "intro-to-rag": {
+    description: "A comprehensive guide to Retrieval-Augmented Generation (RAG) systems, covering embeddings, vector search, chunking, and prompt engineering.",
+    files: [
+      {
+        fileName: "Introduction to RAG Systems.pdf",
+        content: `## What is RAG?
+
+Retrieval-Augmented Generation (RAG) is a technique that enhances large language models by grounding their responses in external knowledge. Instead of relying solely on the model's training data, RAG retrieves relevant documents at query time and includes them in the prompt context. This dramatically reduces hallucinations and allows the model to answer questions about private or recently updated data.
+
+The RAG pipeline has three core stages: indexing (preparing documents), retrieval (finding relevant chunks), and generation (producing the answer). Each stage has its own set of design decisions that significantly impact output quality.
+
+## Document Indexing and Chunking
+
+Before documents can be searched, they must be split into manageable chunks and converted into vector embeddings. Chunking strategy is critical: chunks too large dilute relevance signals, while chunks too small lose context.
+
+Common chunking approaches include fixed-size splitting (e.g., 500-2000 characters with overlap), recursive character splitting (respects paragraph and sentence boundaries), semantic chunking (groups sentences by embedding similarity), and document-structure-aware splitting (uses headings, sections, and tables as natural boundaries).
+
+Overlap between chunks (typically 10-20% of chunk size) ensures that information spanning a chunk boundary is not lost. For example, with a 2000-character chunk size, a 200-character overlap means the end of one chunk repeats at the start of the next.
+
+## Embeddings and Vector Search
+
+Text embeddings are dense numerical vectors (typically 256-3072 dimensions) that capture semantic meaning. Similar concepts produce vectors that are close together in embedding space. Popular embedding models include OpenAI text-embedding-3-small (1536 dims), Cohere embed-v3 (1024 dims), and Google Gemini embedding-001 (768 dims).
+
+Vector databases like Pinecone, Weaviate, Qdrant, Chroma, and pgvector (PostgreSQL extension) store these embeddings and enable fast approximate nearest neighbor (ANN) search. The search process: embed the user's query using the same model, then find the top-K most similar document chunks by cosine similarity or dot product.
+
+Key parameters affecting retrieval quality: top-K (how many chunks to retrieve, typically 3-8), similarity threshold (minimum score to include a result, e.g., 0.45), and the embedding model's dimensionality and training data.
+
+## Advanced RAG Techniques
+
+Basic RAG can be improved with several techniques: Hybrid search combines vector similarity with keyword (BM25) search for better recall. Re-ranking uses a cross-encoder model to re-score retrieved chunks against the query for higher precision. Query expansion rewrites the user's question into multiple variants to catch different phrasings.
+
+HyDE (Hypothetical Document Embeddings) generates a hypothetical answer first, then uses its embedding to search for similar real documents. Multi-hop RAG chains multiple retrieval steps, using the first answer to inform a second query. Parent-child chunking stores small chunks for retrieval but expands to their parent section for context.
+
+## Prompt Engineering for RAG
+
+The system prompt should instruct the model to answer only from provided context, cite sources, and acknowledge when information is insufficient. Source attribution (e.g., [1], [2]) helps users verify claims. Security boundaries should prevent the model from following instructions found inside source documents (prompt injection defense).
+
+Context window management is important: most models have 4K-128K token limits. With large document sets, you need to prioritize the most relevant chunks and trim message history to stay within budget. A common pattern: reserve 60% of context for retrieved documents, 20% for system prompt, and 20% for conversation history.`,
+      },
+    ],
+    quiz: [
+      { question: "What is the primary benefit of RAG over using an LLM alone?", options: ["Faster response times", "Reduced hallucinations by grounding in external data", "Lower cost per query", "Better grammar"], correctIndex: 1, explanation: "RAG retrieves relevant documents to include in the prompt, grounding the model's responses in actual data rather than relying on potentially outdated training knowledge." },
+      { question: "What is a typical chunk overlap percentage?", options: ["0%", "10-20%", "50%", "90%"], correctIndex: 1, explanation: "10-20% overlap ensures information at chunk boundaries is not lost while keeping redundancy manageable." },
+      { question: "What does HyDE stand for?", options: ["Hybrid Document Extraction", "Hypothetical Document Embeddings", "Hierarchical Data Encoding", "High-yield Document Enhancement"], correctIndex: 1, explanation: "HyDE generates a hypothetical answer first, then uses its embedding to find similar real documents." },
+    ],
+    flashcards: [
+      { front: "What are the three core stages of a RAG pipeline?", back: "Indexing (preparing documents), Retrieval (finding relevant chunks), and Generation (producing the answer)." },
+      { front: "What is the purpose of chunk overlap?", back: "To ensure information spanning a chunk boundary is not lost. Typically 10-20% of chunk size." },
+      { front: "Name three popular vector databases.", back: "Pinecone, Weaviate, Qdrant, Chroma, and pgvector (PostgreSQL extension)." },
+      { front: "What is re-ranking in RAG?", back: "Using a cross-encoder model to re-score retrieved chunks against the query for higher precision after initial retrieval." },
+    ],
+    report: [
+      { heading: "RAG Overview", content: "RAG enhances LLMs by retrieving relevant external documents at query time. Three stages: indexing, retrieval, generation. Dramatically reduces hallucinations." },
+      { heading: "Key Design Decisions", content: "Chunk size (500-2000 chars), overlap (10-20%), embedding model, top-K (3-8), similarity threshold, and context window allocation." },
+      { heading: "Advanced Techniques", content: "Hybrid search, re-ranking, query expansion, HyDE, multi-hop RAG, and parent-child chunking." },
+    ],
+    mindmap: {
+      label: "RAG Systems",
+      children: [
+        { label: "Indexing", children: [{ label: "Chunking" }, { label: "Embeddings" }, { label: "Vector DB" }] },
+        { label: "Retrieval", children: [{ label: "Similarity Search" }, { label: "Re-ranking" }, { label: "Hybrid Search" }] },
+        { label: "Generation", children: [{ label: "Prompt Engineering" }, { label: "Citation" }, { label: "Context Management" }] },
+      ],
+    },
+    datatable: {
+      columns: ["Technique", "Stage", "Benefit"],
+      rows: [
+        ["Recursive Chunking", "Indexing", "Respects document structure"],
+        ["Hybrid Search", "Retrieval", "Combines semantic + keyword"],
+        ["Re-ranking", "Retrieval", "Higher precision results"],
+        ["HyDE", "Retrieval", "Better query embeddings"],
+        ["Source Citation", "Generation", "Verifiable answers"],
+      ],
+    },
+    infographic: [
+      { heading: "RAG Pipeline", content: "Document -> Chunk -> Embed -> Store -> Query -> Retrieve -> Generate -> Cite" },
+      { heading: "Key Numbers", content: "- Chunk size: 500-2000 chars\n- Overlap: 10-20%\n- Top-K: 3-8 results\n- Embedding dims: 256-3072" },
+    ],
+    slidedeck: [
+      { heading: "What is RAG?", content: "Retrieval-Augmented Generation enhances LLMs with external knowledge retrieval at query time." },
+      { heading: "The Pipeline", content: "Index documents -> Embed queries -> Retrieve chunks -> Generate grounded answers with citations." },
+    ],
+  },
+
+  "startup-fundraising": {
+    description: "A practical guide to raising seed and Series A funding rounds for startups.",
+    files: [
+      {
+        fileName: "Startup Fundraising Guide.pdf",
+        content: `## Fundraising Fundamentals
+
+Startup fundraising follows a well-established progression: Pre-seed ($50K-$500K from friends, family, angels), Seed ($500K-$3M from angels and early-stage VCs), Series A ($3M-$15M from institutional VCs), and later rounds scaling up from there. Each round serves a specific purpose: pre-seed validates the idea, seed proves product-market fit, and Series A scales a proven model.
+
+The fundraising process typically takes 3-6 months from first meeting to wire transfer. Founders should plan for this timeline and ensure they have at least 6 months of runway when starting to raise. Running out of money during a raise is the most common startup killer.
+
+## Building the Pitch Deck
+
+A compelling pitch deck is 10-15 slides covering: Problem (what pain point exists), Solution (your product), Market Size (TAM/SAM/SOM), Business Model (how you make money), Traction (users, revenue, growth rate), Team (why you will win), Competition (landscape and differentiation), Go-to-market (how you acquire customers), Financials (projections and unit economics), and The Ask (how much you are raising and what you will do with it).
+
+The best decks tell a story. Start with the problem (make the investor feel it), show why existing solutions fall short, present your approach, prove it works with data, and close with why this team at this time will capture this opportunity.
+
+Common mistakes: too many slides, too much text, no clear ask, inflated market sizes, ignoring competition, and lack of specific metrics. Investors see hundreds of decks. Yours needs to be clear, concise, and memorable.
+
+## Term Sheets and Valuation
+
+A term sheet outlines the key terms of an investment. Critical terms include: valuation (pre-money vs. post-money), investment amount, equity percentage, liquidation preference (1x non-participating is standard), board composition, anti-dilution provisions, pro-rata rights, and vesting schedules.
+
+Valuation at seed stage is more art than science. Factors include: team quality, market size, traction, competitive landscape, and current market conditions. In 2024-2025, typical seed valuations range from $5M-$15M pre-money depending on geography and sector. Series A valuations typically range $15M-$50M pre-money.
+
+SAFE notes (Simple Agreement for Future Equity) have become the standard instrument for pre-seed and seed rounds. A SAFE converts to equity at the next priced round, with a valuation cap and optional discount. YC's standard post-money SAFE is the most widely used template.
+
+## Investor Relations
+
+Building relationships with investors before you need money is the single most effective fundraising strategy. Start meeting potential investors 6-12 months before your raise. Share monthly updates showing progress. When you are ready to raise, these warm relationships convert to meetings far more effectively than cold outreach.
+
+During the raise, create urgency through a structured process: hold initial meetings in week 1-2, follow-up deep dives in week 3-4, and push for term sheets in week 5-6. Having multiple interested investors simultaneously is the best way to get favorable terms.
+
+After closing, maintain regular investor updates (monthly or quarterly). Good updates include: key metrics, wins, challenges, asks (introductions, hiring help, strategic advice). Investors who feel informed and involved become your best advocates for future rounds.
+
+## Israeli Startup Fundraising
+
+Israel's startup ecosystem (often called "Startup Nation") has unique fundraising dynamics. Israeli founders frequently raise from both local VCs (Pitango, Viola, JVP, TLV Partners, Aleph) and US-based investors. Many Israeli startups raise seed locally and Series A from US firms. The proximity to European markets and strong military tech talent (Unit 8200 alumni) are frequently cited differentiators.
+
+Key accelerators and programs: 8200 EISP, Techstars TLV, Google for Startups, Mass Challenge Israel, and the Israel Innovation Authority grants (which provide non-dilutive funding of up to $500K for early-stage R&D).`,
+      },
+    ],
+    quiz: [
+      { question: "What is the typical timeline for a fundraising round?", options: ["1-2 weeks", "3-6 months", "1-2 years", "1 day"], correctIndex: 1, explanation: "From first meeting to wire transfer, fundraising typically takes 3-6 months." },
+      { question: "What does SAFE stand for?", options: ["Secure Asset for Equity", "Simple Agreement for Future Equity", "Standard Agreement for Funding", "Share Allocation for Entrepreneurs"], correctIndex: 1, explanation: "SAFE notes are Simple Agreements for Future Equity, converting to shares at the next priced round." },
+      { question: "What is the recommended number of slides in a pitch deck?", options: ["5-8", "10-15", "25-30", "50+"], correctIndex: 1, explanation: "A compelling pitch deck is typically 10-15 slides covering problem, solution, market, traction, team, and the ask." },
+    ],
+    flashcards: [
+      { front: "What are the main fundraising stages?", back: "Pre-seed ($50K-$500K), Seed ($500K-$3M), Series A ($3M-$15M), and later rounds scaling up." },
+      { front: "What is liquidation preference?", back: "A term that determines the order in which investors get paid in an exit event. 1x non-participating is the standard and most founder-friendly." },
+      { front: "What is TAM/SAM/SOM?", back: "Total Addressable Market, Serviceable Addressable Market, and Serviceable Obtainable Market. Used to show market opportunity from broad to realistic." },
+    ],
+    report: [
+      { heading: "Fundraising Overview", content: "Pre-seed to Series A progression. 3-6 month timeline per round. Plan runway carefully." },
+      { heading: "Pitch Deck Essentials", content: "10-15 slides: Problem, Solution, Market, Model, Traction, Team, Competition, GTM, Financials, Ask." },
+      { heading: "Israeli Context", content: "Strong local VC scene (Pitango, Viola, JVP). IIA grants up to $500K non-dilutive. 8200 alumni network." },
+    ],
+    mindmap: {
+      label: "Fundraising",
+      children: [
+        { label: "Stages", children: [{ label: "Pre-seed" }, { label: "Seed" }, { label: "Series A" }] },
+        { label: "Materials", children: [{ label: "Pitch Deck" }, { label: "Financial Model" }, { label: "Data Room" }] },
+        { label: "Terms", children: [{ label: "Valuation" }, { label: "SAFE/Equity" }, { label: "Liquidation Pref" }] },
+      ],
+    },
+    datatable: {
+      columns: ["Stage", "Typical Amount", "Typical Valuation", "Key Milestone"],
+      rows: [
+        ["Pre-seed", "$50K-$500K", "$1M-$5M", "Idea validation"],
+        ["Seed", "$500K-$3M", "$5M-$15M", "Product-market fit"],
+        ["Series A", "$3M-$15M", "$15M-$50M", "Scalable growth"],
+      ],
+    },
+    infographic: [
+      { heading: "Fundraising Timeline", content: "Start relationships 6-12 months early -> Formal raise: 3-6 months -> Close and deploy capital" },
+      { heading: "Pitch Deck Flow", content: "Problem -> Solution -> Market -> Traction -> Team -> Ask" },
+    ],
+    slidedeck: [
+      { heading: "Fundraising 101", content: "Pre-seed validates ideas. Seed proves PMF. Series A scales growth. Plan 3-6 months per round." },
+      { heading: "Key Terms", content: "SAFE notes for early rounds. Valuation caps + discounts. 1x non-participating liquidation preference is standard." },
+    ],
+  },
+
+  "system-design-interview": {
+    description: "Common system design patterns and interview preparation covering scalability, databases, caching, and microservices.",
+    files: [
+      {
+        fileName: "System Design Interview Prep.pdf",
+        content: `## System Design Interview Framework
+
+System design interviews evaluate your ability to design large-scale distributed systems. The standard approach: clarify requirements (5 min), estimate scale (5 min), propose high-level design (10 min), dive deep into components (15 min), and discuss trade-offs and improvements (5 min).
+
+Start by asking clarifying questions: What are the core features? How many users (DAU/MAU)? Read-heavy or write-heavy? What are the latency requirements? What consistency guarantees do we need? These questions show maturity and prevent designing the wrong system.
+
+## Load Balancing
+
+Load balancers distribute incoming traffic across multiple servers. Common algorithms: Round Robin (simple rotation), Least Connections (routes to server with fewest active connections), IP Hash (consistent routing by client IP), and Weighted Round Robin (accounts for server capacity differences).
+
+Layer 4 (transport) load balancers route based on IP/port and are faster. Layer 7 (application) load balancers can inspect HTTP headers and route based on URL path, cookies, or content type. In practice, most systems use both: L4 at the edge and L7 internally. Popular implementations: AWS ALB/NLB, Nginx, HAProxy, Envoy.
+
+Health checks are critical: load balancers must detect unhealthy servers and stop routing traffic to them. Typical: HTTP GET /health every 10 seconds, remove after 3 consecutive failures, restore after 2 consecutive successes.
+
+## Caching Strategies
+
+Caching reduces database load and latency. Common patterns:
+
+Cache-aside (lazy loading): Application checks cache first, on miss reads from DB and writes to cache. Most common pattern. Risk: stale data, cache stampede.
+
+Write-through: Every write goes to both cache and DB. Ensures consistency but adds write latency.
+
+Write-behind (write-back): Writes go to cache first, asynchronously flushed to DB. Fast writes but risk of data loss on cache failure.
+
+Cache invalidation strategies: TTL (time-to-live, simplest), event-driven (invalidate on write), and versioning. Redis and Memcached are the dominant in-memory cache solutions. Redis offers data structures (sorted sets, hashes) and persistence. Memcached is simpler but faster for basic key-value workloads.
+
+## Database Selection and Scaling
+
+Relational databases (PostgreSQL, MySQL) offer ACID transactions, complex queries, and mature tooling. Use when data has clear relationships and you need consistency guarantees. Scale vertically first (bigger machine), then read replicas, then sharding.
+
+NoSQL databases come in several flavors: Document stores (MongoDB, CouchDB) for flexible schemas, Key-value stores (Redis, DynamoDB) for simple lookups, Column-family (Cassandra, HBase) for write-heavy analytical workloads, and Graph databases (Neo4j, DGraph) for highly connected data.
+
+Sharding splits data across multiple database instances. Strategies: hash-based (consistent hashing for even distribution), range-based (good for time-series), and directory-based (lookup table). Sharding adds complexity: cross-shard queries, rebalancing, and join limitations.
+
+## Microservices and API Design
+
+Microservices decompose a monolith into independently deployable services. Benefits: independent scaling, technology flexibility, fault isolation, team autonomy. Costs: network latency, distributed transactions, operational complexity, and debugging difficulty.
+
+Communication patterns: synchronous (REST, gRPC) for request-response flows, asynchronous (message queues like Kafka, RabbitMQ, SQS) for event-driven and decoupled systems. gRPC uses Protocol Buffers for efficient binary serialization and supports streaming.
+
+API Gateway pattern: a single entry point that handles routing, authentication, rate limiting, and request transformation. Examples: Kong, AWS API Gateway, Nginx. The gateway prevents clients from needing to know about individual service locations.
+
+## Common System Design Questions
+
+URL Shortener: Hash function + base62 encoding, read-heavy cache layer, analytics pipeline. Design a Chat System: WebSocket connections, message queue, presence service, message storage (Cassandra for write volume). Design a News Feed: Fan-out on write vs. fan-out on read, ranking algorithm, caching hot content. Design a Rate Limiter: Token bucket or sliding window algorithm, distributed state with Redis.`,
+      },
+    ],
+    quiz: [
+      { question: "Which caching pattern writes to cache first and asynchronously flushes to DB?", options: ["Cache-aside", "Write-through", "Write-behind", "Read-through"], correctIndex: 2, explanation: "Write-behind (write-back) writes to cache first for fast writes, then asynchronously persists to the database." },
+      { question: "What is the main advantage of Layer 7 over Layer 4 load balancing?", options: ["Lower latency", "Content-based routing decisions", "Better security", "Less configuration"], correctIndex: 1, explanation: "Layer 7 load balancers can inspect HTTP content (URL path, headers, cookies) and make smarter routing decisions." },
+      { question: "Which database type is best for highly connected data?", options: ["Document store", "Key-value store", "Graph database", "Column-family store"], correctIndex: 2, explanation: "Graph databases like Neo4j are optimized for traversing relationships between highly connected data points." },
+    ],
+    flashcards: [
+      { front: "What is cache stampede?", back: "When many requests simultaneously miss the cache for the same key, all hitting the database at once. Prevented with locking, probabilistic early expiration, or pre-warming." },
+      { front: "What is consistent hashing?", back: "A hashing technique that minimizes key remapping when nodes are added/removed. Used in distributed caching and database sharding." },
+      { front: "REST vs gRPC?", back: "REST: HTTP/JSON, human-readable, widely supported. gRPC: HTTP/2 + Protocol Buffers, binary serialization, streaming, higher performance." },
+    ],
+    report: [
+      { heading: "Interview Framework", content: "Clarify (5 min) -> Estimate (5 min) -> High-level (10 min) -> Deep dive (15 min) -> Trade-offs (5 min)" },
+      { heading: "Core Patterns", content: "Load balancing (L4/L7), caching (cache-aside, write-through, write-behind), DB scaling (replicas, sharding)." },
+      { heading: "Communication", content: "Sync: REST, gRPC. Async: Kafka, RabbitMQ. API Gateway for routing and auth." },
+    ],
+    mindmap: {
+      label: "System Design",
+      children: [
+        { label: "Scalability", children: [{ label: "Load Balancing" }, { label: "Caching" }, { label: "Sharding" }] },
+        { label: "Databases", children: [{ label: "SQL" }, { label: "NoSQL" }, { label: "NewSQL" }] },
+        { label: "Architecture", children: [{ label: "Microservices" }, { label: "API Gateway" }, { label: "Message Queues" }] },
+      ],
+    },
+    datatable: {
+      columns: ["Pattern", "Use Case", "Trade-off"],
+      rows: [
+        ["Cache-aside", "Read-heavy workloads", "Stale data risk"],
+        ["Write-through", "Consistency-critical", "Higher write latency"],
+        ["Sharding", "Massive data scale", "Cross-shard complexity"],
+        ["gRPC", "Internal services", "Less human-readable"],
+        ["Message Queue", "Async processing", "Eventual consistency"],
+      ],
+    },
+    infographic: [
+      { heading: "System Design Interview", content: "Clarify -> Estimate -> Design -> Deep Dive -> Trade-offs (40 min total)" },
+      { heading: "Scaling Ladder", content: "Vertical scaling -> Read replicas -> Caching -> Sharding -> Microservices" },
+    ],
+    slidedeck: [
+      { heading: "Core Concepts", content: "Load balancing, caching, database scaling, microservices, and message queues." },
+      { heading: "Interview Tips", content: "Always clarify requirements first. Estimate scale. Discuss trade-offs explicitly. There is no perfect design." },
+    ],
+  },
+
+  "israel-tech-ecosystem": {
+    description: "An overview of Israel's technology landscape, startup culture, key hubs, funding trends, and major sectors.",
+    files: [
+      {
+        fileName: "Israel Tech Ecosystem Overview.pdf",
+        content: `## The Startup Nation
+
+Israel, often called the "Startup Nation," has the highest density of startups per capita in the world. With a population of approximately 9.8 million, the country is home to over 6,000 active technology startups, more than 350 R&D centers of multinational corporations (including Google, Apple, Microsoft, Amazon, Meta, Intel, and NVIDIA), and a vibrant venture capital ecosystem. In 2024, Israeli startups raised approximately $10.6 billion in venture funding, maintaining Israel's position as the third-largest startup ecosystem globally behind the US and China.
+
+The roots of Israel's tech ecosystem trace back to military technology units, particularly Unit 8200 (signals intelligence), Talpiot (elite technology program), and Unit 81 (cyber technology). Alumni of these units have founded or led companies including Check Point, Waze, NSO Group, and many others. The mandatory military service creates dense social networks that later become the foundation for co-founding teams and investment relationships.
+
+## Key Technology Hubs
+
+Tel Aviv is the undisputed center of Israel's tech scene. The city and its metropolitan area host the majority of startups, VC firms, and accelerators. Key neighborhoods include Rothschild Boulevard (startup offices and WeWork spaces), the Sarona Market area, and the Ramat HaChayal industrial zone in north Tel Aviv.
+
+Herzliya (especially the Herzliya Pituach industrial area) hosts many larger tech companies and R&D centers, including Microsoft Israel, Elbit Systems, and numerous cybersecurity firms. The IDC Herzliya university produces many entrepreneurs.
+
+Beer Sheva is emerging as a cybersecurity hub, anchored by Ben-Gurion University's cyber research center and the IDF's relocation of technology units to the Negev. CyberSpark, a joint initiative of government, academia, and industry, is creating a dedicated cyber innovation ecosystem.
+
+Haifa, home to the Technion (Israel Institute of Technology), has a strong presence in deep tech, autonomous vehicles, and hardware. Intel's major Israel operations and Mobileye's HQ are in the Haifa area.
+
+Jerusalem has a growing tech scene focused on biotech, healthtech, and social impact, anchored by Hebrew University and the Hadassah Medical Center.
+
+## Major Sectors
+
+Cybersecurity: Israel is the world's second-largest exporter of cyber products (after the US). Major companies include Check Point, CyberArk, Snyk, Armis, Orca Security, Cato Networks, Pentera, and SentinelOne. The sector benefits directly from military intelligence expertise.
+
+AI and Machine Learning: Rapid growth sector with companies like Gong (revenue intelligence), Tabnine (AI code completion), Viz.ai (medical imaging), AI21 Labs (language models), and Run:ai (GPU orchestration). Israel has over 1,000 AI-focused startups.
+
+Fintech: Strong presence including Payoneer (cross-border payments), Rapyd (payment infrastructure), Lemonade (AI insurance), Melio (B2B payments), Tipalti (accounts payable automation), and Pagaya (AI credit analysis).
+
+Autonomous Vehicles: Mobileye (acquired by Intel for $15.3B, now public again) is the dominant player. Other companies include Innoviz (LiDAR), Foretellix (verification), Autobrains, and Cognata.
+
+AgriTech/FoodTech: Companies like Aleph Farms (cultivated meat), Redefine Meat, Prospera (crop analytics), and Taranis (precision agriculture) address food security challenges.
+
+## Funding Landscape
+
+The Israeli VC ecosystem includes both local and international investors. Major local VCs: Pitango Venture Capital, Viola Ventures, Jerusalem Venture Partners (JVP), TLV Partners, Aleph, Entrée Capital, Vertex Ventures Israel, and Insight Partners (US firm with major Israel focus).
+
+The Israel Innovation Authority (IIA) provides non-dilutive grants for R&D: up to $500K for early-stage companies, with additional programs for industrial R&D, pilot projects, and international collaborations. Binational funds (BIRD with US, CIIRDF with Canada, KORIL with South Korea) provide matched R&D funding.
+
+Accelerators and incubators: 8200 EISP, Techstars TLV, Google for Startups, MassChallenge Israel, The Junction (by IIA), and SOSA TLV. These provide mentorship, office space, and investor introductions. Corporate innovation programs from Deutsche Telekom, Barclays, and Citi also operate accelerators in Israel.
+
+## Challenges and Trends
+
+Challenges facing the ecosystem include: high cost of living (Tel Aviv ranked among world's most expensive cities), brain drain to US tech giants offering remote work, geopolitical instability affecting investor confidence, and a relatively small domestic market requiring companies to think global from day one.
+
+Current trends (2025-2026): Increased focus on AI infrastructure and applications, cybersecurity consolidation through M&A, growing deep tech investment (quantum computing, climate tech), expansion of tech hubs beyond Tel Aviv, and rising interest from Asian investors (particularly from Singapore, Japan, and South Korea).`,
+      },
+    ],
+    quiz: [
+      { question: "How many active tech startups does Israel have?", options: ["About 1,000", "About 6,000", "About 20,000", "About 100,000"], correctIndex: 1, explanation: "Israel is home to over 6,000 active technology startups, giving it the highest density per capita globally." },
+      { question: "Which military unit is most associated with Israel's tech ecosystem?", options: ["Golani Brigade", "Unit 8200", "Sayeret Matkal", "Navy SEALs"], correctIndex: 1, explanation: "Unit 8200 (signals intelligence) is the most prominent source of tech founders and talent in Israel's ecosystem." },
+      { question: "How much can IIA grants provide for early-stage companies?", options: ["Up to $50K", "Up to $500K", "Up to $5M", "Up to $50M"], correctIndex: 1, explanation: "The Israel Innovation Authority provides non-dilutive grants of up to $500K for early-stage R&D." },
+    ],
+    flashcards: [
+      { front: "Why is Israel called the 'Startup Nation'?", back: "Highest density of startups per capita in the world: 6,000+ active startups in a population of 9.8 million." },
+      { front: "What is Unit 8200?", back: "Israel's signals intelligence military unit. Alumni have founded Check Point, Waze, NSO Group, and many leading tech companies." },
+      { front: "Name the key tech hubs in Israel.", back: "Tel Aviv (main hub), Herzliya (R&D centers), Beer Sheva (cybersecurity), Haifa (deep tech/Technion), Jerusalem (biotech/healthtech)." },
+    ],
+    report: [
+      { heading: "Ecosystem Overview", content: "6,000+ startups, 350+ multinational R&D centers, $10.6B raised in 2024. Military units (8200, Talpiot) as talent pipeline." },
+      { heading: "Major Sectors", content: "Cybersecurity (#2 global exporter), AI/ML (1,000+ startups), Fintech, Autonomous Vehicles (Mobileye), AgriTech." },
+      { heading: "Funding", content: "Local VCs (Pitango, Viola, JVP) + US investors. IIA grants up to $500K. Active accelerator scene." },
+    ],
+    mindmap: {
+      label: "Israel Tech",
+      children: [
+        { label: "Hubs", children: [{ label: "Tel Aviv" }, { label: "Herzliya" }, { label: "Beer Sheva" }, { label: "Haifa" }] },
+        { label: "Sectors", children: [{ label: "Cybersecurity" }, { label: "AI/ML" }, { label: "Fintech" }, { label: "AutoTech" }] },
+        { label: "Funding", children: [{ label: "Local VCs" }, { label: "IIA Grants" }, { label: "Accelerators" }] },
+      ],
+    },
+    datatable: {
+      columns: ["Sector", "Key Companies", "Notable Stats"],
+      rows: [
+        ["Cybersecurity", "Check Point, CyberArk, Snyk, Armis", "#2 global cyber exporter"],
+        ["AI/ML", "Gong, Tabnine, Viz.ai, AI21 Labs", "1,000+ AI startups"],
+        ["Fintech", "Payoneer, Rapyd, Lemonade, Melio", "Strong payments focus"],
+        ["AutoTech", "Mobileye, Innoviz, Foretellix", "$15.3B Mobileye acquisition"],
+        ["AgriTech", "Aleph Farms, Redefine Meat, Taranis", "Global food security focus"],
+      ],
+    },
+    infographic: [
+      { heading: "Startup Nation", content: "- 9.8M population, 6,000+ startups\n- $10.6B raised in 2024\n- 350+ multinational R&D centers\n- #3 global startup ecosystem" },
+      { heading: "Military Pipeline", content: "Unit 8200 -> Founders -> Startups -> IPO/Acquisition -> Reinvest -> Next Generation" },
+    ],
+    slidedeck: [
+      { heading: "Israel Tech Overview", content: "6,000+ startups, highest density per capita. Military tech units as talent pipeline. $10.6B raised in 2024." },
+      { heading: "Key Sectors", content: "Cybersecurity (#2 global), AI/ML (1,000+ startups), Fintech, Autonomous Vehicles, AgriTech/FoodTech." },
+    ],
+  },
 };
 
 export function getFeaturedContent(slug: string): FeaturedStudioContent | null {

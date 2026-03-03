@@ -44,6 +44,11 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [savingName, setSavingName] = useState(false);
   const [accentHue, setAccentHue] = useState<number>(250);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [bioText, setBioText] = useState("");
+  const [bioDisplayName, setBioDisplayName] = useState("");
+  const [savingBio, setSavingBio] = useState(false);
+  const [bioLoaded, setBioLoaded] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -68,6 +73,23 @@ export default function SettingsPage() {
           const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
           setAvatarUrl(`${supabaseUrl}/storage/v1/object/public/avatars/${meta.avatar_url}`);
         }
+      }
+
+      // Check admin status
+      const adminId = process.env.NEXT_PUBLIC_ADMIN_USER_ID;
+      if (adminId && data.user?.id === adminId) {
+        setIsAdmin(true);
+        // Load admin profile
+        fetch("/api/admin/profile").then(async (res) => {
+          if (res.ok) {
+            const json = await res.json();
+            if (json.profile) {
+              setBioText(json.profile.bio_text ?? "");
+              setBioDisplayName(json.profile.display_name ?? "");
+            }
+          }
+          setBioLoaded(true);
+        }).catch(() => setBioLoaded(true));
       }
     });
     const match = document.cookie.match(/(?:^|;\s*)locale=([^;]*)/);
@@ -216,6 +238,27 @@ export default function SettingsPage() {
     } finally {
       setDeleting(false);
       setConfirmDelete(false);
+    }
+  }
+
+  async function handleSaveBio() {
+    setSavingBio(true);
+    try {
+      const res = await fetch("/api/admin/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bio_text: bioText, display_name: bioDisplayName }),
+      });
+      if (res.ok) {
+        addToast(t("profileUpdated"));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        addToast(err.error || "Failed to save", "error");
+      }
+    } catch {
+      addToast("Failed to save", "error");
+    } finally {
+      setSavingBio(false);
     }
   }
 
@@ -438,6 +481,51 @@ export default function SettingsPage() {
             </div>
           </div>
         </section>
+
+        {/* Admin: Professional Profile (bio editor) */}
+        {isAdmin && bioLoaded && (
+          <section className="space-y-4">
+            <h2 className="text-caption uppercase tracking-wider font-semibold">
+              Professional Profile
+            </h2>
+            <div className="rounded-xl border bg-card p-5 space-y-4">
+              <p className="text-xs text-muted-foreground">
+                This bio is shown to viewers of your shared notebook links. Edit your professional profile below.
+              </p>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Display Name</label>
+                <Input
+                  value={bioDisplayName}
+                  onChange={(e) => setBioDisplayName(e.target.value)}
+                  placeholder="Medy Gribkov"
+                  className="h-9 text-sm"
+                  maxLength={100}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Bio / Resume</label>
+                <textarea
+                  value={bioText}
+                  onChange={(e) => setBioText(e.target.value)}
+                  placeholder="Paste your resume or professional bio here..."
+                  className="w-full min-h-[200px] rounded-lg border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  maxLength={10000}
+                />
+                <p className="text-[10px] text-muted-foreground text-right">
+                  {bioText.length.toLocaleString()} / 10,000
+                </p>
+              </div>
+              <Button
+                onClick={handleSaveBio}
+                disabled={savingBio || bioText.trim().length < 10}
+                size="sm"
+                className="text-xs"
+              >
+                {savingBio ? tc("loading") : tc("save")}
+              </Button>
+            </div>
+          </section>
+        )}
 
         {/* Privacy & Data */}
         <section className="space-y-4">

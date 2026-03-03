@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo } from "react";
+import { useState, useCallback, memo } from "react";
 
 interface CompanyLogoProps {
   /** Domain like "wix.com" or full URL */
@@ -38,6 +38,13 @@ function CompanyLogoInner({ domain, name, size = "md", className = "", eager = f
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
+  // Ref callback: fires when img element mounts. Catches images that loaded before React attaches onLoad.
+  const imgRefCallback = useCallback((img: HTMLImageElement | null) => {
+    if (img && img.complete && img.naturalWidth > 1) {
+      setLoaded(true);
+    }
+  }, []);
+
   const { box, text, px } = SIZES[size];
   const host = domain ? extractDomain(domain) : "";
 
@@ -68,6 +75,7 @@ function CompanyLogoInner({ domain, name, size = "md", className = "", eager = f
       {letter}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        ref={imgRefCallback}
         src={src}
         alt={name}
         width={px}

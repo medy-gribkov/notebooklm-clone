@@ -6,8 +6,8 @@ const VALID_PATTERNS = [
 ];
 
 describe("featuredNotebooks", () => {
-  it("contains 50 company notebooks", () => {
-    expect(featuredNotebooks).toHaveLength(50);
+  it("contains 54 notebooks (50 companies + 4 education)", () => {
+    expect(featuredNotebooks).toHaveLength(54);
   });
 
   it("has no duplicate slugs", () => {
@@ -48,9 +48,10 @@ describe("featuredNotebooks", () => {
     }
   });
 
-  it("all entries have a website domain", () => {
+  it("all company entries have a website domain", () => {
     for (const nb of featuredNotebooks) {
-      expect(nb.website).toBeTruthy();
+      if (nb.category === "Education") continue;
+      expect(nb.website, `${nb.slug} missing website`).toBeTruthy();
     }
   });
 });
