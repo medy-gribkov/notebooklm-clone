@@ -33,8 +33,8 @@ export class DocChatRetriever extends BaseRetriever {
     if (!isValidUUID(fields.userId)) throw new Error("Invalid userId");
     this.notebookId = fields.notebookId;
     this.userId = fields.userId;
-    this.topK = fields.topK ?? (process.env.RAG_TOP_K ? parseInt(process.env.RAG_TOP_K, 10) : 8);
-    this.threshold = fields.threshold ?? (process.env.RAG_THRESHOLD ? parseFloat(process.env.RAG_THRESHOLD) : 0.30);
+    this.topK = fields.topK ?? 8;
+    this.threshold = fields.threshold ?? 0.45;
     this.shared = fields.shared ?? false;
   }
 

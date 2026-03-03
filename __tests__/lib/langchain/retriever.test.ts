@@ -68,7 +68,7 @@ describe("DocChatRetriever", () => {
         match_notebook_id: VALID_UUID,
         match_user_id: VALID_UUID_2,
         match_count: 8,
-        match_threshold: 0.30,
+        match_threshold: 0.45,
       }));
       expect(docs).toHaveLength(1);
       expect(docs[0]).toBeInstanceOf(Document);
@@ -118,27 +118,6 @@ describe("DocChatRetriever", () => {
         match_count: 5,
         match_threshold: 0.5,
       }));
-    });
-
-    it("reads topK and threshold from env vars when not passed", async () => {
-      process.env.RAG_TOP_K = "12";
-      process.env.RAG_THRESHOLD = "0.20";
-      mockRpc.mockResolvedValue({ data: [], error: null });
-
-      const retriever = new DocChatRetriever({
-        notebookId: VALID_UUID,
-        userId: VALID_UUID_2,
-      });
-
-      await retriever._getRelevantDocuments("query");
-
-      expect(mockRpc).toHaveBeenCalledWith("match_chunks", expect.objectContaining({
-        match_count: 12,
-        match_threshold: 0.20,
-      }));
-
-      delete process.env.RAG_TOP_K;
-      delete process.env.RAG_THRESHOLD;
     });
 
     it("throws on RPC error", async () => {
