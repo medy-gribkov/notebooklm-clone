@@ -43,7 +43,8 @@ export default async function NotebookPage({ params }: PageProps) {
       .eq("notebook_id", id)
       .eq("user_id", user.id)
       .eq("is_public", false)
-      .order("created_at", { ascending: true }),
+      .order("created_at", { ascending: true })
+      .limit(200),
     supabase
       .from("companies")
       .select("name, website")
