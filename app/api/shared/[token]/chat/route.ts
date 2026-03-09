@@ -1,8 +1,8 @@
 import { getServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { hashIP } from "@/lib/share";
-import { validateUserMessage, sanitizeText } from "@/lib/validate";
-import { getLLM } from "@/lib/llm";
+import { validateUserMessage, sanitizeText, extractMessageContent } from "@/lib/validate";
+import { getLLM, getGeminiLLM } from "@/lib/llm";
 import { createRAGChain } from "@/lib/langchain/rag-chain";
 import { trimMessages } from "@/lib/langchain/trim-messages";
 import { streamText } from "ai";
@@ -135,7 +135,9 @@ export async function POST(
     );
   }
 
-  let body: { messages?: Array<{ role: string; content: string }> };
+  let body: {
+    messages?: Array<{ role: string; content?: string; parts?: Array<{ type: string; text?: string }> }>;
+  };
   try {
     body = await request.json();
   } catch {
@@ -152,12 +154,13 @@ export async function POST(
     return NextResponse.json({ error: "Last message must be from user" }, { status: 400 });
   }
 
-  const msgError = validateUserMessage(lastMessage.content);
+  const lastContent = extractMessageContent(lastMessage);
+  const msgError = validateUserMessage(lastContent);
   if (msgError) {
     return NextResponse.json({ error: msgError }, { status: 400 });
   }
 
-  const userMessage = sanitizeText(lastMessage.content);
+  const userMessage = sanitizeText(lastContent);
   const notebookId = shareInfo.notebook_id;
   const ownerId = shareInfo.owner_id;
 
@@ -213,51 +216,73 @@ export async function POST(
       is_public: true,
     });
 
-    const result = streamText({
-      model: getLLM(),
-      system: systemMessage,
-      messages: trimMessages(
-        messages.map((m) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        })),
-        undefined,
-        systemMessage.length,
-      ),
-      onChunk: ({ chunk }) => {
-        if (chunk.type === "text-delta") {
-          assistantText += chunk.text;
-        }
-      },
-      onFinish: async ({ text }) => {
-        assistantText = text;
-        try {
-          if (text.trim()) {
-            const { error: insertError } = await supabase.from("messages").insert({
-              notebook_id: notebookId,
-              user_id: ownerId,
-              role: "assistant",
-              content: text,
-              sources: sources.length > 0 ? sources : null,
-              is_public: true,
-            });
-            if (insertError) {
-              console.error("[shared-chat] Message save failed:", insertError);
-            }
-          }
-        } catch (err) {
-          console.error("[shared-chat] Message persistence error:", err);
-        }
-      },
-    });
+    const trimmedMessages = trimMessages(
+      messages.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: extractMessageContent(m),
+      })),
+      undefined,
+      systemMessage.length,
+    );
 
-    return result.toUIMessageStreamResponse({
-      headers: {
-        "X-Chat-Sources": sources.length > 0 ? JSON.stringify(sources) : "[]",
-      },
-    });
+    const onChunk = ({ chunk }: { chunk: { type: string; text?: string } }) => {
+      if (chunk.type === "text-delta" && chunk.text) {
+        assistantText += chunk.text;
+      }
+    };
+
+    const onFinish = async ({ text }: { text: string }) => {
+      assistantText = text;
+      try {
+        if (text.trim()) {
+          const { error: insertError } = await supabase.from("messages").insert({
+            notebook_id: notebookId,
+            user_id: ownerId,
+            role: "assistant",
+            content: text,
+            sources: sources.length > 0 ? sources : null,
+            is_public: true,
+          });
+          if (insertError) {
+            console.error("[shared-chat] Message save failed:", insertError);
+          }
+        }
+      } catch (err) {
+        console.error("[shared-chat] Message persistence error:", err);
+      }
+    };
+
+    const streamHeaders = {
+      "X-Chat-Sources": sources.length > 0 ? JSON.stringify(sources) : "[]",
+    };
+
+    let result;
+    try {
+      result = streamText({
+        model: getLLM(),
+        system: systemMessage,
+        messages: trimmedMessages,
+        onChunk,
+        onFinish,
+      });
+    } catch (initErr) {
+      console.error("[shared-chat] Primary LLM failed:", initErr instanceof Error ? initErr.message : initErr);
+      if (process.env.GROQ_API_KEY && process.env.GEMINI_API_KEY) {
+        console.info("[shared-chat] Retrying with Gemini fallback");
+        result = streamText({
+          model: getGeminiLLM(),
+          system: systemMessage,
+          messages: trimmedMessages,
+          onChunk,
+          onFinish,
+        });
+      } else {
+        throw initErr;
+      }
+    }
+
+    return result.toUIMessageStreamResponse({ headers: streamHeaders });
   } catch (error) {
-    // Fallback: save partial assistant text if stream failed mid-way
     if (assistantText.trim()) {
       await supabase.from("messages").insert({
         notebook_id: notebookId,

@@ -40,10 +40,21 @@ vi.mock("@/lib/share", () => ({
 vi.mock("@/lib/validate", () => ({
   validateUserMessage: vi.fn(() => null),
   sanitizeText: vi.fn((text: string) => text),
+  extractMessageContent: vi.fn((msg: { content?: string; parts?: Array<{ type: string; text?: string }> }) => {
+    if (typeof msg.content === "string") return msg.content;
+    if (Array.isArray(msg.parts)) {
+      return msg.parts
+        .filter((p: { type: string; text?: string }) => p.type === "text" && typeof p.text === "string")
+        .map((p: { type: string; text?: string }) => p.text!)
+        .join("");
+    }
+    return "";
+  }),
 }));
 
 vi.mock("@/lib/llm", () => ({
   getLLM: vi.fn(() => "mock-llm-model"),
+  getGeminiLLM: vi.fn(() => "mock-gemini-model"),
 }));
 
 vi.mock("@/lib/langchain/rag-chain", () => ({

@@ -213,97 +213,114 @@ export async function POST(request: Request) {
     console.error("[clone-featured] Studio generation insertion failed:", e instanceof Error ? e.message : e);
   }
 
+  // Return immediately. Embedding runs in the background.
+  // Works because Render runs a long-lived Node.js server (not serverless).
   if (fileEntries.length > 0) {
-    try {
-      const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 2000,
-        chunkOverlap: 200,
+    embedFeaturedInBackground(notebook.id, user.id, fileEntries, totalPages, serviceClient)
+      .catch((e) => {
+        console.error("[clone-featured] Background embedding failed:", e instanceof Error ? e.message : e);
       });
-
-      let globalChunkIndex = 0;
-      const allChunkRows: {
-        notebook_id: string;
-        user_id: string;
-        content: string;
-        embedding: string;
-        chunk_index: number;
-        metadata: { file_id: string; file_name: string };
-      }[] = [];
-
-      for (const file of fileEntries) {
-        const docs = await splitter.createDocuments([file.content]);
-        const chunks = docs.map((d) => d.pageContent);
-
-        const BATCH_SIZE = 5;
-        for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-          const batch = chunks.slice(i, i + BATCH_SIZE);
-          const embeddings = await Promise.all(batch.map((chunk) => embedText(chunk)));
-
-          for (let idx = 0; idx < batch.length; idx++) {
-            allChunkRows.push({
-              notebook_id: notebook.id,
-              user_id: user.id,
-              content: batch[idx],
-              embedding: JSON.stringify(embeddings[idx]),
-              chunk_index: globalChunkIndex++,
-              metadata: { file_id: file.id, file_name: file.fileName },
-            });
-          }
-
-          // Rate limit delay between batches within a file
-          // Optimized: Featured content is small, use 3s delay instead of 6.5s
-          if (i + BATCH_SIZE < chunks.length) {
-            await new Promise((r) => setTimeout(r, 3000));
-          }
-        }
-      }
-
-      if (allChunkRows.length > 0) {
-        const { error: chunkError } = await serviceClient.from("chunks").insert(allChunkRows);
-        if (chunkError) throw new Error("Failed to store document chunks");
-
-        // Verify chunks were actually persisted
-        const { count: storedCount } = await serviceClient
-          .from("chunks")
-          .select("id", { count: "exact", head: true })
-          .eq("notebook_id", notebook.id);
-
-        if (!storedCount || storedCount === 0) {
-          console.error(`[clone-featured] Chunk verification failed: 0 stored for notebook=${notebook.id}, expected ${allChunkRows.length}`);
-          throw new Error("Chunks were not persisted");
-        }
-
-        console.info(`[clone-featured] Stored ${storedCount} chunks for notebook=${notebook.id}`);
-      }
-
-      await serviceClient
-        .from("notebook_files")
-        .update({ status: "ready" })
-        .eq("notebook_id", notebook.id)
-        .eq("user_id", user.id);
-
-      await serviceClient
-        .from("notebooks")
-        .update({ status: "ready", page_count: totalPages })
-        .eq("id", notebook.id);
-    } catch (e) {
-      console.error("[clone-featured] Embedding failed:", e instanceof Error ? e.message : e);
-
-
-      await serviceClient
-        .from("notebooks")
-        .update({ status: "error" })
-        .eq("id", notebook.id);
-
-      await serviceClient
-        .from("notebook_files")
-        .update({ status: "error" })
-        .eq("notebook_id", notebook.id)
-        .eq("user_id", user.id);
-
-      return NextResponse.json({ error: "Failed to process featured content" }, { status: 500 });
-    }
+  } else {
+    // No files to embed, mark as ready immediately
+    await serviceClient
+      .from("notebooks")
+      .update({ status: "ready", page_count: totalPages })
+      .eq("id", notebook.id);
   }
 
   return NextResponse.json({ notebookId: notebook.id }, { status: 201 });
+}
+
+/** Embed featured content in the background. Updates DB statuses on completion. */
+async function embedFeaturedInBackground(
+  notebookId: string,
+  userId: string,
+  fileEntries: { id: string; fileName: string; content: string }[],
+  totalPages: number,
+  serviceClient: ReturnType<typeof getServiceClient>,
+) {
+  try {
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 2000,
+      chunkOverlap: 200,
+    });
+
+    let globalChunkIndex = 0;
+    const allChunkRows: {
+      notebook_id: string;
+      user_id: string;
+      content: string;
+      embedding: string;
+      chunk_index: number;
+      metadata: { file_id: string; file_name: string };
+    }[] = [];
+
+    for (const file of fileEntries) {
+      const docs = await splitter.createDocuments([file.content]);
+      const chunks = docs.map((d) => d.pageContent);
+
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+        const batch = chunks.slice(i, i + BATCH_SIZE);
+        const embeddings = await Promise.all(batch.map((chunk) => embedText(chunk)));
+
+        for (let idx = 0; idx < batch.length; idx++) {
+          allChunkRows.push({
+            notebook_id: notebookId,
+            user_id: userId,
+            content: batch[idx],
+            embedding: JSON.stringify(embeddings[idx]),
+            chunk_index: globalChunkIndex++,
+            metadata: { file_id: file.id, file_name: file.fileName },
+          });
+        }
+
+        if (i + BATCH_SIZE < chunks.length) {
+          await new Promise((r) => setTimeout(r, 3000));
+        }
+      }
+    }
+
+    if (allChunkRows.length > 0) {
+      const { error: chunkError } = await serviceClient.from("chunks").insert(allChunkRows);
+      if (chunkError) throw new Error("Failed to store document chunks");
+
+      const { count: storedCount } = await serviceClient
+        .from("chunks")
+        .select("id", { count: "exact", head: true })
+        .eq("notebook_id", notebookId);
+
+      if (!storedCount || storedCount === 0) {
+        throw new Error(`Chunk verification failed: 0 stored, expected ${allChunkRows.length}`);
+      }
+
+      console.info(`[clone-featured] Stored ${storedCount} chunks for notebook=${notebookId}`);
+    }
+
+    await serviceClient
+      .from("notebook_files")
+      .update({ status: "ready" })
+      .eq("notebook_id", notebookId)
+      .eq("user_id", userId);
+
+    await serviceClient
+      .from("notebooks")
+      .update({ status: "ready", page_count: totalPages })
+      .eq("id", notebookId);
+
+    console.info(`[clone-featured] Background embedding complete for notebook=${notebookId}`);
+  } catch (e) {
+    console.error("[clone-featured] Embedding failed:", e instanceof Error ? e.message : e);
+
+    await serviceClient
+      .from("notebooks")
+      .update({ status: "error" })
+      .eq("id", notebookId);
+
+    await serviceClient
+      .from("notebook_files")
+      .update({ status: "error" })
+      .eq("notebook_id", notebookId)
+      .eq("user_id", userId);
+  }
 }

@@ -33,7 +33,19 @@ describe("getLLM", () => {
 
   it("throws when neither key is set", async () => {
     const { getLLM } = await import("@/lib/llm");
-    expect(() => getLLM()).toThrow("GROQ_API_KEY or GEMINI_API_KEY is required");
+    expect(() => getLLM()).toThrow("GEMINI_API_KEY is required");
+  });
+
+  it("getGeminiLLM returns Google model", async () => {
+    process.env.GEMINI_API_KEY = "gemini-key";
+    const { getGeminiLLM } = await import("@/lib/llm");
+    const model = getGeminiLLM();
+    expect(model).toBe("google-model");
+  });
+
+  it("getGeminiLLM throws without GEMINI_API_KEY", async () => {
+    const { getGeminiLLM } = await import("@/lib/llm");
+    expect(() => getGeminiLLM()).toThrow("GEMINI_API_KEY is required");
   });
 });
 

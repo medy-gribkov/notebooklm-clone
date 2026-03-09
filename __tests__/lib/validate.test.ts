@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isValidUUID, sanitizeText, validateUserMessage } from "@/lib/validate";
+import { isValidUUID, sanitizeText, validateUserMessage, extractMessageContent } from "@/lib/validate";
 
 describe("isValidUUID", () => {
   it("accepts valid v4 UUID", () => {
@@ -73,5 +73,52 @@ describe("validateUserMessage", () => {
 
   it("returns null for message at exactly 2000 chars", () => {
     expect(validateUserMessage("a".repeat(2000))).toBeNull();
+  });
+});
+
+describe("extractMessageContent", () => {
+  it("extracts from v4 content string", () => {
+    expect(extractMessageContent({ content: "hello" })).toBe("hello");
+  });
+
+  it("extracts from v6 parts array", () => {
+    expect(
+      extractMessageContent({ parts: [{ type: "text", text: "hello world" }] }),
+    ).toBe("hello world");
+  });
+
+  it("concatenates multiple text parts", () => {
+    expect(
+      extractMessageContent({
+        parts: [
+          { type: "text", text: "hello " },
+          { type: "text", text: "world" },
+        ],
+      }),
+    ).toBe("hello world");
+  });
+
+  it("ignores non-text parts", () => {
+    expect(
+      extractMessageContent({
+        parts: [
+          { type: "text", text: "hello" },
+          { type: "tool-invocation" },
+        ],
+      }),
+    ).toBe("hello");
+  });
+
+  it("prefers content over parts when both present", () => {
+    expect(
+      extractMessageContent({
+        content: "from-content",
+        parts: [{ type: "text", text: "from-parts" }],
+      }),
+    ).toBe("from-content");
+  });
+
+  it("returns empty string for message with neither", () => {
+    expect(extractMessageContent({})).toBe("");
   });
 });

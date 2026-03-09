@@ -137,6 +137,22 @@ export function NotebookLayout({ notebookId, notebookTitle, notebookFiles, initi
   const hasReadyFiles = files.some((f) => f.status === "ready");
   const hasErrorFiles = files.some((f) => f.status === "error");
 
+  // Poll for file status updates while processing (e.g., after featured notebook clone)
+  useEffect(() => {
+    if (!hasProcessingFiles) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/notebooks/${notebookId}/files`);
+        if (!res.ok) return;
+        const updated: NotebookFile[] = await res.json();
+        setFiles(updated);
+      } catch {
+        // Silent - retry on next interval
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [hasProcessingFiles, notebookId]);
+
   return (
     <div className="flex h-dvh flex-col bg-background">
       {/* Header */}

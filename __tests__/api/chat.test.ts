@@ -34,6 +34,16 @@ vi.mock("@/lib/rate-limit", () => ({
 vi.mock("@/lib/validate", () => ({
   isValidUUID: vi.fn(),
   validateUserMessage: vi.fn(),
+  extractMessageContent: vi.fn((msg: { content?: string; parts?: Array<{ type: string; text?: string }> }) => {
+    if (typeof msg.content === "string") return msg.content;
+    if (Array.isArray(msg.parts)) {
+      return msg.parts
+        .filter((p: { type: string; text?: string }) => p.type === "text" && typeof p.text === "string")
+        .map((p: { type: string; text?: string }) => p.text!)
+        .join("");
+    }
+    return "";
+  }),
 }));
 
 vi.mock("@/lib/langchain/rag-chain", () => ({
@@ -51,6 +61,7 @@ vi.mock("@/lib/langchain/trim-messages", () => ({
 
 vi.mock("@/lib/llm", () => ({
   getLLM: vi.fn().mockReturnValue("mock-model"),
+  getGeminiLLM: vi.fn().mockReturnValue("mock-gemini-model"),
 }));
 
 vi.mock("ai", () => ({
@@ -306,6 +317,35 @@ describe("POST /api/chat", () => {
 
     const req = makeRequest({
       messages: [{ role: "user", content: "Tell me about the company" }],
+      notebookId: validUUID,
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+  });
+
+  it("returns 200 with v6 UIMessage parts format", async () => {
+    mockServiceFrom.mockImplementation((table: string) => {
+      if (table === "notebooks") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { id: validUUID, status: "ready", user_id: "user-123" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        insert: vi.fn().mockResolvedValue({ error: null }),
+      };
+    });
+
+    const req = makeRequest({
+      messages: [
+        { role: "user", parts: [{ type: "text", text: "Tell me about the company" }] },
+      ],
       notebookId: validUUID,
     });
     const res = await POST(req);

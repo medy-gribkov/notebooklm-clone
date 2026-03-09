@@ -2,10 +2,10 @@ import { authenticateRequest } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createRAGChain } from "@/lib/langchain/rag-chain";
 import { trimMessages } from "@/lib/langchain/trim-messages";
-import { getLLM } from "@/lib/llm";
+import { getLLM, getGeminiLLM } from "@/lib/llm";
 import { getServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { isValidUUID, validateUserMessage } from "@/lib/validate";
+import { isValidUUID, validateUserMessage, extractMessageContent } from "@/lib/validate";
 import { streamText } from "ai";
 import { NextResponse } from "next/server";
 import type { Source } from "@/types";
@@ -70,7 +70,10 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { messages?: Array<{ role: string; content: string }>; notebookId?: string };
+  let body: {
+    messages?: Array<{ role: string; content?: string; parts?: Array<{ type: string; text?: string }> }>;
+    notebookId?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -87,7 +90,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Messages required" }, { status: 400 });
   }
 
-  const userMessage = messages[messages.length - 1]?.content ?? "";
+  const userMessage = extractMessageContent(messages[messages.length - 1]);
   const msgError = validateUserMessage(userMessage);
   if (msgError) {
     return NextResponse.json({ error: msgError }, { status: 400 });
@@ -172,26 +175,36 @@ export async function POST(request: Request) {
 
   let assistantText = "";
 
-  try {
-    const result = streamText({
-      model: getLLM(),
-      system: systemWithContext,
-      messages: trimMessages(
-        messages.map((m) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        })),
-        undefined,
-        systemWithContext.length,
-      ),
-      onChunk: ({ chunk }) => {
-        if (chunk.type === "text-delta") {
-          assistantText += chunk.text;
-        }
-      },
-      onFinish: async ({ text }) => {
-        assistantText = text;
-        if (!text.trim()) return;
+  const trimmedMessages = trimMessages(
+    messages.map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: extractMessageContent(m),
+    })),
+    undefined,
+    systemWithContext.length,
+  );
+
+  const onChunk = ({ chunk }: { chunk: { type: string; text?: string } }) => {
+    if (chunk.type === "text-delta" && chunk.text) {
+      assistantText += chunk.text;
+    }
+  };
+
+  const onFinish = async ({ text }: { text: string }) => {
+    assistantText = text;
+    if (!text.trim()) return;
+    try {
+      await serviceClient.from("messages").insert({
+        notebook_id: notebookId,
+        user_id: user.id,
+        role: "assistant",
+        content: text,
+        sources: sources.length > 0 ? sources : null,
+        is_public: false,
+      });
+    } catch (err) {
+      console.error("[chat] Message save failed:", err);
+      setTimeout(async () => {
         try {
           await serviceClient.from("messages").insert({
             notebook_id: notebookId,
@@ -201,29 +214,43 @@ export async function POST(request: Request) {
             sources: sources.length > 0 ? sources : null,
             is_public: false,
           });
-        } catch (err) {
-          console.error("[chat] Message save failed:", err);
-          // Retry once after brief delay
-          setTimeout(async () => {
-            try {
-              await serviceClient.from("messages").insert({
-                notebook_id: notebookId,
-                user_id: user.id,
-                role: "assistant",
-                content: text,
-                sources: sources.length > 0 ? sources : null,
-                is_public: false,
-              });
-            } catch (retryErr) {
-              console.error("[chat] Message save retry failed:", retryErr);
-            }
-          }, 500);
+        } catch (retryErr) {
+          console.error("[chat] Message save retry failed:", retryErr);
         }
-      },
+      }, 500);
+    }
+  };
+
+  try {
+    const result = streamText({
+      model: getLLM(),
+      system: systemWithContext,
+      messages: trimmedMessages,
+      onChunk,
+      onFinish,
     });
 
     return result.toUIMessageStreamResponse();
   } catch (error) {
+    console.error("[chat] Primary LLM failed:", error instanceof Error ? error.message : error);
+
+    // Fallback to Gemini if Groq was primary and failed
+    if (process.env.GROQ_API_KEY && process.env.GEMINI_API_KEY) {
+      try {
+        console.info("[chat] Retrying with Gemini fallback");
+        const fallback = streamText({
+          model: getGeminiLLM(),
+          system: systemWithContext,
+          messages: trimmedMessages,
+          onChunk,
+          onFinish,
+        });
+        return fallback.toUIMessageStreamResponse();
+      } catch (fallbackErr) {
+        console.error("[chat] Gemini fallback also failed:", fallbackErr instanceof Error ? fallbackErr.message : fallbackErr);
+      }
+    }
+
     if (assistantText.trim()) {
       await serviceClient.from("messages").insert({
         notebook_id: notebookId,
@@ -234,7 +261,6 @@ export async function POST(request: Request) {
         is_public: false,
       }).then(null, (e: unknown) => { console.error("[chat] Fallback save failed:", e); });
     }
-    console.error("[chat] Stream failed:", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

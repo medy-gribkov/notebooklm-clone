@@ -222,6 +222,7 @@
     "dashboard": "Dashboard",
     "sources": "Sources",
     "studio": "Studio",
+    "chat": "Chat",
     "doubleClickToEdit": "Double-click to edit title"
   },
   "chat": {

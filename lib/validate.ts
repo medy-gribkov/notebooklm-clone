@@ -38,6 +38,20 @@ export function sanitizeText(text: string): string {
   return cleaned.slice(0, 100_000);
 }
 
+/** Extract text content from a chat message (handles both v4 `content` and v6 `parts` formats). */
+export function extractMessageContent(
+  msg: { content?: string; parts?: Array<{ type: string; text?: string }> },
+): string {
+  if (typeof msg.content === "string") return msg.content;
+  if (Array.isArray(msg.parts)) {
+    return msg.parts
+      .filter((p): p is { type: "text"; text: string } => p.type === "text" && typeof p.text === "string")
+      .map((p) => p.text)
+      .join("");
+  }
+  return "";
+}
+
 /** Validate a chat message. Returns an error string, or null if valid. */
 export function validateUserMessage(msg: string): string | null {
   if (!msg || msg.trim().length === 0) return "Message cannot be empty";
