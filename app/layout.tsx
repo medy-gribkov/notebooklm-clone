@@ -1,0 +1,89 @@
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ToastProvider } from "@/components/toast";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
+import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: { default: "DocChat", template: "%s | DocChat" },
+  description:
+    "Upload documents. Get AI-powered analysis with cited sources.",
+  keywords: ["document analysis", "PDF analysis", "AI", "RAG", "research", "analysis", "study tools"],
+  authors: [{ name: "Medy Gribkov", url: "https://medygribkov.vercel.app" }],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  openGraph: {
+    title: "DocChat",
+    description: "Upload documents. Get AI-powered analysis with cited sources.",
+    type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "DocChat" }],
+    siteName: "DocChat",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DocChat",
+    description: "Upload documents. Get AI-powered analysis with cited sources.",
+    images: ["/og-image.png"],
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
+export default async function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+  const dir = locale === "he" ? "rtl" : "ltr";
+
+  return (
+    <html lang={locale} dir={dir} suppressHydrationWarning>
+      <head>
+        <link rel="dns-prefetch" href="https://www.google.com" />
+        <link rel="dns-prefetch" href="https://img.logo.dev" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('theme')!=='light')document.documentElement.classList.add('dark');var h=localStorage.getItem('accent-hue');if(h){var d=document.documentElement,isDark=d.classList.contains('dark');d.style.setProperty('--primary','oklch('+(isDark?'0.72 0.16':'0.45 0.18')+' '+h+')');d.style.setProperty('--ring','oklch('+(isDark?'0.72 0.16':'0.45 0.18')+' '+h+')')}}catch(e){}`,
+          }}
+        />
+      </head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+      >
+        <NextIntlClientProvider messages={messages}>
+          <ThemeProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  );
+}

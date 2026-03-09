@@ -1,0 +1,18 @@
+[
+  {
+    "id": "msg-1",
+    "notebook_id": "nb-test-1",
+    "role": "user",
+    "content": "What is machine learning?",
+    "sources": [],
+    "created_at": "2025-01-01T00:01:00Z"
+  },
+  {
+    "id": "msg-2",
+    "notebook_id": "nb-test-1",
+    "role": "assistant",
+    "content": "Machine learning is a branch of artificial intelligence that enables systems to learn from data.",
+    "sources": [{"file_name": "ml-basics.pdf", "chunk_index": 0, "content": "ML is a branch of AI..."}],
+    "created_at": "2025-01-01T00:02:00Z"
+  }
+]

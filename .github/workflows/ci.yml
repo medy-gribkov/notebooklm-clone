@@ -1,0 +1,248 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+env:
+  GEMINI_API_KEY: stub
+  GROQ_API_KEY: stub
+  NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: stub
+  SUPABASE_SERVICE_ROLE_KEY: stub
+  SUPABASE_JWT_SECRET: stub
+  NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+jobs:
+  check:
+    name: Type check & lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+  test:
+    name: Unit & integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Security audit (prod deps)
+        run: npm audit --audit-level=high --omit=dev || true
+
+      - name: Run tests with coverage
+        run: npx vitest run --coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  component-test:
+    name: Component tests (RTL)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run component tests
+        run: npx vitest run __tests__/components/
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [check, test, component-test]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: next-build
+          path: .next/
+          include-hidden-files: true
+          retention-days: 1
+
+  docker-push:
+    name: Docker build & push
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/docchat
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  health-check:
+    name: Post-deploy health check
+    runs-on: ubuntu-latest
+    needs: docker-push
+    steps:
+      - name: Wait for Render deploy and check health
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "Attempt $i: waiting 60s for deploy..."
+            sleep 60
+            if curl -sf --max-time 30 https://docchat-cagb.onrender.com/; then
+              echo "Health check passed on attempt $i"
+              exit 0
+            fi
+          done
+          echo "Health check failed after 5 attempts"
+          exit 1
+
+  e2e:
+    name: E2E smoke tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: next-build
+          path: .next/
+
+      - name: Run E2E tests
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: next-build
+          path: .next/
+
+      - name: Run Lighthouse CI
+        run: npx @lhci/cli autorun
+
+  docker-validate:
+    name: Docker build (validate)
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          tags: docchat:ci
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=stub
+            NEXT_PUBLIC_APP_URL=http://localhost:3000
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
